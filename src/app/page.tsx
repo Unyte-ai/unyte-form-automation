@@ -1,7 +1,18 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  // Create Supabase server client
+  const supabase = await createClient();
+  
+  // Check if user is authenticated
+  const { data } = await supabase.auth.getUser();
+  const isAuthenticated = !!data?.user;
+  
+  // Determine the target URL based on authentication status
+  const targetUrl = isAuthenticated ? "/protected" : "/auth/sign-up";
+  
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-background text-foreground">
       {/* Hero Section */}
@@ -12,9 +23,9 @@ export default function Home() {
         Automate the creation and deployment of ad campaigns on Google, Meta, TikTok, and LinkedIn with ease.
       </p>
       {/* Call to Action */}
-      <Link href="/auth/sign-up">
+      <Link href={targetUrl}>
         <Button size="lg" className="px-8 py-4">
-          Get Started
+          {isAuthenticated ? "Dashboard" : "Get Started"}
         </Button>
       </Link>
     </div>
