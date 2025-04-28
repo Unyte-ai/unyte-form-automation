@@ -12,7 +12,7 @@ export default function Home() {
         Automate the creation and deployment of ad campaigns on Google, Meta, TikTok, and LinkedIn with ease.
       </p>
       {/* Call to Action */}
-      <Link href="/login">
+      <Link href="/auth/sign-up">
         <Button size="lg" className="px-8 py-4">
           Get Started
         </Button>
