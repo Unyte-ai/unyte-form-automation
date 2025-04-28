@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useCurrentUserImage } from '@/hooks/use-current-user-image'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -8,7 +9,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -19,11 +19,24 @@ export const CurrentUserAvatar = () => {
   const router = useRouter()
   const profileImage = useCurrentUserImage()
   const name = useCurrentUserName()
+  const [email, setEmail] = useState<string | null>(null)
   const initials = name
     ?.split(' ')
     ?.map((word) => word[0])
     ?.join('')
     ?.toUpperCase()
+
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data, error } = await createClient().auth.getSession()
+      if (error) {
+        console.error(error)
+      }
+      setEmail(data.session?.user.email ?? null)
+    }
+    
+    fetchUserEmail()
+  }, [])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -40,8 +53,14 @@ export const CurrentUserAvatar = () => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+
+        {/* User info section */}
+        <div className="px-2 py-1.5 flex flex-col">
+          <span className="font-medium">{name}</span>
+          <span className="text-xs text-muted-foreground mt-0.5">{email}</span>
+        </div>
         <DropdownMenuSeparator />
+        
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"
           onClick={handleLogout}
