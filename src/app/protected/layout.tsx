@@ -14,6 +14,9 @@ export default async function ProtectedLayout({
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
   
+  // Get the user's display name from metadata, fallback to email
+  const displayName = user?.user_metadata?.full_name || user?.email || "Guest User";
+  
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header/Navigation */}
@@ -34,7 +37,7 @@ export default async function ProtectedLayout({
             {/* User Profile */}
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">
-                {user?.email || "Name Surname"}
+                {displayName}
               </span>
               <CurrentUserAvatar />
             </div>
