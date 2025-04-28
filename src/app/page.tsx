@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -11,9 +12,11 @@ export default function Home() {
         Automate the creation and deployment of ad campaigns on Google, Meta, TikTok, and LinkedIn with ease.
       </p>
       {/* Call to Action */}
-      <Button size="lg" className="px-8 py-4">
-        Get Started
-      </Button>
+      <Link href="/login">
+        <Button size="lg" className="px-8 py-4">
+          Get Started
+        </Button>
+      </Link>
     </div>
   );
 }
