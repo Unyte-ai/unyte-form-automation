@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useEffect, useState } from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -19,13 +20,53 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { AddOrganisationDialog } from '@/components/add-organisation'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
-// Will be populated dynamically later
-const organizations: { id: string; name: string }[] = []
+type Organization = {
+  id: string
+  name: string
+  platform_type: string
+  org_email: string
+  is_active: boolean
+}
 
 export function OrganisationSwitch() {
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState('')
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch organizations on component mount
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setIsLoading(true)
+        const supabase = createClient()
+        
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          
+        if (error) throw error
+        
+        setOrganizations(data || [])
+        
+        // If we have organizations and none selected, select the first one
+        if (data && data.length > 0 && !value) {
+          setValue(data[0].id)
+        }
+      } catch (error) {
+        console.error('Error fetching organizations:', error)
+        toast.error('Failed to load organizations')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchOrganizations()
+  }, [value])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -35,10 +76,15 @@ export function OrganisationSwitch() {
           role="combobox"
           aria-expanded={open}
           className="w-[200px] justify-between"
+          disabled={isLoading}
         >
-          {value
-            ? organizations.find((org) => org.id === value)?.name
-            : 'Select Organisation'}
+          {isLoading ? (
+            "Loading organizations..."
+          ) : value ? (
+            organizations.find((org) => org.id === value)?.name || 'Select Organisation'
+          ) : (
+            'Select Organisation'
+          )}
           <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>

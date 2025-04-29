@@ -17,6 +17,10 @@ import { Label } from '@/components/ui/label'
 import { Plus } from 'lucide-react'
 import { PlatformTypeSelect, PlatformType } from '@/components/platform-type'
 import { GenerateEmail } from '@/components/generate-email'
+import { createOrganization } from '@/app/actions/organizations'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 export function AddOrganisationDialog() {
   const [open, setOpen] = useState(false)
@@ -24,24 +28,57 @@ export function AddOrganisationDialog() {
   const [email, setEmail] = useState('')
   const [platformType, setPlatformType] = useState<PlatformType | ''>('') 
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async () => {
     if (!platformType || !name || !email) {
-      // Show validation error
+      toast.error('Missing information', {
+        description: 'Please fill out all fields before continuing.'
+      })
       return
     }
     
     try {
       setIsLoading(true)
-      // Add code here to save the organization with the generated email
+
+      // Get the current user's information
+      const supabase = createClient()
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        throw new Error('Could not authenticate user')
+      }
+      
+      // Get the user's display name
+      const userName = user.user_metadata?.full_name || user.email || 'Unknown User'
+      
+      // Create the organization
+      await createOrganization({
+        name,
+        platformType,
+        email,
+        userId: user.id,
+        userName: userName as string
+      })
+
+      // Show success message
+      toast.success('Organization created', {
+        description: 'Your new organization has been created successfully.'
+      })
       
       // Reset form and close dialog on success
       setName('')
       setEmail('')
       setPlatformType('')
       setOpen(false)
+      
+      // Refresh the page to show the new organization
+      router.refresh()
     } catch (error) {
       console.error('Error creating organization:', error)
+      toast.error('Failed to create organization', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
     } finally {
       setIsLoading(false)
     }
