@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { CurrentUserAvatar } from '@/components/current-user-avatar';
 import { createClient } from '@/lib/supabase/server';
+import { OrganisationSwitch } from '@/components/organisation-switch';
 
 export default async function ProtectedLayout({
   children,
@@ -29,10 +29,8 @@ export default async function ProtectedLayout({
 
           {/* Center/Right Side */}
           <div className="flex items-center gap-6">
-            {/* Add Organisation Button */}
-            <Button variant="default" className="rounded-full bg-black text-white hover:bg-black/90">
-              Add Organisation
-            </Button>
+            {/* Organisation Switch Component */}
+            <OrganisationSwitch />
 
             {/* User Profile */}
             <div className="flex items-center gap-2">
