@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus } from 'lucide-react'
 import { PlatformTypeSelect, PlatformType } from '@/components/platform-type'
+import { GenerateEmail } from '@/components/generate-email'
 
 export function AddOrganisationDialog() {
   const [open, setOpen] = useState(false)
@@ -70,13 +71,16 @@ export function AddOrganisationDialog() {
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="email">Email</Label>
+              <GenerateEmail />
+            </div>
             <Input 
               id="email" 
               type="email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
-              placeholder="contact@example.com" 
+              placeholder="Organisation email..." 
             />
           </div>
         </div>
