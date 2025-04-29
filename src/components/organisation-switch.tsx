@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { AddOrganisationDialog } from '@/components/add-organisation'
 
 // Will be populated dynamically later
 const organizations: { id: string; name: string }[] = []
@@ -69,15 +70,9 @@ export function OrganisationSwitch() {
             
             <CommandSeparator />
             
-            {/* Add Organisation Button */}
+            {/* Add Organisation Dialog */}
             <div className="p-1">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start text-sm font-normal"
-              >
-                <Plus className="mr-2 size-4" />
-                Add Organisation
-              </Button>
+              <AddOrganisationDialog />
             </div>
           </CommandList>
         </Command>
