@@ -4,7 +4,7 @@ import { CurrentUserAvatar } from '@/components/current-user-avatar';
 import { createClient } from '@/lib/supabase/server';
 import { OrganisationSwitch } from '@/components/organisation-switch';
 
-export default async function ProtectedLayout({
+export default async function HomeLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export default async function ProtectedLayout({
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="font-bold text-xl">
-            <Link href="/protected">LOGO</Link>
+            <Link href="/home">LOGO</Link>
           </div>
 
           {/* Center/Right Side */}

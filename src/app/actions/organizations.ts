@@ -42,7 +42,7 @@ export async function createOrganization(data: CreateOrganizationData) {
   }
   
   // Revalidate any paths that might show organization data
-  revalidatePath('/protected')
+  revalidatePath('/home')
   
   return organization
 }

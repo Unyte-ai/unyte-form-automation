@@ -11,7 +11,7 @@ export default async function Home() {
   const isAuthenticated = !!data?.user;
   
   // Determine the target URL based on authentication status
-  const targetUrl = isAuthenticated ? "/protected" : "/auth/sign-up";
+  const targetUrl = isAuthenticated ? "/home" : "/auth/sign-up";
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-background text-foreground">
