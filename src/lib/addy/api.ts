@@ -1,4 +1,3 @@
-// src/lib/addy/api.ts
 const API_URL = process.env.ADDY_API_URL || 'https://app.addy.io/api/v1';
 const API_KEY = process.env.ADDY_API_KEY;
 
