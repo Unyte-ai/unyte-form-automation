@@ -22,17 +22,33 @@ export function AddOrganisationDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [platformType, setPlatformType] = useState<PlatformType | ''>('') // Initialize with empty string
+  const [platformType, setPlatformType] = useState<PlatformType | ''>('') 
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = () => {
-    // Make sure platform type is selected before submission
-    if (!platformType) {
-      // Show error or handle empty platform type
+  const handleSubmit = async () => {
+    if (!platformType || !name || !email) {
+      // Show validation error
       return
     }
     
-    // Rest of submission logic
-    setOpen(false)
+    try {
+      setIsLoading(true)
+      // Add code here to save the organization with the generated email
+      
+      // Reset form and close dialog on success
+      setName('')
+      setEmail('')
+      setPlatformType('')
+      setOpen(false)
+    } catch (error) {
+      console.error('Error creating organization:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEmailGenerated = (generatedEmail: string) => {
+    setEmail(generatedEmail)
   }
 
   return (
@@ -59,7 +75,7 @@ export function AddOrganisationDialog() {
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 placeholder="Organisation name" 
-                className="pr-[140px]" // Add enough padding to accommodate the platform select
+                className="pr-[140px]"
               />
               <div className="absolute inset-y-0 right-0 flex items-center">
                 <PlatformTypeSelect
@@ -73,7 +89,7 @@ export function AddOrganisationDialog() {
           <div className="grid gap-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="email">Email</Label>
-              <GenerateEmail />
+              <GenerateEmail onEmailGenerated={handleEmailGenerated} />
             </div>
             <Input 
               id="email" 
@@ -85,11 +101,11 @@ export function AddOrganisationDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={isLoading}>
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit}>
-            Create Organisation
+          <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? 'Creating...' : 'Create Organisation'}
           </Button>
         </DialogFooter>
       </DialogContent>
