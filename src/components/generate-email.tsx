@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { generateAliasEmail } from '@/app/actions/addy'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -19,12 +18,15 @@ export function GenerateEmail({ onEmailGenerated, className }: GenerateEmailProp
     
     try {
       setIsGenerating(true)
-      const email = await generateAliasEmail()
       
-      if (onEmailGenerated && email) {
-        onEmailGenerated(email)
+      // TODO: Replace with your new email generation implementation
+      // This is a temporary placeholder
+      const tempRandomEmail = `user${Math.floor(Math.random() * 10000)}@example.com`
+      
+      if (onEmailGenerated) {
+        onEmailGenerated(tempRandomEmail)
         toast.success("Email generated", {
-          description: "Your new email alias has been created successfully."
+          description: "Your new email has been created successfully."
         })
       }
     } catch (error) {
