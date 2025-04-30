@@ -4,6 +4,7 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { generateUniqueEmail } from '@/app/actions/email'
 
 interface GenerateEmailProps {
   onEmailGenerated?: (email: string) => void
@@ -19,14 +20,13 @@ export function GenerateEmail({ onEmailGenerated, className }: GenerateEmailProp
     try {
       setIsGenerating(true)
       
-      // TODO: Replace with your new email generation implementation
-      // This is a temporary placeholder
-      const tempRandomEmail = `user${Math.floor(Math.random() * 10000)}@example.com`
+      // Call our server action to generate a unique email
+      const uniqueEmail = await generateUniqueEmail()
       
       if (onEmailGenerated) {
-        onEmailGenerated(tempRandomEmail)
+        onEmailGenerated(uniqueEmail)
         toast.success("Email generated", {
-          description: "Your new email has been created successfully."
+          description: "Your unique form submission email has been created."
         })
       }
     } catch (error) {
