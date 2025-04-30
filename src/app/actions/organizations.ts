@@ -65,3 +65,52 @@ export async function getUserOrganizations() {
   
   return organizations || []
 }
+
+/**
+ * Deletes an organization from the database
+ */
+export async function deleteOrganization(organizationId: string) {
+  const supabase = await createClient()
+  
+  // Delete the organization
+  const { error, data } = await supabase
+    .from('organizations')
+    .delete()
+    .eq('id', organizationId)
+    .select()
+  
+  if (error) {
+    console.error('Error deleting organization:', error)
+    throw new Error(error.message)
+  }
+  
+  // Revalidate any paths that might show organization data
+  revalidatePath('/home')
+  
+  return data?.[0] || null
+}
+
+/**
+ * Fetches the next available organization ID (if any)
+ * This is used for post-delete navigation
+ * @param currentOrgId The ID of the organization being deleted
+ */
+export async function getNextOrganizationId(currentOrgId: string) {
+  const supabase = await createClient()
+  
+  // Get all organizations except the current one
+  const { data: organizations, error } = await supabase
+    .from('organizations')
+    .select('id')
+    .neq('id', currentOrgId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+  
+  if (error) {
+    console.error('Error fetching next organization:', error)
+    throw new Error(error.message)
+  }
+  
+  // Return the ID of the next organization, or null if none exist
+  return organizations && organizations.length > 0 ? organizations[0].id : null
+}
