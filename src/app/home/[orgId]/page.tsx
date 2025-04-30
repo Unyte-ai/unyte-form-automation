@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import { OrgInfo } from '@/components/org-info';
 
 export default async function OrganizationPage({
     params,
@@ -30,16 +31,7 @@ export default async function OrganizationPage({
         {/* Left column */}
         <div className="space-y-6">
           {/* Organization header */}
-          <div className="rounded-lg border p-6 bg-card">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold">{organization.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{organization.org_email}</span>
-                <span>•</span>
-                <span className="capitalize">{organization.platform_type} Form</span>
-              </div>
-            </div>
-          </div>
+          <OrgInfo organization={organization} />
           
           {/* Forms list - placeholder for now */}
           <div className="rounded-lg border p-6 bg-card">
