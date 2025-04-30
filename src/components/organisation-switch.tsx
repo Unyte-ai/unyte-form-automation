@@ -22,6 +22,7 @@ import {
 import { AddOrganisationDialog } from '@/components/add-organisation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useRouter, usePathname } from 'next/navigation'
 
 type Organization = {
   id: string
@@ -32,10 +33,20 @@ type Organization = {
 }
 
 export function OrganisationSwitch() {
+  const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState('')
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null)
+
+  // Extract current org ID from pathname if available
+  useEffect(() => {
+    const pathParts = pathname.split('/')
+    if (pathParts.length >= 3 && pathParts[1] === 'home') {
+      setCurrentOrgId(pathParts[2])
+    }
+  }, [pathname])
 
   // Fetch organizations on component mount
   useEffect(() => {
@@ -53,10 +64,6 @@ export function OrganisationSwitch() {
         
         setOrganizations(data || [])
         
-        // If we have organizations and none selected, select the first one
-        if (data && data.length > 0 && !value) {
-          setValue(data[0].id)
-        }
       } catch (error) {
         console.error('Error fetching organizations:', error)
         toast.error('Failed to load organizations')
@@ -66,7 +73,14 @@ export function OrganisationSwitch() {
     }
     
     fetchOrganizations()
-  }, [value])
+  }, [])
+
+  const handleOrgSelect = (orgId: string) => {
+    if (orgId !== currentOrgId) {
+      router.push(`/home/${orgId}`)
+      setOpen(false)
+    }
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -80,8 +94,8 @@ export function OrganisationSwitch() {
         >
           {isLoading ? (
             "Loading organizations..."
-          ) : value ? (
-            organizations.find((org) => org.id === value)?.name || 'Select Organisation'
+          ) : currentOrgId ? (
+            organizations.find((org) => org.id === currentOrgId)?.name || 'Select Organisation'
           ) : (
             'Select Organisation'
           )}
@@ -98,16 +112,13 @@ export function OrganisationSwitch() {
                 <CommandItem
                   key={org.id}
                   value={org.id}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? '' : currentValue)
-                    setOpen(false)
-                  }}
+                  onSelect={() => handleOrgSelect(org.id)}
                 >
                   {org.name}
                   <Check
                     className={cn(
                       "ml-auto size-4",
-                      value === org.id ? "opacity-100" : "opacity-0"
+                      currentOrgId === org.id ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>
