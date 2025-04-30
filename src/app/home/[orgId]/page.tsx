@@ -2,27 +2,27 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 
 export default async function OrganizationPage({
-  params,
-}: {
-  params: Promise<{ orgId: string }> | { orgId: string };
-}) {
-  // Await params to get the actual orgId
-  const resolvedParams = 'then' in params ? await params : params;
-  const orgId = resolvedParams.orgId;
-  
-  const supabase = await createClient();
-  
-  // Fetch organization data
-  const { data: organization, error } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', orgId)
-    .single();
-  
-  // If organization doesn't exist, return 404
-  if (error || !organization) {
-    notFound();
-  }
+    params,
+  }: {
+    params: Promise<{ orgId: string }>;
+  }) {
+    // Correctly await the params before accessing properties
+    const { orgId } = await params;
+    
+    const supabase = await createClient();
+    
+    // Fetch organization data
+    const { data: organization, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', orgId)
+      .single();
+    
+    // If organization doesn't exist, return 404
+    if (error || !organization) {
+      notFound();
+    }
+
   
   return (
     <div className="container mx-auto px-4 py-6">
