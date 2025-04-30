@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { OrgInfo } from '@/components/org-info';
 import { SocialPlatforms } from '@/components/social-platforms';
+import { OrgTeam } from '@/components/org-team';
 
 export default async function OrganizationPage({
     params,
@@ -48,13 +49,8 @@ export default async function OrganizationPage({
           {/* Platforms */}
           <SocialPlatforms />
           
-          {/* Team members - placeholder for now */}
-          <div className="rounded-lg border p-6 bg-card">
-            <h2 className="text-xl font-semibold mb-4">Team</h2>
-            <div className="text-muted-foreground">
-              Team members will appear here.
-            </div>
-          </div>
+          {/* Team members */}
+          <OrgTeam />
         </div>
       </div>
     </div>
