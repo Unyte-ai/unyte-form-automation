@@ -56,6 +56,8 @@ export async function createOrganization(data: CreateOrganizationData) {
       role:         'owner',
       user_name:    userName,
       user_email:   userEmail,
+      invitation_status: 'accepted',  // Owners are automatically accepted
+      invited_by:   userId            // Owner invited themselves
     })    
 
   if (memberError) {
