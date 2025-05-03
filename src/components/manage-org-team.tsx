@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useState } from 'react'
 import { AddOrgUser } from '@/components/add-org-user'
+import { useParams } from 'next/navigation'
 
 interface ManageOrgTeamProps {
   organizationId?: string
@@ -17,6 +18,10 @@ interface ManageOrgTeamProps {
 
 export function ManageOrgTeam({ organizationId }: ManageOrgTeamProps) {
   const [showAddUserDialog, setShowAddUserDialog] = useState(false)
+  const params = useParams()
+  
+  // Get organization ID from props or URL params
+  const orgId = organizationId || (params?.orgId as string)
   
   return (
     <>
@@ -39,7 +44,7 @@ export function ManageOrgTeam({ organizationId }: ManageOrgTeamProps) {
       </DropdownMenu>
       
       <AddOrgUser 
-        organizationId={organizationId} 
+        organizationId={orgId} 
         open={showAddUserDialog} 
         onOpenChange={setShowAddUserDialog} 
       />

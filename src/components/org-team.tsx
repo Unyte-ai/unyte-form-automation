@@ -20,6 +20,7 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
   
   // Generate initials from user name
   const getInitials = (name: string) => {
+    if (!name) return '??';
     return name
       .split(' ')
       .map(part => part[0])
@@ -32,7 +33,7 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
     <div className="rounded-lg border p-6 bg-card">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Team</h2>
-        <ManageOrgTeam />
+        <ManageOrgTeam organizationId={organizationId} />
       </div>
       
       {error ? (
@@ -52,7 +53,7 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
                   <AvatarFallback>{getInitials(member.user_name)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium text-sm">{member.user_name}</p>
+                  <p className="font-medium text-sm">{member.user_name || 'Pending User'}</p>
                   <p className="text-muted-foreground text-xs">{member.user_email}</p>
                 </div>
               </div>
@@ -60,6 +61,11 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
                 <span className="text-xs px-2 py-1 rounded-full bg-secondary">
                   {member.role}
                 </span>
+                {member.invitation_status === 'pending' && (
+                  <span className="ml-2 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">
+                    Pending
+                  </span>
+                )}
               </div>
             </div>
           ))}

@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { inviteUserToOrganization } from '@/app/actions/members'
+import { toast } from 'sonner'
+import { useParams } from 'next/navigation'
 
 interface AddOrgUserProps {
   organizationId?: string
@@ -20,20 +23,48 @@ interface AddOrgUserProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function AddOrgUser({ open, onOpenChange }: AddOrgUserProps) {
+export function AddOrgUser({ organizationId, open, onOpenChange }: AddOrgUserProps) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const params = useParams()
+  
+  // Get organization ID from props or URL params
+  const orgId = organizationId || (params?.orgId as string)
 
   const handleInvite = async () => {
-    // Placeholder for future invitation logic
-    setIsLoading(true)
+    if (!email) {
+      toast.error('Please enter an email address')
+      return
+    }
     
-    // Simulate API call delay
-    setTimeout(() => {
-      setIsLoading(false)
-      onOpenChange(false)
+    if (!orgId) {
+      toast.error('Organization ID is missing')
+      return
+    }
+    
+    try {
+      setIsLoading(true)
+      
+      // Call the server action to invite the user
+      await inviteUserToOrganization(orgId, email)
+      
+      // Show success message
+      toast.success('Invitation sent', {
+        description: `${email} has been invited to the organization.`
+      })
+      
+      // Reset form and close dialog
       setEmail('')
-    }, 500)
+      onOpenChange(false)
+      
+    } catch (error) {
+      console.error('Error inviting user:', error)
+      toast.error('Failed to invite user', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
