@@ -50,7 +50,7 @@ export default async function OrganizationPage({
           <SocialPlatforms />
           
           {/* Team members */}
-          <OrgTeam />
+          <OrgTeam organizationId={orgId} />
         </div>
       </div>
     </div>
