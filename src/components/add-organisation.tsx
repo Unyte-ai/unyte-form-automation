@@ -57,9 +57,10 @@ export function AddOrganisationDialog() {
         name,
         platformType,
         email,
-        userId: user.id,
-        userName: userName as string
-      })
+        userId:   user.id,
+        userName: userName as string,
+        userEmail: user.email!,
+      })      
 
       // Show success message
       toast.success('Organization created', {

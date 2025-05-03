@@ -9,6 +9,7 @@ export type CreateOrganizationData = {
   email: string
   userId: string
   userName: string
+  userEmail: string
 }
 
 /**
@@ -18,7 +19,7 @@ export type CreateOrganizationData = {
 export async function createOrganization(data: CreateOrganizationData) {
   const supabase = await createClient()
 
-  const { name, platformType, email, userId, userName } = data
+  const { name, platformType, email, userId, userName, userEmail } = data
 
   // 1️⃣ Insert the organization
   const {
@@ -45,15 +46,18 @@ export async function createOrganization(data: CreateOrganizationData) {
     throw new Error(orgError.message)
   }
 
-  // 2️⃣ Automatically add the creator as owner in organization_members
+  // 2️⃣ Automatically add the creator as owner in organization_members,
+  //    now populating user_name and use_email
   const { error: memberError } = await supabase
     .from('organization_members')
     .insert({
       organization: organization.id,
-      user_id: userId,
-      role: 'owner',
-    }) // avoid extra SELECT
-  
+      user_id:      userId,
+      role:         'owner',
+      user_name:    userName,
+      user_email:   userEmail,
+    })    
+
   if (memberError) {
     console.error('Error creating organization membership:', memberError)
     throw new Error(memberError.message)
