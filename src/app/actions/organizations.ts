@@ -12,15 +12,19 @@ export type CreateOrganizationData = {
 }
 
 /**
- * Creates a new organization in the database
+ * Creates a new organization in the database,
+ * and automatically adds the creator as the 'owner'.
  */
 export async function createOrganization(data: CreateOrganizationData) {
   const supabase = await createClient()
-  
+
   const { name, platformType, email, userId, userName } = data
-  
-  // Insert the organization data
-  const { data: organization, error } = await supabase
+
+  // 1️⃣ Insert the organization
+  const {
+    data: organization,
+    error: orgError,
+  } = await supabase
     .from('organizations')
     .insert({
       user_id: userId,
@@ -31,19 +35,33 @@ export async function createOrganization(data: CreateOrganizationData) {
       created_by_id: userId,
       created_by_name: userName,
       updated_by_id: userId,
-      updated_by_name: userName
+      updated_by_name: userName,
     })
     .select()
     .single()
-  
-  if (error) {
-    console.error('Error creating organization:', error)
-    throw new Error(error.message)
+
+  if (orgError) {
+    console.error('Error creating organization:', orgError)
+    throw new Error(orgError.message)
   }
+
+  // 2️⃣ Automatically add the creator as owner in organization_members
+  const { error: memberError } = await supabase
+    .from('organization_members')
+    .insert({
+      organization: organization.id,
+      user_id: userId,
+      role: 'owner',
+    }) // avoid extra SELECT
   
-  // Revalidate any paths that might show organization data
+  if (memberError) {
+    console.error('Error creating organization membership:', memberError)
+    throw new Error(memberError.message)
+  }
+
+  // 3️⃣ Revalidate any paths that might show organization data
   revalidatePath('/home')
-  
+
   return organization
 }
 
@@ -52,17 +70,17 @@ export async function createOrganization(data: CreateOrganizationData) {
  */
 export async function getUserOrganizations() {
   const supabase = await createClient()
-  
+
   const { data: organizations, error } = await supabase
     .from('organizations')
     .select('*')
     .order('created_at', { ascending: false })
-  
+
   if (error) {
     console.error('Error fetching organizations:', error)
     throw new Error(error.message)
   }
-  
+
   return organizations || []
 }
 
@@ -71,22 +89,22 @@ export async function getUserOrganizations() {
  */
 export async function deleteOrganization(organizationId: string) {
   const supabase = await createClient()
-  
-  // Delete the organization
+
+  // Delete the organization (membership rows cascade)
   const { error, data } = await supabase
     .from('organizations')
     .delete()
     .eq('id', organizationId)
     .select()
-  
+
   if (error) {
     console.error('Error deleting organization:', error)
     throw new Error(error.message)
   }
-  
+
   // Revalidate any paths that might show organization data
   revalidatePath('/home')
-  
+
   return data?.[0] || null
 }
 
@@ -97,7 +115,7 @@ export async function deleteOrganization(organizationId: string) {
  */
 export async function getNextOrganizationId(currentOrgId: string) {
   const supabase = await createClient()
-  
+
   // Get all organizations except the current one
   const { data: organizations, error } = await supabase
     .from('organizations')
@@ -105,12 +123,12 @@ export async function getNextOrganizationId(currentOrgId: string) {
     .neq('id', currentOrgId)
     .order('created_at', { ascending: false })
     .limit(1)
-  
+
   if (error) {
     console.error('Error fetching next organization:', error)
     throw new Error(error.message)
   }
-  
+
   // Return the ID of the next organization, or null if none exist
   return organizations && organizations.length > 0 ? organizations[0].id : null
 }
