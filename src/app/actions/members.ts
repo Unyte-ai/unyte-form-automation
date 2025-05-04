@@ -1,8 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
-import { v4 as uuidv4 } from 'uuid' // Make sure 'uuid' is in your dependencies
 
 /**
  * Fetches all members for a specific organization
@@ -37,30 +37,39 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     throw new Error('You must be logged in to invite users')
   }
   
-  // Check if the invited user already exists in our auth system
-  const adminClient = supabase.auth.admin
-  
-  let existingUser = null
-  let userName = null
-  
-  // Using the listUsers() admin method to find users by email
-  const { data: usersData } = await adminClient.listUsers()
-  
-  if (usersData?.users) {
-    // Find a user with the matching email
-    existingUser = usersData.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-    
-    if (existingUser) {
-      // Get user's name from metadata if available
-      userName = existingUser.user_metadata?.full_name || 'User'
+  // Create an admin client with service role key
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
+  )
+  
+  const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    // Use the new invite route
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/invite?next=/home`
+  })
+  
+  if (inviteError) {
+    console.error('Error inviting user:', inviteError)
+    throw new Error(`Failed to invite user: ${inviteError.message}`)
   }
   
-  // Generate placeholder UUID for users who don't exist yet
-  const userId = existingUser?.id || uuidv4()
+  if (!invitedUser?.user) {
+    throw new Error('Failed to get user data from invite response')
+  }
   
-  // Set a default name for users who don't exist yet
-  const displayName = userName || `Pending User (${email.split('@')[0]})`
+  // The invited user now has a real Supabase user ID
+  const userId = invitedUser.user.id
+  
+  // Extract or create a display name
+  const displayName = invitedUser.user.user_metadata?.full_name || 
+                      invitedUser.user.email?.split('@')[0] || 
+                      'Invited User'
   
   // Insert the member record
   const { data: member, error } = await supabase
@@ -68,7 +77,7 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     .insert({
       organization: organizationId,
       user_id: userId,
-      user_name: displayName, // Use the display name (never null)
+      user_name: displayName,
       user_email: email,
       role: 'member',
       invitation_status: 'pending',
@@ -79,7 +88,7 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     .single()
   
   if (error) {
-    console.error('Error inviting user:', error)
+    console.error('Error creating member record:', error)
     throw new Error(error.message)
   }
   
