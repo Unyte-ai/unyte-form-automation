@@ -1,4 +1,5 @@
 import { ManageOrgTeam } from '@/components/manage-org-team'
+import { ManageOrgMember } from '@/components/manage-org-member'
 import { getOrganizationMembers } from '@/app/actions/members'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -60,7 +61,7 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
                   <p className="text-muted-foreground text-xs">{member.user_email}</p>
                 </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   member.role === 'owner' 
                     ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-200' 
@@ -72,6 +73,9 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
                   <span className="ml-2 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">
                     Pending
                   </span>
+                )}
+                {userRole === 'owner' && member.role !== 'owner' && (
+                  <ManageOrgMember />
                 )}
               </div>
             </div>
