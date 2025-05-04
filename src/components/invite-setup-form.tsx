@@ -98,6 +98,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                   disabled
                   readOnly
                   className="bg-muted cursor-not-allowed"
+                  autoComplete="email"
                 />
               </div>
               <div className="grid gap-2">
@@ -110,6 +111,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pr-10"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"

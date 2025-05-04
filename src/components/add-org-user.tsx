@@ -85,6 +85,7 @@ export function AddOrgUser({ organizationId, open, onOpenChange }: AddOrgUserPro
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
               placeholder="colleague@example.com" 
+              autoComplete="email"
             />
           </div>
         </div>

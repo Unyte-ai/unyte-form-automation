@@ -82,6 +82,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                 />
               </div>
               <div className="grid gap-2">
@@ -94,6 +95,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pr-10" // Add padding to accommodate the icon
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"

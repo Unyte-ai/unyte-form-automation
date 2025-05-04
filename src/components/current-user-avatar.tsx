@@ -28,11 +28,14 @@ export const CurrentUserAvatar = () => {
 
   useEffect(() => {
     const fetchUserEmail = async () => {
-      const { data, error } = await createClient().auth.getSession()
+      const { data: { user }, error } = await createClient().auth.getUser()
       if (error) {
         console.error(error)
+        return
       }
-      setEmail(data.session?.user.email ?? null)
+      if (user?.email) {
+        setEmail(user.email)
+      }
     }
     
     fetchUserEmail()
