@@ -51,7 +51,10 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
       ) : (
         <div className="space-y-4">
           {members.map(member => (
-            <div key={member.id} className="flex items-center justify-between py-2">
+            <div 
+              key={member.id} 
+              className="group flex items-center justify-between py-2 rounded-md hover:bg-accent/50 transition-colors duration-200"
+            >
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>{getInitials(member.user_name)}</AvatarFallback>
@@ -74,9 +77,9 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
                     Pending
                   </span>
                 )}
-                {userRole === 'owner' && member.role !== 'owner' && (
+                <div className={`${userRole === 'owner' && member.role !== 'owner' ? 'opacity-0 group-hover:opacity-100 w-0 group-hover:w-auto' : 'invisible w-0'} transition-all duration-700 ease-[cubic-bezier(0.2,0.0,0.1,1.0)]`}>
                   <ManageOrgMember />
-                )}
+                </div>
               </div>
             </div>
           ))}
