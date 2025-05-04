@@ -39,7 +39,7 @@ export function InviteHandler() {
         } else {
           console.log('Session set successfully, redirecting to home')
           // Clear the URL fragment and redirect to home
-          window.location.href = '/home'
+          window.location.href = '/auth/invite-setup'
         }
       } else {
         console.log('Missing required parameters')
