@@ -4,9 +4,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface OrgTeamProps {
   organizationId: string
+  userRole: string
 }
 
-export async function OrgTeam({ organizationId }: OrgTeamProps) {
+export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
   // Fetch members and handle potential errors
   let members = [];
   let error = null;
@@ -33,7 +34,9 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
     <div className="rounded-lg border p-6 bg-card">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Team</h2>
-        <ManageOrgTeam organizationId={organizationId} />
+        {userRole === 'owner' && (
+          <ManageOrgTeam organizationId={organizationId} />
+        )}
       </div>
       
       {error ? (

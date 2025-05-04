@@ -10,9 +10,10 @@ interface Organization {
 
 interface OrgInfoProps {
   organization: Organization;
+  userRole: string;
 }
 
-export function OrgInfo({ organization }: OrgInfoProps) {
+export function OrgInfo({ organization, userRole }: OrgInfoProps) {
   // Format platform type directly (convert hyphens to spaces and capitalize words)
   const formattedPlatformType = organization.platform_type
     .split('-')
@@ -30,7 +31,9 @@ export function OrgInfo({ organization }: OrgInfoProps) {
             <span>{formattedPlatformType}</span>
           </div>
         </div>
-        <OrgDelete organizationId={organization.id} organizationName={organization.name} />
+        {userRole === 'owner' && (
+          <OrgDelete organizationId={organization.id} organizationName={organization.name} />
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,10 @@ export default async function OrganizationPage({
     
     const supabase = await createClient();
     
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData?.user
+    
     // Fetch organization data
     const { data: organization, error } = await supabase
       .from('organizations')
@@ -25,7 +29,16 @@ export default async function OrganizationPage({
     if (error || !organization) {
       notFound();
     }
-
+    
+    // Fetch user's role in this organization
+    const { data: memberData } = await supabase
+      .from('organization_members')
+      .select('role')
+      .eq('organization', orgId)
+      .eq('user_id', user?.id)
+      .single()
+    
+    const userRole = memberData?.role || 'member'
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -33,7 +46,7 @@ export default async function OrganizationPage({
         {/* Left column */}
         <div className="space-y-6">
           {/* Organization header */}
-          <OrgInfo organization={organization} />
+          <OrgInfo organization={organization} userRole={userRole} />
           
           {/* Forms list - placeholder for now */}
           <div className="rounded-lg border p-6 bg-card">
@@ -50,7 +63,7 @@ export default async function OrganizationPage({
           <SocialPlatforms />
           
           {/* Team members */}
-          <OrgTeam organizationId={orgId} />
+          <OrgTeam organizationId={orgId} userRole={userRole} />
         </div>
       </div>
     </div>
