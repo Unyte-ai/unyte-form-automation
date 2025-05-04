@@ -97,3 +97,46 @@ export async function inviteUserToOrganization(organizationId: string, email: st
   
   return member
 }
+
+/**
+ * Deletes a member from an organization
+ */
+export async function deleteOrganizationMember(organizationId: string, memberId: string) {
+  const supabase = await createClient()
+  
+  // Get the current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    throw new Error('You must be logged in to delete members')
+  }
+  
+  // Check if the current user is an owner of the organization
+  const { data: membership, error: membershipError } = await supabase
+    .from('organization_members')
+    .select('role')
+    .eq('organization', organizationId)
+    .eq('user_id', user.id)
+    .single()
+  
+  if (membershipError || !membership || membership.role !== 'owner') {
+    throw new Error('Only organization owners can delete members')
+  }
+  
+  // Delete the member
+  const { error: deleteError } = await supabase
+    .from('organization_members')
+    .delete()
+    .eq('id', memberId)
+    .eq('organization', organizationId)
+  
+  if (deleteError) {
+    console.error('Error deleting member:', deleteError)
+    throw new Error(deleteError.message)
+  }
+  
+  // Revalidate the path to update the UI
+  revalidatePath(`/home/${organizationId}`)
+  
+  return { success: true }
+}

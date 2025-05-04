@@ -78,7 +78,11 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
                   </span>
                 )}
                 <div className={`${userRole === 'owner' && member.role !== 'owner' ? 'opacity-0 group-hover:opacity-100 w-0 group-hover:w-auto' : 'invisible w-0'} transition-all duration-700 ease-[cubic-bezier(0.2,0.0,0.1,1.0)]`}>
-                  <ManageOrgMember />
+                  <ManageOrgMember 
+                    memberId={member.id}
+                    memberName={member.user_name || member.user_email}
+                    organizationId={organizationId}
+                  />
                 </div>
               </div>
             </div>
