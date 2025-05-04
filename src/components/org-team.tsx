@@ -58,7 +58,11 @@ export async function OrgTeam({ organizationId }: OrgTeamProps) {
                 </div>
               </div>
               <div className="flex items-center">
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary">
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  member.role === 'owner' 
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-200' 
+                    : 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-200'
+                }`}>
                   {member.role}
                 </span>
                 {member.invitation_status === 'pending' && (
