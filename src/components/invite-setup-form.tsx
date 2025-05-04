@@ -11,18 +11,61 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { completeInviteSetup } from '@/app/actions/complete-invite-setup'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export function InviteSetupForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [fullName, setFullName] = useState('')
-  const email = 'invite@example.com' // This would be pre-filled from user data
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const handleFinishSignUp = (e: React.FormEvent) => {
+  useEffect(() => {
+    const getUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user?.email) {
+        setEmail(user.email)
+        // Pre-fill the name if available
+        if (user.user_metadata?.full_name) {
+          setFullName(user.user_metadata.full_name)
+        }
+      }
+    }
+    
+    getUser()
+  }, [])
+
+  const handleFinishSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    // No functionality - just prevent form submission
+    
+    if (!fullName || !password) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+    
+    setIsLoading(true)
+    
+    try {
+      await completeInviteSetup(fullName, password)
+      
+      toast.success('Account setup completed successfully')
+      
+      // Redirect to home page
+      router.push('/home')
+    } catch (error) {
+      console.error('Error completing setup:', error)
+      toast.error('Failed to complete setup. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -79,8 +122,8 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={false}>
-                Finish Sign Up
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Setting up...' : 'Finish Sign Up'}
               </Button>
             </div>
           </form>
