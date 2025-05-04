@@ -140,3 +140,34 @@ export async function deleteOrganizationMember(organizationId: string, memberId:
   
   return { success: true }
 }
+
+/**
+ * Allows a member to leave an organization
+ */
+export async function leaveOrganization(organizationId: string) {
+  const supabase = await createClient()
+  
+  // Get the current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    throw new Error('You must be logged in to leave an organization')
+  }
+  
+  // Delete the current user's membership
+  const { error: deleteError } = await supabase
+    .from('organization_members')
+    .delete()
+    .eq('organization', organizationId)
+    .eq('user_id', user.id)
+  
+  if (deleteError) {
+    console.error('Error leaving organization:', deleteError)
+    throw new Error(deleteError.message)
+  }
+  
+  // Revalidate the path to update the UI
+  revalidatePath('/home')
+  
+  return { success: true }
+}
