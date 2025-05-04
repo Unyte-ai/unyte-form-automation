@@ -2,6 +2,7 @@ import { ManageOrgTeam } from '@/components/manage-org-team'
 import { ManageOrgMember } from '@/components/manage-org-member'
 import { getOrganizationMembers } from '@/app/actions/members'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { LeaveOrg } from '@/components/leave-org'
 
 interface OrgTeamProps {
   organizationId: string
@@ -35,8 +36,10 @@ export async function OrgTeam({ organizationId, userRole }: OrgTeamProps) {
     <div className="rounded-lg border p-6 bg-card">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Team</h2>
-        {userRole === 'owner' && (
+        {userRole === 'owner' ? (
           <ManageOrgTeam organizationId={organizationId} />
+        ) : (
+          <LeaveOrg />
         )}
       </div>
       
