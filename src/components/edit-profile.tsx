@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import Link from 'next/link'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -26,10 +25,10 @@ interface EditProfileDialogProps {
 
 export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [showOldPassword, setShowOldPassword] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [originalEmail, setOriginalEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +64,8 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
 
     if (open) {
       fetchUserData()
+      // Reset password field when dialog opens
+      setPassword('')
     }
   }, [open, currentUserName])
 
@@ -75,20 +76,34 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     try {
       const supabase = createClient()
       
-      // Update user data
-      const { error } = await supabase.auth.updateUser({
+      // Prepare update object
+      const updateData: {
+        email?: string;
+        data?: { full_name: string };
+        password?: string;
+      } = {
         email: email,
         data: {
           full_name: name
         }
-      })
+      }
+      
+      // Only include password if it's not empty
+      if (password) {
+        updateData.password = password
+      }
+      
+      // Update user data
+      const { error } = await supabase.auth.updateUser(updateData)
       
       if (error) {
         throw error
       }
       
       // Handle different success scenarios
-      if (email !== originalEmail) {
+      if (password) {
+        toast.success('Profile and password updated successfully')
+      } else if (email !== originalEmail) {
         toast.success('Profile updated', {
           description: 'Please check your email to confirm your new email address.'
         })
@@ -162,39 +177,14 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             )}
           </div>
           <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="oldPassword">Old Password</Label>
-              <Link
-                href="/auth/forgot-password"
-                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-            <div className="relative">
-              <Input
-                id="oldPassword"
-                type={showOldPassword ? "text" : "password"}
-                placeholder="Old password"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowOldPassword(!showOldPassword)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-          <div className="grid gap-2">
             <Label htmlFor="password">New Password</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="New password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave empty to keep current password"
                 className="pr-10"
               />
               <button
@@ -206,6 +196,9 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Optional: Enter a new password to change it
+            </p>
           </div>
           
           {error && (
