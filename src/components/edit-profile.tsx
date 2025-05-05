@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
+import { useCurrentUserName } from '@/hooks/use-current-user-name'
+import { createClient } from '@/lib/supabase/client'
 
 interface EditProfileDialogProps {
   open: boolean
@@ -23,6 +25,37 @@ interface EditProfileDialogProps {
 export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showOldPassword, setShowOldPassword] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  
+  const currentUserName = useCurrentUserName()
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoading(true)
+      const supabase = createClient()
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error) {
+        console.error('Error fetching user:', error)
+        return
+      }
+      
+      if (user) {
+        // Set email
+        setEmail(user.email || '')
+        
+        // Set name from user metadata or fall back to hook value
+        const fullName = user.user_metadata?.full_name || currentUserName || ''
+        setName(fullName)
+      }
+      
+      setIsLoading(false)
+    }
+
+    fetchUserData()
+  }, [currentUserName])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,7 +71,10 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
+              disabled={isLoading}
             />
           </div>
           <div className="grid gap-2">
@@ -46,7 +82,10 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             <Input
               id="email"
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email"
+              disabled={isLoading}
             />
           </div>
           <div className="grid gap-2">
@@ -98,7 +137,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
         </div>
         <DialogFooter>
           <Button variant="ghost">Cancel</Button>
-          <Button>Save changes</Button>
+          <Button disabled={isLoading}>Save changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
