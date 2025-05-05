@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
 import { createClient } from '@/lib/supabase/client'
@@ -148,6 +148,18 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
               placeholder="Your email"
               disabled={isLoading || isSaving}
             />
+            {email !== originalEmail && email ? (
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                <AlertCircle className="size-4 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  You will receive confirmation emails at both your current and new email addresses
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Your email address for notifications and account recovery
+              </p>
+            )}
           </div>
           <div className="grid gap-2">
             <div className="flex items-center">
