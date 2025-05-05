@@ -16,6 +16,8 @@ import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface EditProfileDialogProps {
   open: boolean
@@ -27,7 +29,11 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [originalEmail, setOriginalEmail] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
   
   const currentUserName = useCurrentUserName()
 
@@ -39,12 +45,15 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       
       if (error) {
         console.error('Error fetching user:', error)
+        setError('Failed to fetch user data')
         return
       }
       
       if (user) {
         // Set email
-        setEmail(user.email || '')
+        const userEmail = user.email || ''
+        setEmail(userEmail)
+        setOriginalEmail(userEmail)
         
         // Set name from user metadata or fall back to hook value
         const fullName = user.user_metadata?.full_name || currentUserName || ''
@@ -54,8 +63,60 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       setIsLoading(false)
     }
 
-    fetchUserData()
-  }, [currentUserName])
+    if (open) {
+      fetchUserData()
+    }
+  }, [open, currentUserName])
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    setError(null)
+    
+    try {
+      const supabase = createClient()
+      
+      // Update user data
+      const { error } = await supabase.auth.updateUser({
+        email: email,
+        data: {
+          full_name: name
+        }
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      // Handle different success scenarios
+      if (email !== originalEmail) {
+        toast.success('Profile updated', {
+          description: 'Please check your email to confirm your new email address.'
+        })
+      } else {
+        toast.success('Profile updated successfully')
+      }
+      
+      // Close dialog
+      onOpenChange(false)
+      
+      // Refresh the page to update all components using this data
+      router.refresh()
+      
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile'
+      setError(errorMessage)
+      toast.error('Failed to update profile', {
+        description: errorMessage
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    onOpenChange(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,7 +135,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              disabled={isLoading}
+              disabled={isLoading || isSaving}
             />
           </div>
           <div className="grid gap-2">
@@ -85,7 +146,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email"
-              disabled={isLoading}
+              disabled={isLoading || isSaving}
             />
           </div>
           <div className="grid gap-2">
@@ -134,10 +195,25 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
               </button>
             </div>
           </div>
+          
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
         </div>
         <DialogFooter>
-          <Button variant="ghost">Cancel</Button>
-          <Button disabled={isLoading}>Save changes</Button>
+          <Button 
+            variant="ghost" 
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button 
+            disabled={isLoading || isSaving}
+            onClick={handleSave}
+          >
+            {isSaving ? 'Saving...' : 'Save changes'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
