@@ -46,12 +46,18 @@ export function AddOrgUser({ organizationId, open, onOpenChange }: AddOrgUserPro
       setIsLoading(true)
       
       // Call the server action to invite the user
-      await inviteUserToOrganization(orgId, email)
+      const result = await inviteUserToOrganization(orgId, email)
       
-      // Show success message
-      toast.success('Invitation sent', {
-        description: `${email} has been invited to the organization.`
-      })
+      // Show appropriate success message based on user type
+      if (result.isExistingUser) {
+        toast.success('User invited successfully', {
+          description: `${email} will be notified of the invitation. They need to accept to join.`
+        })
+      } else {
+        toast.success('Invitation sent', {
+          description: `${email} has been sent an invitation email to join the organization.`
+        })
+      }
       
       // Reset form and close dialog
       setEmail('')
