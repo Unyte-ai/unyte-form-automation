@@ -38,7 +38,7 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     throw new Error('You must be logged in to invite users')
   }
   
-  // Create an admin client with service role key
+  // Create an admin client with service role key for user management
   const adminClient = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -62,11 +62,12 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     const existingUser = users?.find(user => user.email === email)
     
     if (existingUser) {
-      // User already exists - directly create member record
+      // User already exists - create member record and send magic link
       const displayName = existingUser.user_metadata?.full_name || 
                           existingUser.email?.split('@')[0] || 
                           'Invited User'
-      
+            
+      // Insert the member record
       const { data: member, error } = await supabase
         .from('organization_members')
         .insert({
@@ -75,7 +76,7 @@ export async function inviteUserToOrganization(organizationId: string, email: st
           user_name: displayName,
           user_email: email,
           role: 'member',
-          invitation_status: 'pending', // Still needs to accept the invitation
+          invitation_status: 'pending',
           invited_at: new Date().toISOString(),
           invited_by: currentUser.id
         })
@@ -87,11 +88,30 @@ export async function inviteUserToOrganization(organizationId: string, email: st
         throw new Error(error.message)
       }
       
-      // TODO: Notification system - for now we'll need to handle this separately
-      // For now, we'll return a flag indicating this is an existing user
-      return { ...member, isExistingUser: true }
+      // Create the redirect URL for the magic link
+      const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
+      
+      // Send the magic link using signInWithOtp
+      // This will automatically send an email with a link to the user
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: redirectUrl,
+          shouldCreateUser: false // Ensure we don't create duplicate users
+        }
+      })
+      
+      if (otpError) {
+        console.error('Error sending magic link:', otpError)
+        throw new Error(`Failed to send invitation email: ${otpError.message}`)
+      }
+      
+      return { 
+        ...member, 
+        isExistingUser: true
+      }
     } else {
-      // User doesn't exist - use invite email flow
+      // User doesn't exist - use invite email flow (same as before)
       const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/invite?next=/home`
       })
@@ -143,6 +163,40 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     // Revalidate cached data
     revalidatePath(`/home/${organizationId}`)
   }
+}
+
+/**
+ * Allow an existing user to accept an organization invitation
+ */
+export async function acceptOrganizationInvitation(organizationId: string, memberId: string) {
+  const supabase = await createClient()
+  
+  // Get the current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    throw new Error('You must be logged in to accept an invitation')
+  }
+  
+  // Update the member record
+  const { error } = await supabase
+    .from('organization_members')
+    .update({
+      invitation_status: 'accepted'
+    })
+    .eq('id', memberId)
+    .eq('organization', organizationId)
+    .eq('user_id', user.id)
+  
+  if (error) {
+    console.error('Error accepting invitation:', error)
+    throw new Error(error.message)
+  }
+  
+  // Revalidate the path to update the UI
+  revalidatePath(`/home/${organizationId}`)
+  
+  return { success: true }
 }
 
 /**
