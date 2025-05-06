@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { acceptOrganizationInvitation } from '@/app/actions/members'
 import { toast } from 'sonner'
 
-export default function AcceptInvitationPage() {
+// Create a client component that uses the searchParams
+function InvitationProcessor() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(true)
@@ -24,7 +25,6 @@ export default function AcceptInvitationPage() {
         }
         
         // Process the invitation acceptance
-        // Since this page is accessed via magic link, the user is already authenticated
         await acceptOrganizationInvitation(organizationId, memberId)
         
         toast.success('Invitation accepted', {
@@ -55,18 +55,34 @@ export default function AcceptInvitationPage() {
     )
   }
 
-    return (
-        <div className="flex min-h-svh w-full items-center justify-center p-6">
+  return (
+    <div className="flex min-h-svh w-full items-center justify-center p-6">
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">
+          {isProcessing ? "Processing invitation..." : "Invitation processed"}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          {isProcessing 
+            ? "Please wait while we process your invitation." 
+            : "Your invitation has been processed. Redirecting..."}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function AcceptInvitationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center p-6">
         <div className="text-center">
-            <h2 className="text-lg font-semibold">
-            {isProcessing ? "Processing invitation..." : "Invitation processed"}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2">
-            {isProcessing 
-                ? "Please wait while we process your invitation." 
-                : "Your invitation has been processed. Redirecting..."}
-            </p>
+          <h2 className="text-lg font-semibold">Loading...</h2>
+          <p className="text-sm text-muted-foreground mt-2">Please wait...</p>
         </div>
-        </div>
-    );
+      </div>
+    }>
+      <InvitationProcessor />
+    </Suspense>
+  )
 }
