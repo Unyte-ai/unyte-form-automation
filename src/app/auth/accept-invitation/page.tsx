@@ -1,48 +1,95 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { acceptOrganizationInvitation } from '@/app/actions/members'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-// Create a client component that uses the searchParams
 function InvitationProcessor() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+
+  const organizationId = searchParams.get('organization')
+  const memberId = searchParams.get('member')
+
+  // Memoize the processInvitation function with useCallback
+  const processInvitation = useCallback(async () => {
+    try {
+      if (!organizationId || !memberId) {
+        throw new Error('Invalid invitation link. Missing required parameters.')
+      }
+      
+      // Process the invitation acceptance
+      await acceptOrganizationInvitation(organizationId, memberId)
+      
+      toast.success('Invitation accepted', {
+        description: 'You have successfully joined the organization.'
+      })
+      
+      // Redirect to the organization page
+      router.push(`/home/${organizationId}`)
+    } catch (error) {
+      console.error('Error processing invitation:', error)
+      setError(error instanceof Error ? error.message : 'An error occurred while processing the invitation.')
+      setIsProcessing(false)
+    }
+  }, [organizationId, memberId, router])
 
   useEffect(() => {
-    const processInvitation = async () => {
+    const checkLoginStatus = async () => {
       try {
-        setIsProcessing(true)
+        const supabase = createClient()
+        const { data, error } = await supabase.auth.getUser()
         
-        const organizationId = searchParams.get('organization')
-        const memberId = searchParams.get('member')
-        
-        if (!organizationId || !memberId) {
-          throw new Error('Invalid invitation link. Missing required parameters.')
+        if (error || !data?.user) {
+          setIsLoggedIn(false)
+          setIsProcessing(false)
+        } else {
+          setIsLoggedIn(true)
+          processInvitation()
         }
-        
-        // Process the invitation acceptance
-        await acceptOrganizationInvitation(organizationId, memberId)
-        
-        toast.success('Invitation accepted', {
-          description: 'You have successfully joined the organization.'
-        })
-        
-        // Redirect to the organization page
-        router.push(`/home/${organizationId}`)
       } catch (error) {
-        console.error('Error processing invitation:', error)
-        setError(error instanceof Error ? error.message : 'An error occurred while processing the invitation.')
-      } finally {
+        console.error('Error checking login status:', error)
+        setError('Failed to check login status')
         setIsProcessing(false)
       }
     }
 
-    processInvitation()
-  }, [router, searchParams])
+    if (organizationId && memberId) {
+      checkLoginStatus()
+    } else {
+      setError('Invalid invitation link. Missing required parameters.')
+      setIsProcessing(false)
+    }
+  }, [organizationId, memberId, processInvitation])
+
+  const handleLogin = () => {
+    // Save the current URL parameters to return after login
+    const returnPath = `/auth/accept-invitation?organization=${organizationId}&member=${memberId}`
+    router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`)
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className="flex min-h-svh w-full items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Organization Invitation</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p>Please log in to accept this organization invitation.</p>
+            <Button onClick={handleLogin}>Log In</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (error) {
     return (

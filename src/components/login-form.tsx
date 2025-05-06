@@ -25,26 +25,31 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  const supabase = createClient()
+  setIsLoading(true)
+  setError(null)
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push('/home')
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
-      setIsLoading(false)
-    }
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) throw error
+    
+    // Check if there's a returnTo parameter in the URL
+    const searchParams = new URLSearchParams(window.location.search)
+    const returnTo = searchParams.get('returnTo')
+    
+    // Redirect to the return path or home
+    router.push(returnTo || '/home')
+  } catch (error: unknown) {
+    setError(error instanceof Error ? error.message : 'An error occurred')
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
