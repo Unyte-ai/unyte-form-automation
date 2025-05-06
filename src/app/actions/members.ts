@@ -51,15 +51,18 @@ export async function inviteUserToOrganization(organizationId: string, email: st
   )
   
   try {
-    // First, check if user already exists by listing users and filtering by email
-    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers()
+    // First try to find the user by email using listUsers
+    const { data, error: listError } = await adminClient.auth.admin.listUsers()
     
     if (listError) {
       throw new Error(`Failed to check existing users: ${listError.message}`)
     }
     
-    // Find user by email
-    const existingUser = users?.find(user => user.email === email)
+    // Find user by email with case-insensitive comparison
+    const normalizedEmail = email.toLowerCase()
+    const existingUser = data?.users?.find(user => 
+      user.email?.toLowerCase() === normalizedEmail
+    )
     
     if (existingUser) {
       // User already exists - create member record and send magic link
@@ -92,7 +95,6 @@ export async function inviteUserToOrganization(organizationId: string, email: st
       const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
       
       // Send the magic link using signInWithOtp
-      // This will automatically send an email with a link to the user
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
@@ -111,50 +113,127 @@ export async function inviteUserToOrganization(organizationId: string, email: st
         isExistingUser: true
       }
     } else {
-      // User doesn't exist - use invite email flow (same as before)
-      const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/invite?next=/home`
-      })
-      
-      if (inviteError) {
-        console.error('Error inviting user:', inviteError)
-        throw new Error(`Failed to invite user: ${inviteError.message}`)
-      }
-      
-      if (!invitedUser?.user) {
-        throw new Error('Failed to get user data from invite response')
-      }
-      
-      // The invited user now has a real Supabase user ID
-      const userId = invitedUser.user.id
-      
-      // Extract or create a display name
-      const displayName = invitedUser.user.user_metadata?.full_name || 
-                          invitedUser.user.email?.split('@')[0] || 
-                          'Invited User'
-      
-      // Insert the member record
-      const { data: member, error } = await supabase
-        .from('organization_members')
-        .insert({
-          organization: organizationId,
-          user_id: userId,
-          user_name: displayName,
-          user_email: email,
-          role: 'member',
-          invitation_status: 'pending',
-          invited_at: new Date().toISOString(),
-          invited_by: currentUser.id
+      // User doesn't exist - try to create a new user with proper error handling
+      try {
+        const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/invite?next=/home`
         })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Error creating member record:', error)
-        throw new Error(error.message)
+        
+        if (inviteError) {
+          // If error is because user already exists (despite our check)
+          if (inviteError.message?.includes('already been registered') || 
+              inviteError.status === 422 || 
+              inviteError.code === 'email_exists') {
+            
+            console.log('User exists but was not found in initial check, trying fallback method')
+            
+            // Try again with a more thorough search - maybe the first check missed them
+            // This might happen if there are pagination issues or race conditions
+            const { data: secondCheckData } = await adminClient.auth.admin.listUsers({
+              page: 1,           // Explicitly start at page 1
+              perPage: 1000      // Request a larger page size to catch more users
+            })
+            
+            // Find user with case-insensitive comparison
+            const secondCheckUser = secondCheckData?.users?.find(user => 
+              user.email?.toLowerCase() === normalizedEmail
+            )
+            
+            if (secondCheckUser) {
+              // Found the user on second check - treat as existing user
+              const displayName = secondCheckUser.user_metadata?.full_name || 
+                                secondCheckUser.email?.split('@')[0] || 
+                                'Invited User'
+                      
+              // Insert the member record
+              const { data: member, error } = await supabase
+                .from('organization_members')
+                .insert({
+                  organization: organizationId,
+                  user_id: secondCheckUser.id,
+                  user_name: displayName,
+                  user_email: email,
+                  role: 'member',
+                  invitation_status: 'pending',
+                  invited_at: new Date().toISOString(),
+                  invited_by: currentUser.id
+                })
+                .select()
+                .single()
+              
+              if (error) {
+                console.error('Error creating member record:', error)
+                throw new Error(error.message)
+              }
+              
+              // Create the redirect URL for the magic link
+              const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
+              
+              // Send the magic link using signInWithOtp
+              const { error: otpError } = await supabase.auth.signInWithOtp({
+                email: email,
+                options: {
+                  emailRedirectTo: redirectUrl,
+                  shouldCreateUser: false
+                }
+              })
+              
+              if (otpError) {
+                console.error('Error sending magic link:', otpError)
+                throw new Error(`Failed to send invitation email: ${otpError.message}`)
+              }
+              
+              return { 
+                ...member, 
+                isExistingUser: true
+              }
+            } else {
+              // Still couldn't find user despite the error
+              throw new Error(`User appears to exist but couldn't be found: ${inviteError.message}`)
+            }
+          } else {
+            // Some other invite error
+            console.error('Error inviting user:', inviteError)
+            throw new Error(`Failed to invite user: ${inviteError.message}`)
+          }
+        }
+        
+        if (!invitedUser?.user) {
+          throw new Error('Failed to get user data from invite response')
+        }
+        
+        // Successfully invited a new user
+        const userId = invitedUser.user.id
+        const displayName = invitedUser.user.user_metadata?.full_name || 
+                            invitedUser.user.email?.split('@')[0] || 
+                            'Invited User'
+        
+        // Insert the member record
+        const { data: member, error } = await supabase
+          .from('organization_members')
+          .insert({
+            organization: organizationId,
+            user_id: userId,
+            user_name: displayName,
+            user_email: email,
+            role: 'member',
+            invitation_status: 'pending',
+            invited_at: new Date().toISOString(),
+            invited_by: currentUser.id
+          })
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Error creating member record:', error)
+          throw new Error(error.message)
+        }
+        
+        return { ...member, isExistingUser: false }
+      } catch (inviteError) {
+        console.error('Error in invite attempt:', inviteError)
+        throw inviteError
       }
-      
-      return { ...member, isExistingUser: false }
     }
   } catch (error) {
     console.error('Error in inviteUserToOrganization:', error)
