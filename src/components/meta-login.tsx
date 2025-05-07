@@ -6,20 +6,15 @@ import { createClient } from '@/lib/supabase/client'
 export function MetaLogin() {
   async function signInWithFacebook() {
     const supabase = createClient()
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-          // Remove the explicit scopes to let Supabase use defaults
-        }
-      })
-      
-      if (error) {
-        console.error('Error signing in with Facebook:', error)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
       }
-    } catch (err) {
-      console.error('Exception during Facebook login:', err)
+    })
+    
+    if (error) {
+      console.error('Error signing in with Facebook:', error)
     }
   }
 
