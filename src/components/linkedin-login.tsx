@@ -1,20 +1,32 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export function LinkedInLogin() {
-  async function signInWithLinkedIn() {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'linkedin_oidc',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      }
-    })
-    
-    if (error) {
-      console.error('Error signing in with LinkedIn:', error)
+  const [isLoading, setIsLoading] = useState(false)
+  
+  async function connectLinkedIn() {
+    try {
+      setIsLoading(true)
+      const supabase = createClient()
+      
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'linkedin_oidc'
+      })
+      
+      if (error) throw error
+      
+      // Supabase handles the redirect automatically
+      
+    } catch (error) {
+      console.error('Error connecting LinkedIn account:', error)
+      toast.error('Failed to connect LinkedIn account', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+      setIsLoading(false)
     }
   }
 
@@ -24,9 +36,10 @@ export function LinkedInLogin() {
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={signInWithLinkedIn}
+        onClick={connectLinkedIn}
+        disabled={isLoading}
       >
-        Sign In
+        {isLoading ? 'Connecting...' : 'Connect'}
       </Button>
     </div>
   )

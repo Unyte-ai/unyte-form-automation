@@ -1,34 +1,32 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { initiateSocialAuth } from '@/app/actions/social-auth'
-import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export function GoogleLogin() {
   const [isLoading, setIsLoading] = useState(false)
-  const params = useParams()
-  const organizationId = params?.orgId as string
   
   async function connectGoogle() {
-    if (!organizationId) {
-      toast.error('Organization ID is required')
-      return
-    }
-    
     try {
       setIsLoading(true)
-      const url = await initiateSocialAuth(organizationId, 'google')
+      const supabase = createClient()
       
-      // Redirect to Google OAuth flow
-      window.location.href = url
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'google'
+      })
+      
+      if (error) throw error
+      
+      // Note: no need to handle redirect - Supabase automatically redirects
+      // then handles the callback when user returns
+      
     } catch (error) {
       console.error('Error connecting Google account:', error)
       toast.error('Failed to connect Google account', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
-    } finally {
       setIsLoading(false)
     }
   }

@@ -1,20 +1,32 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export function MetaLogin() {
-  async function signInWithFacebook() {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'facebook',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      }
-    })
-    
-    if (error) {
-      console.error('Error signing in with Facebook:', error)
+  const [isLoading, setIsLoading] = useState(false)
+  
+  async function connectFacebook() {
+    try {
+      setIsLoading(true)
+      const supabase = createClient()
+      
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'facebook'
+      })
+      
+      if (error) throw error
+      
+      // Supabase handles the redirect automatically
+      
+    } catch (error) {
+      console.error('Error connecting Facebook account:', error)
+      toast.error('Failed to connect Facebook account', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+      setIsLoading(false)
     }
   }
 
@@ -24,9 +36,10 @@ export function MetaLogin() {
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={signInWithFacebook}
+        onClick={connectFacebook}
+        disabled={isLoading}
       >
-        Sign In
+        {isLoading ? 'Connecting...' : 'Connect'}
       </Button>
     </div>
   )
