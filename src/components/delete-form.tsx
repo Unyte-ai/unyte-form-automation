@@ -11,15 +11,49 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { deleteFormSubmission } from '@/app/actions/forms'
+import { toast } from 'sonner'
+import { useParams } from 'next/navigation'
 
 interface DeleteFormProps {
   id: string
   title: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function DeleteForm({ id, title }: DeleteFormProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const params = useParams()
+  const organizationId = params.orgId as string
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      
+      // Call the server action to delete the form
+      const result = await deleteFormSubmission(id, organizationId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete form')
+      }
+      
+      // Show success message
+      toast.success('Form deleted', {
+        description: `"${title}" has been successfully deleted.`
+      })
+      
+      // Close dialog
+      setShowDeleteDialog(false)
+      
+    } catch (error) {
+      console.error('Error deleting form:', error)
+      toast.error('Failed to delete form', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   return (
     <>
@@ -48,14 +82,16 @@ export function DeleteForm({ id, title }: DeleteFormProps) {
             <Button 
               variant="ghost" 
               onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
             <Button 
               variant="destructive"
-              onClick={() => setShowDeleteDialog(false)} // Just close the dialog for now
+              onClick={handleDelete}
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
