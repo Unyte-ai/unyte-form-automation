@@ -1,4 +1,6 @@
+// src/components/forms.tsx (remains a server component)
 import { createClient } from '@/lib/supabase/server';
+import { FormItem } from '@/components/form-item'; // This will be a client component
 
 interface FormsProps {
   organizationId: string;
@@ -32,15 +34,11 @@ export async function Forms({ organizationId }: FormsProps) {
       ) : (
         <div className="space-y-3">
           {submissions.map((submission) => (
-            <button 
+            <FormItem 
               key={submission.id}
-              className="p-4 rounded-md border border-border bg-background w-full text-left transition-all 
-                         hover:bg-accent/25 hover:border-primary hover:shadow-sm"
-            >
-              <p className="font-medium truncate">
-                {submission.email_subject || 'Untitled Submission'}
-              </p>
-            </button>
+              id={submission.id} 
+              title={submission.email_subject || 'Untitled Submission'} 
+            />
           ))}
         </div>
       )}
