@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { OrgInfo } from '@/components/org-info';
 import { SocialPlatforms } from '@/components/social-platforms';
 import { OrgTeam } from '@/components/org-team';
+import { Forms } from '@/components/forms';
 
 export default async function OrganizationPage({
     params,
@@ -48,13 +49,8 @@ export default async function OrganizationPage({
           {/* Organization header */}
           <OrgInfo organization={organization} userRole={userRole} />
           
-          {/* Forms list - placeholder for now */}
-          <div className="rounded-lg border p-6 bg-card">
-            <h2 className="text-xl font-semibold mb-4">Forms</h2>
-            <div className="text-muted-foreground">
-              No forms available yet.
-            </div>
-          </div>
+          {/* Forms list */}
+          <Forms organizationId={orgId} />
         </div>
         
         {/* Right column */}
