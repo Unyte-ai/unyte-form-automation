@@ -1,7 +1,4 @@
-// src/components/forms.tsx
 import { createClient } from '@/lib/supabase/server';
-import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
 
 interface FormsProps {
   organizationId: string;
@@ -35,20 +32,15 @@ export async function Forms({ organizationId }: FormsProps) {
       ) : (
         <div className="space-y-3">
           {submissions.map((submission) => (
-            <div 
+            <button 
               key={submission.id}
-              className="p-4 rounded-md border border-border bg-background hover:bg-accent/10 transition-colors"
+              className="p-4 rounded-md border border-border bg-background w-full text-left transition-all 
+                         hover:bg-accent/25 hover:border-primary hover:shadow-sm"
             >
-              <div className="flex items-center justify-between">
-                <p className="font-medium truncate mr-4">
-                  {submission.email_subject || 'Untitled Submission'}
-                </p>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontal className="size-4" />
-                  <span className="sr-only">Options</span>
-                </Button>
-              </div>
-            </div>
+              <p className="font-medium truncate">
+                {submission.email_subject || 'Untitled Submission'}
+              </p>
+            </button>
           ))}
         </div>
       )}
