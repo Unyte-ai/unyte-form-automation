@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // Define TypeScript interfaces for the email data structure
 interface HeaderLine {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       if (queryUuid) {
         console.log('Using UUID from query parameters:', queryUuid);
         // Store in Supabase with UUID from query param
-        const supabase = await createClient();
+        const supabase = await createAdminClient();
         const { error } = await supabase
           .from('form_submissions')
           .insert({
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     }
     
     // Store in Supabase
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
     const { error } = await supabase
       .from('form_submissions')
       .insert({
