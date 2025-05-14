@@ -1,3 +1,5 @@
+// src/app/api/webhook/email/route.ts
+
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -23,6 +25,33 @@ interface EmailPayload {
     recipient?: string;
   };
   recipients?: string[];
+}
+
+// New function to look up organization ID by the email fragment
+async function findOrganizationByEmailFragment(emailFragment: string): Promise<string | null> {
+  if (!emailFragment) return null;
+  
+  try {
+    const supabase = await createAdminClient();
+    
+    // Look up the organization based on the email pattern
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id, org_email')
+      .ilike('org_email', `%+${emailFragment}@%`)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error finding organization:', error || 'No organization found');
+      return null;
+    }
+    
+    console.log(`Found organization: ${data.id} with email: ${data.org_email}`);
+    return data.id;
+  } catch (error) {
+    console.error('Error in findOrganizationByEmailFragment:', error);
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -51,12 +80,24 @@ export async function POST(request: Request) {
       const queryUuid = url.searchParams.get('uuid');
       if (queryUuid) {
         console.log('Using UUID from query parameters:', queryUuid);
-        // Store in Supabase with UUID from query param
+        
+        // Look up the organization ID from the fragment
+        const organizationId = await findOrganizationByEmailFragment(queryUuid);
+        
+        if (!organizationId) {
+          console.error('No matching organization found for fragment:', queryUuid);
+          return NextResponse.json({ 
+            success: false, 
+            error: `No organization found for ID fragment: ${queryUuid}` 
+          }, { status: 200 });
+        }
+        
+        // Store in Supabase with the full organization UUID
         const supabase = await createAdminClient();
         const { error } = await supabase
           .from('form_submissions')
           .insert({
-            organization_id: queryUuid,
+            organization_id: organizationId, // Full UUID from lookup
             email_to: 'Unknown - extracted from URL',
             email_subject: extractSubject(emailData),
             email_body: extractBody(emailData),
@@ -83,22 +124,35 @@ export async function POST(request: Request) {
     const subject = extractSubject(emailData);
     const body = extractBody(emailData);
     
-    // Extract the UUID from the email address
-    let orgUuid: string | null = null;
-    try {
-      orgUuid = extractUuidFromEmail(to);
-      console.log('Extracted UUID:', orgUuid);
-    } catch (error) {
-      console.error('Error extracting UUID:', error);
-      orgUuid = 'forms'; // Default fallback
+    // Extract the UUID fragment from the email address
+    const emailFragment = extractUuidFromEmail(to);
+    console.log('Extracted UUID fragment:', emailFragment);
+    
+    if (!emailFragment) {
+      console.error('Could not extract UUID fragment from email:', to);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Could not extract organization ID from email address' 
+      }, { status: 200 });
     }
     
-    // Store in Supabase
+    // Look up the full organization ID using the fragment
+    const organizationId = await findOrganizationByEmailFragment(emailFragment);
+    
+    if (!organizationId) {
+      console.error('No matching organization found for fragment:', emailFragment);
+      return NextResponse.json({ 
+        success: false, 
+        error: `No organization found for email: ${to}` 
+      }, { status: 200 });
+    }
+    
+    // Store in Supabase with the full organization UUID
     const supabase = await createAdminClient();
     const { error } = await supabase
       .from('form_submissions')
       .insert({
-        organization_id: orgUuid || 'forms',
+        organization_id: organizationId, // Full UUID from lookup
         email_to: to,
         email_subject: subject,
         email_body: body,
