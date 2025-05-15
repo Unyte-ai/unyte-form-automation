@@ -4,11 +4,11 @@ import { notFound, redirect } from 'next/navigation'
 export default async function FormDetailPage({
   params,
 }: {
-  params: Promise<{ orgId: string; formId: string }>
+  params: Promise<{ formId: string }>
 }) {
   // Await the params before using them
   const resolvedParams = await params
-  const { orgId, formId } = resolvedParams
+  const { formId } = resolvedParams
   
   // Get the current user and verify authentication
   const supabase = await createClient()
@@ -19,29 +19,28 @@ export default async function FormDetailPage({
     redirect('/auth/login')
   }
   
-  // Check if user belongs to this organization
+  // First, get the form submission to determine which organization it belongs to
+  const { data: submission, error } = await supabase
+    .from('form_submissions')
+    .select('email_subject, organization_id')
+    .eq('id', formId)
+    .single()
+
+  // If submission doesn't exist, return 404
+  if (error || !submission) {
+    notFound()
+  }
+
+  // Now check if user belongs to this organization
   const { data: memberData } = await supabase
     .from('organization_members')
     .select('id')
-    .eq('organization', orgId)
+    .eq('organization', submission.organization_id)
     .eq('user_id', userData.user.id)
     .single()
   
   // If user is not a member of this organization, return 404
   if (!memberData) {
-    notFound()
-  }
-
-  // Now get the form submission data
-  const { data: submission, error } = await supabase
-    .from('form_submissions')
-    .select('email_subject')
-    .eq('id', formId)
-    .eq('organization_id', orgId) // Also verify this submission belongs to this org
-    .single()
-
-  // If submission doesn't exist or doesn't belong to this org, return 404
-  if (error || !submission) {
     notFound()
   }
 

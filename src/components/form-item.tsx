@@ -1,8 +1,7 @@
-// src/components/form-item.tsx
 'use client'
 
 import { DeleteForm } from '@/components/delete-form'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 interface FormItemProps {
   id: string
@@ -11,11 +10,9 @@ interface FormItemProps {
 
 export function FormItem({ id, title }: FormItemProps) {
   const router = useRouter()
-  const params = useParams()
-  const organizationId = params.orgId as string
 
   const handleClick = () => {
-    router.push(`/home/${organizationId}/forms/${id}`)
+    router.push(`/forms/${id}`)
   }
 
   return (
