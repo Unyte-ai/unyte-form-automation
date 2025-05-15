@@ -1,6 +1,8 @@
+// src/components/form-item.tsx
 'use client'
 
 import { DeleteForm } from '@/components/delete-form'
+import { useRouter, useParams } from 'next/navigation'
 
 interface FormItemProps {
   id: string
@@ -8,6 +10,14 @@ interface FormItemProps {
 }
 
 export function FormItem({ id, title }: FormItemProps) {
+  const router = useRouter()
+  const params = useParams()
+  const organizationId = params.orgId as string
+
+  const handleClick = () => {
+    router.push(`/home/${organizationId}/forms/${id}`)
+  }
+
   return (
     <div className="group relative rounded-md border border-border bg-background hover:bg-accent/25 hover:border-primary hover:shadow-sm transition-all">
       {/* Position the delete button inside but absolutely positioned */}
@@ -19,6 +29,7 @@ export function FormItem({ id, title }: FormItemProps) {
       {/* The actual button content */}
       <button 
         className="p-4 w-full text-left"
+        onClick={handleClick}
       >
         <p className="font-medium truncate pr-8">
           {title}
