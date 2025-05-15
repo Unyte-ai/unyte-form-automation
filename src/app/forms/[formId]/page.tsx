@@ -1,5 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 export default async function FormDetailPage({
   params,
@@ -43,11 +52,34 @@ export default async function FormDetailPage({
   if (!memberData) {
     notFound()
   }
+  
+  // Fetch the organization name
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', submission.organization_id)
+    .single()
+  
+  const organizationName = organization?.name || 'Organization'
+  const formTitle = submission.email_subject || 'Untitled Submission'
 
-  // Return a simple page with just the subject as title
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold">{submission.email_subject || 'Untitled Submission'}</h1>
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/home/${submission.organization_id}`}>{organizationName}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator>/</BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbPage>{formTitle}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      
+      <h1 className="text-2xl font-bold">{formTitle}</h1>
     </div>
   )
 }
