@@ -54,26 +54,20 @@ export async function FormBody({ formId }: FormBodyProps) {
     )
   }
 
-  // If we have structured form data, display it in a table
+  // If we have structured form data, display it in vertical format (question as title, answer as text)
   if (hasFormData) {
     return (
       <div className="mt-6 rounded-lg border border-border bg-card p-6">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-3 px-4 font-semibold">Question</th>
-              <th className="text-left py-3 px-4 font-semibold">Answer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {structuredData.formData.map((item: FormQuestion, i: number) => (
-              <tr key={i} className="border-b last:border-0">
-                <td className="py-3 px-4 align-top">{item.question}</td>
-                <td className="py-3 px-4 align-top">{item.answer || 'No answer'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="space-y-6">
+          {structuredData.formData.map((item: FormQuestion, i: number) => (
+            <div key={i} className="border-b pb-6 last:border-0 last:pb-0">
+              <h3 className="text-lg font-medium mb-2">{item.question}</h3>
+              <p className="text-muted-foreground">
+                {item.answer || 'No answer provided'}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
