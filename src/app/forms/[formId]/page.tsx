@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { FormBreadcrumb } from '@/components/form-breadcrumb'
+import { FormBody } from '@/components/form-body'
 
 export default async function FormDetailPage({
   params,
@@ -63,7 +64,12 @@ export default async function FormDetailPage({
         formTitle={formTitle}
       />
       
-      <h1 className="text-2xl font-bold">{formTitle}</h1>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">{formTitle}</h1>
+        
+        {/* Add the FormBody component */}
+        <FormBody formId={formId} />
+      </div>
     </>
   )
 }
