@@ -43,65 +43,146 @@ export function parseEmailContent(emailData: EmailPayload): { subject: string; b
   };
 }
 
-// New function for parsing Microsoft Forms data
 export function parseMicrosoftFormsData(emailBody: string) {
-  // Split into lines and filter out empty ones
+  // First check if there's an HTML table in the body
+  const tableMatch = emailBody.match(/<table>[\s\S]*?<\/table>/);
+  
+  if (tableMatch) {
+    try {
+      const tableHtml = tableMatch[0];
+      
+      // Extract headers (questions)
+      const headers: string[] = [];
+      const headerMatch = tableHtml.match(/<thead><tr>([\s\S]*?)<\/tr><\/thead>/);
+      
+      if (headerMatch) {
+        const headerRow = headerMatch[1];
+        const thMatches = headerRow.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g);
+        
+        for (const match of Array.from(thMatches)) {
+          headers.push(decodeHtmlEntities(match[1].trim()));
+        }
+      }
+      
+      // Extract data (answers)
+      const answers: string[] = [];
+      const bodyMatch = tableHtml.match(/<tbody><tr>([\s\S]*?)<\/tr><\/tbody>/);
+      
+      if (bodyMatch) {
+        const dataRow = bodyMatch[1];
+        const tdMatches = dataRow.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g);
+        
+        for (const match of Array.from(tdMatches)) {
+          answers.push(decodeHtmlEntities(match[1].trim()));
+        }
+      }
+      
+      // Create formData with proper question-answer mapping
+      const formData = headers.map((question, index) => ({
+        question,
+        answer: index < answers.length ? answers[index] : ''
+      }));
+      
+      return {
+        rawText: emailBody,
+        formData
+      };
+    } catch (error) {
+      console.error('Error parsing HTML table:', error);
+      // Fall back to text parsing if HTML parsing fails
+    }
+  }
+  
+  // If no HTML table found or parsing failed, fall back to text parsing
+  return parseTextBasedFormData(emailBody);
+}
+
+// Helper function to handle HTML entities
+function decodeHtmlEntities(html: string): string {
+  const entities: Record<string, string> = {
+    '&quot;': '"',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&nbsp;': ' ',
+    '&#163;': '£',
+    '&#039;': "'",
+    '&apos;': "'"
+  };
+  
+  return html.replace(/&[^;]+;/g, (entity) => {
+    return entities[entity] || entity;
+  });
+}
+
+// Fallback text-based parser (improved version of the current implementation)
+function parseTextBasedFormData(emailBody: string) {
   const lines = emailBody.split('\n').filter(line => line.trim().length > 0);
   
-  // Need at least 2 lines (questions and answers)
   if (lines.length < 2) {
-    return { formData: [] };
+    return { formData: [], rawText: emailBody };
   }
-
-  // Extract the question line and answer line
+  
   const questionLine = lines[0];
   const answerLine = lines[1];
   
-  // Detect column positions by analyzing spaces
-  const columnPositions: number[] = [];
-  let inWord = false;
-  let consecutiveSpaces = 0;
+  // Improved algorithm for detecting column boundaries
+  const columns = [];
+  let inColumn = false;
+  let textStartPos = 0;
   
+  // Scan the line character by character
   for (let i = 0; i < questionLine.length; i++) {
-    if (questionLine[i] !== ' ') {
-      if (!inWord) {
-        // Start of a new column
-        columnPositions.push(i);
-        inWord = true;
+    if (!inColumn && questionLine[i] !== ' ') {
+      // Start of a new column
+      inColumn = true;
+      textStartPos = i;
+    } else if (inColumn && questionLine[i] === ' ') {
+      // Check if we have multiple consecutive spaces (column separator)
+      let spaceCount = 1;
+      let j = i + 1;
+      
+      while (j < questionLine.length && questionLine[j] === ' ') {
+        spaceCount++;
+        j++;
       }
-      consecutiveSpaces = 0;
-    } else {
-      consecutiveSpaces++;
-      // Consider a column break when we have 2+ consecutive spaces
-      if (inWord && consecutiveSpaces >= 2) {
-        inWord = false;
+      
+      if (spaceCount >= 3) {
+        // This is a column separator
+        columns.push({
+          start: textStartPos,
+          end: i - 1
+        });
+        
+        i = j - 1; // Skip spaces we've already counted
+        inColumn = false;
       }
     }
   }
   
-  // Parse questions and answers based on column positions
-  const formData = [];
+  // Add the last column if we were still in one
+  if (inColumn) {
+    columns.push({
+      start: textStartPos,
+      end: questionLine.length - 1
+    });
+  }
   
-  for (let i = 0; i < columnPositions.length; i++) {
-    const startPos = columnPositions[i];
-    const endPos = i < columnPositions.length - 1 
-      ? columnPositions[i + 1] 
-      : questionLine.length;
-    
-    const question = questionLine.substring(startPos, endPos).trim();
-    
-    // Extract answer if available (within bounds)
+  // Extract questions and answers using the detected columns
+  const formData = columns.map(column => {
+    const question = questionLine.substring(column.start, column.end + 1).trim();
     let answer = '';
-    if (startPos < answerLine.length) {
-      const answerEndPos = Math.min(endPos, answerLine.length);
-      answer = answerLine.substring(startPos, answerEndPos).trim();
+    
+    if (column.start < answerLine.length) {
+      const answerEnd = Math.min(column.end + 1, answerLine.length);
+      answer = answerLine.substring(column.start, answerEnd).trim();
     }
     
-    formData.push({ question, answer });
-  }
+    return { question, answer };
+  });
   
-  return { 
+  return {
     rawText: emailBody,
-    formData: formData 
+    formData
   };
 }
