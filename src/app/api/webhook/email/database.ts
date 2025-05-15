@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { parseMicrosoftFormsData } from './parsers';
 
 export async function findOrganizationByEmailFragment(emailFragment: string): Promise<string | null> {
   if (!emailFragment) return null;
@@ -34,6 +35,10 @@ export async function storeFormSubmission(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createAdminClient();
+    
+    // Parse the email body into structured data
+    const parsedData = parseMicrosoftFormsData(body);
+    
     const { error } = await supabase
       .from('form_submissions')
       .insert({
@@ -41,6 +46,7 @@ export async function storeFormSubmission(
         email_to: to,
         email_subject: subject,
         email_body: body,
+        structured_data: parsedData, // Add the structured data
         processed: false,
         received_at: new Date().toISOString()
       });

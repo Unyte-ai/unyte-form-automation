@@ -42,3 +42,66 @@ export function parseEmailContent(emailData: EmailPayload): { subject: string; b
     body: extractBody(emailData)
   };
 }
+
+// New function for parsing Microsoft Forms data
+export function parseMicrosoftFormsData(emailBody: string) {
+  // Split into lines and filter out empty ones
+  const lines = emailBody.split('\n').filter(line => line.trim().length > 0);
+  
+  // Need at least 2 lines (questions and answers)
+  if (lines.length < 2) {
+    return { formData: [] };
+  }
+
+  // Extract the question line and answer line
+  const questionLine = lines[0];
+  const answerLine = lines[1];
+  
+  // Detect column positions by analyzing spaces
+  const columnPositions: number[] = [];
+  let inWord = false;
+  let consecutiveSpaces = 0;
+  
+  for (let i = 0; i < questionLine.length; i++) {
+    if (questionLine[i] !== ' ') {
+      if (!inWord) {
+        // Start of a new column
+        columnPositions.push(i);
+        inWord = true;
+      }
+      consecutiveSpaces = 0;
+    } else {
+      consecutiveSpaces++;
+      // Consider a column break when we have 2+ consecutive spaces
+      if (inWord && consecutiveSpaces >= 2) {
+        inWord = false;
+      }
+    }
+  }
+  
+  // Parse questions and answers based on column positions
+  const formData = [];
+  
+  for (let i = 0; i < columnPositions.length; i++) {
+    const startPos = columnPositions[i];
+    const endPos = i < columnPositions.length - 1 
+      ? columnPositions[i + 1] 
+      : questionLine.length;
+    
+    const question = questionLine.substring(startPos, endPos).trim();
+    
+    // Extract answer if available (within bounds)
+    let answer = '';
+    if (startPos < answerLine.length) {
+      const answerEndPos = Math.min(endPos, answerLine.length);
+      answer = answerLine.substring(startPos, answerEndPos).trim();
+    }
+    
+    formData.push({ question, answer });
+  }
+  
+  return { 
+    rawText: emailBody,
+    formData: formData 
+  };
+}
