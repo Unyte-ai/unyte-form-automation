@@ -12,8 +12,8 @@ interface StructuredData {
 }
 
 interface FormSubmission {
-  email_body: string;
   structured_data: StructuredData;
+  email_subject: string;
 }
 
 interface FormBodyProps {
@@ -23,10 +23,10 @@ interface FormBodyProps {
 export async function FormBody({ formId }: FormBodyProps) {
   const supabase = await createClient()
   
-  // Fetch the form submission data
+  // Fetch the form submission data - only select structured_data now
   const { data, error } = await supabase
     .from('form_submissions')
-    .select('email_body, structured_data')
+    .select('structured_data, email_subject')
     .eq('id', formId)
     .single()
   
@@ -39,12 +39,14 @@ export async function FormBody({ formId }: FormBodyProps) {
   }
   
   const submission = data as FormSubmission;
+  const structuredData = submission.structured_data;
   
-  // Check if we have structured data
-  const hasStructuredData = submission.structured_data?.formData?.length > 0;
+  // Check if we have valid structured data
+  const hasFormData = structuredData?.formData?.length > 0;
+  const hasRawText = structuredData?.rawText;
   
   // If no content at all
-  if (!submission.email_body && !hasStructuredData) {
+  if (!hasRawText && !hasFormData) {
     return (
       <div className="rounded-lg border border-border bg-card p-4 text-muted-foreground">
         <p>This form submission has no content.</p>
@@ -52,8 +54,8 @@ export async function FormBody({ formId }: FormBodyProps) {
     )
   }
 
-  // If we have structured data, display it in a table
-  if (hasStructuredData) {
+  // If we have structured form data, display it in a table
+  if (hasFormData) {
     return (
       <div className="mt-6 rounded-lg border border-border bg-card p-6">
         <table className="w-full">
@@ -64,7 +66,7 @@ export async function FormBody({ formId }: FormBodyProps) {
             </tr>
           </thead>
           <tbody>
-            {submission.structured_data.formData.map((item: FormQuestion, i: number) => (
+            {structuredData.formData.map((item: FormQuestion, i: number) => (
               <tr key={i} className="border-b last:border-0">
                 <td className="py-3 px-4 align-top">{item.question}</td>
                 <td className="py-3 px-4 align-top">{item.answer || 'No answer'}</td>
@@ -76,12 +78,12 @@ export async function FormBody({ formId }: FormBodyProps) {
     )
   }
   
-  // Fallback to displaying the raw email body
+  // Fallback to displaying the raw email body from structured_data.rawText
   return (
     <div className="mt-6 rounded-lg border border-border bg-card p-6">
       <div className="max-h-[600px] overflow-y-auto">
         <pre className="text-sm whitespace-pre-wrap break-words font-normal">
-          {submission.email_body}
+          {structuredData?.rawText || 'No content available'}
         </pre>
       </div>
     </div>

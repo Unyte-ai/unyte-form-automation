@@ -39,14 +39,19 @@ export async function storeFormSubmission(
     // Parse the email body into structured data
     const parsedData = parseMicrosoftFormsData(body);
     
+    // Make sure the raw email body is included in the structured data
+    const structuredData = {
+      ...parsedData,
+      rawText: body // Ensure the raw email body is stored in structuredData
+    };
+    
     const { error } = await supabase
       .from('form_submissions')
       .insert({
         organization_id: organizationId,
         email_to: to,
         email_subject: subject,
-        email_body: body,
-        structured_data: parsedData, // Add the structured data
+        structured_data: structuredData, // Store both parsed data and raw text
         processed: false,
         received_at: new Date().toISOString()
       });
