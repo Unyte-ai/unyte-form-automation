@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { refreshTikTokToken } from './tiktok-refresh'
 
 interface TikTokTokenResponse {
   access_token: string
@@ -182,5 +183,64 @@ async function fetchAndStoreTikTokUserInfo(
   } catch (error) {
     console.error('Error storing TikTok user info:', error)
     // We don't throw here - profile data is not critical to the connection
+  }
+}
+
+/**
+ * Gets a valid access token for TikTok API calls, refreshing if needed
+ * @param userId The user ID
+ * @returns Access token if available, null otherwise
+ */
+export async function getValidTikTokToken(userId: string): Promise<string | null> {
+  try {
+    const adminClient = createAdminClient()
+    
+    // Get the current token information
+    const { data: connection, error } = await adminClient
+      .from('tiktok_connections')
+      .select('id, access_token, token_expires_at')
+      .eq('user_id', userId)
+      .single()
+      
+    if (error || !connection) {
+      console.error('No TikTok connection found for user:', userId)
+      return null
+    }
+    
+    // Check if token is expired or about to expire (within 5 minutes)
+    const tokenExpiresAt = new Date(connection.token_expires_at)
+    const now = new Date()
+    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000)
+    
+    if (tokenExpiresAt > fiveMinutesFromNow) {
+      // Token is still valid
+      return connection.access_token
+    }
+    
+    // Token is expired or about to expire, try to refresh it
+    console.log('TikTok token expired or about to expire, refreshing...')
+    const refreshResult = await refreshTikTokToken(userId)
+    
+    if (!refreshResult.success) {
+      console.error('Failed to refresh TikTok token:', refreshResult.error)
+      return null
+    }
+    
+    // Get the refreshed token
+    const { data: refreshedConnection, error: refreshedError } = await adminClient
+      .from('tiktok_connections')
+      .select('access_token')
+      .eq('user_id', userId)
+      .single()
+      
+    if (refreshedError || !refreshedConnection) {
+      console.error('Failed to get refreshed TikTok token')
+      return null
+    }
+    
+    return refreshedConnection.access_token
+  } catch (error) {
+    console.error('Error getting valid TikTok token:', error)
+    return null
   }
 }
