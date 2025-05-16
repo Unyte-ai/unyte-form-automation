@@ -58,12 +58,15 @@ export async function initTikTokOAuth() {
   // Build the authorization URL
   const url = 'https://www.tiktok.com/v2/auth/authorize/'
   
+  // IMPORTANT: Always use the production redirect URI, even in development
+  const redirectUri = 'https://unyte-form-automation.vercel.app/auth/tiktok/callback'
+  
   // Add required parameters including PKCE parameters
   const params = new URLSearchParams({
     client_key: clientKey,
     scope: 'user.info.basic',
     response_type: 'code',
-    redirect_uri: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/tiktok/callback`,
+    redirect_uri: redirectUri,
     state: csrfState,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
