@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { exchangeTikTokToken } from '@/app/actions/tiktok-token'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +13,7 @@ export async function GET(request: NextRequest) {
     
     // For debugging: Log all the parameters we received
     console.log('TikTok Callback Parameters:', {
-      code,
+      code: code ? 'present' : 'missing',
       state,
       error,
       errorDescription,
@@ -19,26 +21,60 @@ export async function GET(request: NextRequest) {
     })
     
     // Production URL - always use this instead of localhost
-    const productionUrl = 'https://unyte-form-automation.vercel.app'
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://unyte-form-automation.vercel.app' 
+      : 'http://localhost:3000'
     
     // If there's an error, redirect to the error page
     if (error) {
       console.error('TikTok auth error:', error, errorDescription)
       return NextResponse.redirect(
-        `${productionUrl}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`
+        `${baseUrl}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`
       )
     }
     
-    // For now, just redirect to home with a success message
-    // We'll implement the token exchange later
+    // Verify state parameter to prevent CSRF attacks
+    const cookieStore = await cookies() // Fix: await the Promise
+    const storedState = cookieStore.get('tiktok_csrf_state')?.value
+    
+    if (!storedState || storedState !== state) {
+      console.error('State mismatch! Possible CSRF attack.')
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=Invalid state parameter`
+      )
+    }
+    
+    // If code is missing, handle the error
+    if (!code) {
+      console.error('Authorization code is missing from callback')
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=Missing authorization code`
+      )
+    }
+    
+    // Exchange code for tokens
+    const result = await exchangeTikTokToken(code)
+    
+    if (!result.success) {
+      // If token exchange failed, redirect to error page
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=${encodeURIComponent(result.error || 'Failed to exchange token')}`
+      )
+    }
+    
+    // Successful connection, redirect to home with success message
     return NextResponse.redirect(
-      `${productionUrl}/home?tiktok=callback_received&code=${code ? 'present' : 'missing'}`
+      `${baseUrl}/home?tiktok=connected&success=1`
     )
     
   } catch (error) {
     console.error('Error in TikTok callback handler:', error)
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://unyte-form-automation.vercel.app' 
+      : 'http://localhost:3000'
+      
     return NextResponse.redirect(
-      `https://unyte-form-automation.vercel.app/auth/error?error=Unexpected error processing TikTok callback`
+      `${baseUrl}/auth/error?error=${encodeURIComponent('Unexpected error processing TikTok callback')}`
     )
   }
 }
