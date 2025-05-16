@@ -18,24 +18,27 @@ export async function GET(request: NextRequest) {
       allParams: Object.fromEntries(searchParams.entries())
     })
     
+    // Production URL - always use this instead of localhost
+    const productionUrl = 'https://unyte-form-automation.vercel.app'
+    
     // If there's an error, redirect to the error page
     if (error) {
       console.error('TikTok auth error:', error, errorDescription)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`
+        `${productionUrl}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`
       )
     }
     
     // For now, just redirect to home with a success message
     // We'll implement the token exchange later
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/home?tiktok=callback_received&code=${code ? 'present' : 'missing'}`
+      `${productionUrl}/home?tiktok=callback_received&code=${code ? 'present' : 'missing'}`
     )
     
   } catch (error) {
     console.error('Error in TikTok callback handler:', error)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/error?error=Unexpected error processing TikTok callback`
+      `https://unyte-form-automation.vercel.app/auth/error?error=Unexpected error processing TikTok callback`
     )
   }
 }
