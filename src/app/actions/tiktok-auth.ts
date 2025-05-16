@@ -64,13 +64,13 @@ export async function initTikTokOAuth() {
   // Add required parameters including PKCE parameters
   const params = new URLSearchParams({
     client_key: clientKey,
-    scope: 'user.info.basic',
+    scope: 'user.info.basic,user.info.profile', // Updated scope
     response_type: 'code',
     redirect_uri: redirectUri,
     state: csrfState,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
-  })
+  });
   
   // Return the full authorization URL
   return `${url}?${params.toString()}`
