@@ -25,7 +25,7 @@ export function FormItem({ id, title }: FormItemProps) {
       
       {/* The actual button content */}
       <button 
-        className="p-4 w-full text-left"
+        className="p-4 w-full text-left cursor-pointer"
         onClick={handleClick}
       >
         <p className="font-medium truncate pr-8">
