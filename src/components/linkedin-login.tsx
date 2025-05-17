@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { getSocialConnectionStatus } from '@/app/actions/social-connections'
+import { LinkedInDialog } from '@/components/linkedin-dialog'
 
 export function LinkedInLogin() {
   const [isLoading, setIsLoading] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   
   // Check connection status on component mount
   useEffect(() => {
@@ -24,9 +26,10 @@ export function LinkedInLogin() {
     checkConnectionStatus()
   }, [])
   
-  async function connectLinkedIn() {
+  async function handleLinkedInClick() {
     if (isConnected) {
-      // If already connected, don't do anything
+      // If already connected, open the dialog instead
+      setIsDialogOpen(true)
       return
     }
     
@@ -52,19 +55,27 @@ export function LinkedInLogin() {
   }
 
   return (
-    <div className="flex justify-between items-center">
-      <span className="font-medium">LinkedIn</span>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={connectLinkedIn}
-        disabled={isLoading || isConnected}
-        className={isConnected 
-          ? "text-green-700 border-green-500 bg-green-50 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-50 dark:hover:bg-green-950/30 cursor-default" 
-          : ""}
-      >
-        {isLoading ? 'Connecting...' : isConnected ? 'Connected' : 'Connect'}
-      </Button>
-    </div>
+    <>
+      <div className="flex justify-between items-center">
+        <span className="font-medium">LinkedIn</span>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleLinkedInClick}
+          disabled={isLoading}
+          className={isConnected 
+            ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
+            : ""}
+        >
+          {isLoading ? 'Connecting...' : isConnected ? 'Connected' : 'Connect'}
+        </Button>
+      </div>
+      
+      {/* LinkedIn Dialog */}
+      <LinkedInDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+      />
+    </>
   )
 }
