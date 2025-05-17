@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { initTikTokOAuth } from '@/app/actions/tiktok-auth'
 import { getTikTokConnectionStatus, TikTokConnectionStatus } from '@/app/actions/tiktok-status'
+import { TikTokDialog } from '@/components/tiktok-dialog'
 
 export function TikTokLogin() {
   const [isLoading, setIsLoading] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<TikTokConnectionStatus>({ isConnected: false })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   
   // Check connection status on component mount
   useEffect(() => {
@@ -26,7 +28,8 @@ export function TikTokLogin() {
   
   async function connectTikTok() {
     if (connectionStatus.isConnected) {
-      // If already connected, don't do anything
+      // If already connected, open the dialog instead
+      setIsDialogOpen(true)
       return
     }
     
@@ -53,20 +56,28 @@ export function TikTokLogin() {
   }
 
   return (
-    <div className="flex justify-between items-center">
-      <span className="font-medium">TikTok</span>
+    <>
+      <div className="flex justify-between items-center">
+        <span className="font-medium">TikTok</span>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={connectTikTok}
+          disabled={isLoading}
+          className={connectionStatus.isConnected 
+            ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
+            : ""}
+        >
+          {isLoading ? 'Connecting...' : connectionStatus.isConnected ? 'Connected' : 'Connect'}
+        </Button>
+      </div>
       
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={connectTikTok}
-        disabled={isLoading || connectionStatus.isConnected}
-        className={connectionStatus.isConnected 
-          ? "text-green-700 border-green-500 bg-green-50 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-50 dark:hover:bg-green-950/30 cursor-default" 
-          : ""}
-      >
-        {isLoading ? 'Connecting...' : connectionStatus.isConnected ? 'Connected' : 'Connect'}
-      </Button>
-    </div>
+      {/* TikTok Dialog */}
+      <TikTokDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+      />
+    </>
   )
 }
