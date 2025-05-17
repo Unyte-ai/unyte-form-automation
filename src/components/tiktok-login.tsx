@@ -1,30 +1,19 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { initTikTokOAuth } from '@/app/actions/tiktok-auth'
-import { getTikTokConnectionStatus, TikTokConnectionStatus } from '@/app/actions/tiktok-status'
 import { TikTokDialog } from '@/components/tiktok-dialog'
+import { useConnectionStatus } from '@/contexts/connection-status-context'
 
 export function TikTokLogin() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<TikTokConnectionStatus>({ isConnected: false })
+  const [isConnecting, setIsConnecting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
-  // Check connection status on component mount
-  useEffect(() => {
-    async function checkConnectionStatus() {
-      try {
-        const status = await getTikTokConnectionStatus()
-        setConnectionStatus(status)
-      } catch (error) {
-        console.error('Error checking TikTok connection status:', error)
-      }
-    }
-    
-    checkConnectionStatus()
-  }, [])
+  // Use the context instead of individual status check
+  const { connections, isLoading, refreshConnections } = useConnectionStatus()
+  const connectionStatus = connections.tiktok
   
   async function connectTikTok() {
     if (connectionStatus.isConnected) {
@@ -34,7 +23,7 @@ export function TikTokLogin() {
     }
     
     try {
-      setIsLoading(true)
+      setIsConnecting(true)
       
       toast.info('Connecting to TikTok...', {
         description: 'Redirecting to TikTok authorization page'
@@ -51,7 +40,7 @@ export function TikTokLogin() {
       toast.error('Failed to connect TikTok account', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
-      setIsLoading(false)
+      setIsConnecting(false)
     }
   }
 
@@ -64,19 +53,20 @@ export function TikTokLogin() {
           variant="outline" 
           size="sm" 
           onClick={connectTikTok}
-          disabled={isLoading}
+          disabled={isLoading || isConnecting}
           className={connectionStatus.isConnected 
             ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
             : ""}
         >
-          {isLoading ? 'Connecting...' : connectionStatus.isConnected ? 'Connected' : 'Connect'}
+          {isConnecting ? 'Connecting...' : isLoading ? 'Loading...' : connectionStatus.isConnected ? 'Connected' : 'Connect'}
         </Button>
       </div>
       
-      {/* TikTok Dialog */}
+      {/* TikTok Dialog - pass refresh function */}
       <TikTokDialog 
         open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        onDisconnect={refreshConnections}
       />
     </>
   )

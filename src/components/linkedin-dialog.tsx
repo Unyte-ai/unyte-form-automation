@@ -17,9 +17,10 @@ import { toast } from 'sonner'
 interface LinkedInDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDisconnect?: () => Promise<void> // New prop for refreshing connection status
 }
 
-export function LinkedInDialog({ open, onOpenChange }: LinkedInDialogProps) {
+export function LinkedInDialog({ open, onOpenChange, onDisconnect }: LinkedInDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [linkedInIdentity, setLinkedInIdentity] = useState<LinkedInIdentity | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,8 +85,10 @@ export function LinkedInDialog({ open, onOpenChange }: LinkedInDialogProps) {
       // Close the dialog
       onOpenChange(false)
       
-      // Refresh the page to update the UI
-      window.location.reload()
+      // Call onDisconnect to refresh connection status instead of reloading
+      if (onDisconnect) {
+        await onDisconnect()
+      }
       
     } catch (error) {
       console.error('Error unlinking LinkedIn account:', error)

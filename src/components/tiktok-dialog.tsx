@@ -17,9 +17,10 @@ import { toast } from 'sonner'
 interface TikTokDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDisconnect?: () => Promise<void> // New prop for refreshing connection status
 }
 
-export function TikTokDialog({ open, onOpenChange }: TikTokDialogProps) {
+export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [userInfo, setUserInfo] = useState<TikTokUserInfo | null>(null)
@@ -71,8 +72,10 @@ export function TikTokDialog({ open, onOpenChange }: TikTokDialogProps) {
       // Close the dialog
       onOpenChange(false)
       
-      // Refresh the page to update the UI
-      window.location.reload()
+      // Call onDisconnect to refresh connection status instead of reloading
+      if (onDisconnect) {
+        await onDisconnect()
+      }
       
     } catch (error) {
       console.error('Error disconnecting TikTok account:', error)

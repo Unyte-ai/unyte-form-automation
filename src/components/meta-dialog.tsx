@@ -17,9 +17,10 @@ import { toast } from 'sonner'
 interface MetaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDisconnect?: () => Promise<void> // New prop for refreshing connection status
 }
 
-export function MetaDialog({ open, onOpenChange }: MetaDialogProps) {
+export function MetaDialog({ open, onOpenChange, onDisconnect }: MetaDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [metaIdentity, setMetaIdentity] = useState<MetaIdentity | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,8 +85,10 @@ export function MetaDialog({ open, onOpenChange }: MetaDialogProps) {
       // Close the dialog
       onOpenChange(false)
       
-      // Refresh the page to update the UI
-      window.location.reload()
+      // Call onDisconnect to refresh connection status instead of reloading
+      if (onDisconnect) {
+        await onDisconnect()
+      }
       
     } catch (error) {
       console.error('Error unlinking Meta account:', error)

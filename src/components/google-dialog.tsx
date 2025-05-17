@@ -17,9 +17,10 @@ import { toast } from 'sonner'
 interface GoogleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDisconnect?: () => Promise<void> // New prop to refresh connection status
 }
 
-export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
+export function GoogleDialog({ open, onOpenChange, onDisconnect }: GoogleDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [googleIdentity, setGoogleIdentity] = useState<GoogleIdentity | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,8 +85,10 @@ export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
       // Close the dialog
       onOpenChange(false)
       
-      // Refresh the page to update the UI
-      window.location.reload()
+      // Call onDisconnect to refresh connection statuses instead of reloading the page
+      if (onDisconnect) {
+        await onDisconnect()
+      }
       
     } catch (error) {
       console.error('Error unlinking Google account:', error)

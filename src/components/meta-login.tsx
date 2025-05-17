@@ -1,30 +1,19 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { getSocialConnectionStatus } from '@/app/actions/social-connections'
 import { MetaDialog } from '@/components/meta-dialog'
+import { useConnectionStatus } from '@/contexts/connection-status-context'
 
 export function MetaLogin() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
-  // Check connection status on component mount
-  useEffect(() => {
-    async function checkConnectionStatus() {
-      try {
-        const status = await getSocialConnectionStatus()
-        setIsConnected(status.facebook)
-      } catch (error) {
-        console.error('Error checking Facebook connection status:', error)
-      }
-    }
-    
-    checkConnectionStatus()
-  }, [])
+  // Use the context instead of individual status check
+  const { connections, isLoading, refreshConnections } = useConnectionStatus()
+  const isConnected = connections.facebook
   
   async function connectFacebook() {
     if (isConnected) {
@@ -34,7 +23,7 @@ export function MetaLogin() {
     }
     
     try {
-      setIsLoading(true)
+      setIsConnecting(true)
       const supabase = createClient()
       
       const { error } = await supabase.auth.linkIdentity({
@@ -50,7 +39,7 @@ export function MetaLogin() {
       toast.error('Failed to connect Facebook account', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
-      setIsLoading(false)
+      setIsConnecting(false)
     }
   }
 
@@ -62,19 +51,20 @@ export function MetaLogin() {
           variant="outline" 
           size="sm" 
           onClick={connectFacebook}
-          disabled={isLoading}
+          disabled={isLoading || isConnecting}
           className={isConnected 
             ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
             : ""}
         >
-          {isLoading ? 'Connecting...' : isConnected ? 'Connected' : 'Connect'}
+          {isConnecting ? 'Connecting...' : isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Connect'}
         </Button>
       </div>
       
-      {/* Meta Dialog */}
+      {/* Meta Dialog - pass refresh function */}
       <MetaDialog 
         open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        onDisconnect={refreshConnections}
       />
     </>
   )

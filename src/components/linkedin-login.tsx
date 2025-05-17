@@ -1,30 +1,19 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { getSocialConnectionStatus } from '@/app/actions/social-connections'
 import { LinkedInDialog } from '@/components/linkedin-dialog'
+import { useConnectionStatus } from '@/contexts/connection-status-context'
 
 export function LinkedInLogin() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
-  // Check connection status on component mount
-  useEffect(() => {
-    async function checkConnectionStatus() {
-      try {
-        const status = await getSocialConnectionStatus()
-        setIsConnected(status.linkedin)
-      } catch (error) {
-        console.error('Error checking LinkedIn connection status:', error)
-      }
-    }
-    
-    checkConnectionStatus()
-  }, [])
+  // Use the context instead of individual status check
+  const { connections, isLoading, refreshConnections } = useConnectionStatus()
+  const isConnected = connections.linkedin
   
   async function handleLinkedInClick() {
     if (isConnected) {
@@ -34,7 +23,7 @@ export function LinkedInLogin() {
     }
     
     try {
-      setIsLoading(true)
+      setIsConnecting(true)
       const supabase = createClient()
       
       const { error } = await supabase.auth.linkIdentity({
@@ -50,7 +39,7 @@ export function LinkedInLogin() {
       toast.error('Failed to connect LinkedIn account', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
-      setIsLoading(false)
+      setIsConnecting(false)
     }
   }
 
@@ -62,19 +51,20 @@ export function LinkedInLogin() {
           variant="outline" 
           size="sm" 
           onClick={handleLinkedInClick}
-          disabled={isLoading}
+          disabled={isLoading || isConnecting}
           className={isConnected 
             ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
             : ""}
         >
-          {isLoading ? 'Connecting...' : isConnected ? 'Connected' : 'Connect'}
+          {isConnecting ? 'Connecting...' : isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Connect'}
         </Button>
       </div>
       
-      {/* LinkedIn Dialog */}
+      {/* LinkedIn Dialog - pass refresh function */}
       <LinkedInDialog 
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
+        onDisconnect={refreshConnections}
       />
     </>
   )
