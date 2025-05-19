@@ -57,29 +57,25 @@ export async function FormBody({ formId }: FormBodyProps) {
   // If we have structured form data, display it in vertical format (question as title, answer as text)
   if (hasFormData) {
     return (
-      <div className="mt-6 rounded-lg border border-border bg-card p-6">
-        <div className="space-y-6">
-          {structuredData.formData.map((item: FormQuestion, i: number) => (
-            <div key={i} className="border-b pb-6 last:border-0 last:pb-0">
-              <h3 className="text-lg font-medium mb-2">{item.question}</h3>
-              <p className="text-muted-foreground">
-                {item.answer || 'No answer provided'}
-              </p>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-4">
+        {structuredData.formData.map((item: FormQuestion, i: number) => (
+          <div key={i} className="border-b pb-6 last:border-0 last:pb-0">
+            <h3 className="text-lg font-medium mb-2">{item.question}</h3>
+            <p className="text-muted-foreground">
+              {item.answer || 'No answer provided'}
+            </p>
+          </div>
+        ))}
       </div>
     )
   }
   
   // Fallback to displaying the raw email body from structured_data.rawText
   return (
-    <div className="mt-6 rounded-lg border border-border bg-card p-6">
-      <div className="max-h-[600px] overflow-y-auto">
-        <pre className="text-sm whitespace-pre-wrap break-words font-normal">
-          {structuredData?.rawText || 'No content available'}
-        </pre>
-      </div>
+    <div className="max-h-[600px] overflow-y-auto">
+      <pre className="text-sm whitespace-pre-wrap break-words font-normal">
+        {structuredData?.rawText || 'No content available'}
+      </pre>
     </div>
   )
 }

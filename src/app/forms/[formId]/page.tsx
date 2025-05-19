@@ -1,7 +1,9 @@
+// src/app/forms/[formId]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { FormBreadcrumb } from '@/components/form-breadcrumb'
 import { FormBody } from '@/components/form-body'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 
 export default async function FormDetailPage({
   params,
@@ -64,8 +66,29 @@ export default async function FormDetailPage({
         formTitle={formTitle}
       />
       
-      <div className="space-y-6">
-        <FormBody formId={formId} />
+      <div className="h-[calc(100vh-8rem)]">
+        <ResizablePanelGroup 
+          direction="horizontal"
+          className="min-h-full"
+        >
+          {/* Left column - Form body */}
+          <ResizablePanel defaultSize={65} minSize={30}>
+            <div className="p-2 h-full overflow-y-auto">
+              <FormBody formId={formId} />
+            </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Right column - Empty for now */}
+          <ResizablePanel defaultSize={35} minSize={20}>
+            <div className="p-4 h-full overflow-y-auto bg-card/50">
+              <p className="text-muted-foreground text-sm">
+                Additional information will be displayed here.
+              </p>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </>
   )
