@@ -72,7 +72,7 @@ export default async function FormDetailPage({
           className="min-h-full"
         >
           {/* Left column - Form body */}
-          <ResizablePanel defaultSize={65} minSize={30}>
+          <ResizablePanel defaultSize={50} minSize={30}>
             <div className="p-2 h-full overflow-y-auto">
               <FormBody formId={formId} />
             </div>
@@ -81,7 +81,7 @@ export default async function FormDetailPage({
           <ResizableHandle withHandle />
           
           {/* Right column - Empty for now */}
-          <ResizablePanel defaultSize={35} minSize={20}>
+          <ResizablePanel defaultSize={50} minSize={20}>
             <div className="p-4 h-full overflow-y-auto bg-card/50">
               <p className="text-muted-foreground text-sm">
                 Additional information will be displayed here.
