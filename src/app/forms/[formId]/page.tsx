@@ -65,9 +65,6 @@ export default async function FormDetailPage({
       />
       
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">{formTitle}</h1>
-        
-        {/* Add the FormBody component */}
         <FormBody formId={formId} />
       </div>
     </>
