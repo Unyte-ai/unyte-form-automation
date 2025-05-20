@@ -1,4 +1,3 @@
-// src/app/actions/get-all-connections.ts
 'use server'
 
 import { getSocialConnectionStatus } from './social-connections'
@@ -14,7 +13,7 @@ export async function getAllConnectionStatuses() {
   return {
     google: socialStatuses.google,
     facebook: socialStatuses.facebook,
-    linkedin: socialStatuses.linkedin,
+    // linkedin: socialStatuses.linkedin,
     tiktok: {
       isConnected: tiktokStatus.isConnected,
       username: tiktokStatus.username,
