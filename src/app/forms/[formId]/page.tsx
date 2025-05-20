@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { FormBreadcrumb } from '@/components/form-breadcrumb'
 import { FormBody } from '@/components/form-body'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { CreateCampaign } from '@/components/create-campaign' // Added import
+import { CreateCampaign } from '@/components/create-campaign'
 
 export default async function FormDetailPage({
   params,
