@@ -13,7 +13,7 @@ export async function getAllConnectionStatuses() {
   return {
     google: socialStatuses.google,
     facebook: socialStatuses.facebook,
-    // linkedin: socialStatuses.linkedin,
+    linkedin: false, // Keep this property but set it to false until LinkedIn is implemented
     tiktok: {
       isConnected: tiktokStatus.isConnected,
       username: tiktokStatus.username,
