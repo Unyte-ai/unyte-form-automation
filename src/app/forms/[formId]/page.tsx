@@ -1,9 +1,9 @@
-// src/app/forms/[formId]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { FormBreadcrumb } from '@/components/form-breadcrumb'
 import { FormBody } from '@/components/form-body'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { CreateCampaign } from '@/components/create-campaign' // Added import
 
 export default async function FormDetailPage({
   params,
@@ -80,12 +80,10 @@ export default async function FormDetailPage({
           
           <ResizableHandle withHandle />
           
-          {/* Right column - Empty for now */}
+          {/* Right column - Campaign creation */}
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="p-4 h-full overflow-y-auto bg-card/50">
-              <p className="text-muted-foreground text-sm">
-                Additional information will be displayed here.
-              </p>
+              <CreateCampaign />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
