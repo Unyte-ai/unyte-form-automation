@@ -10,7 +10,6 @@ export interface SocialConnectionStatus {
 export async function getSocialConnectionStatus(): Promise<{
   google: boolean;
   facebook: boolean;
-  linkedin: boolean;
 }> {
   try {
     // Get the current user
@@ -18,28 +17,25 @@ export async function getSocialConnectionStatus(): Promise<{
     const { data: userData } = await supabase.auth.getUser()
     
     if (!userData?.user) {
-      return { google: false, facebook: false, linkedin: false }
+      return { google: false, facebook: false }
     }
-
     // Get user's identities (linked accounts)
     const { data: identities, error } = await supabase.auth.getUserIdentities()
     
     if (error || !identities?.identities || identities.identities.length === 0) {
-      return { google: false, facebook: false, linkedin: false }
+      return { google: false, facebook: false }
     }
     
     // Check each provider
     const google = identities.identities.some(identity => identity.provider === 'google')
-    const facebook = identities.identities.some(identity => identity.provider === 'facebook') 
-    const linkedin = identities.identities.some(identity => identity.provider === 'linkedin_oidc')
+    const facebook = identities.identities.some(identity => identity.provider === 'facebook')
     
     return {
       google,
-      facebook,
-      linkedin
+      facebook
     }
   } catch (error) {
     console.error('Error checking social connections:', error)
-    return { google: false, facebook: false, linkedin: false }
+    return { google: false, facebook: false }
   }
 }
