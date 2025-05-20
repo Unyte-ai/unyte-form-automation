@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
+import { LinkedInAdAccount } from '@/components/linkedin-ad-account'
 
 interface LinkedInCampaignProps {
   id: string
@@ -24,10 +25,8 @@ export function LinkedInCampaign({ id, onRemove }: LinkedInCampaignProps) {
         <CardTitle>LinkedIn</CardTitle>
         <CardDescription>Create a campaign for LinkedIn</CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Configure your LinkedIn campaign settings here.
-        </p>
+      <CardContent className="space-y-4">
+        <LinkedInAdAccount accounts={[]} />
       </CardContent>
     </Card>
   )
