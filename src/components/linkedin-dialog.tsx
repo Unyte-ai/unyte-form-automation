@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { getLinkedInConnectionStatus, LinkedInConnectionStatus } from '@/app/actions/linkedin-status'
+import { disconnectLinkedIn } from '@/app/actions/linkedin-disconnect'
 import { toast } from 'sonner'
 import { useParams } from 'next/navigation' // Add this import
 
@@ -53,16 +54,30 @@ export function LinkedInDialog({ open, onOpenChange, onDisconnect }: LinkedInDia
   // Function to handle disconnecting - we'll implement this later
   const handleDisconnect = async () => {
     try {
-      // For now, just show a toast
-      toast.info('LinkedIn disconnect functionality coming soon')
+      // Show loading state
+      const toastId = toast.loading('Disconnecting LinkedIn account...')
       
-      // Close dialog
+      // Call the server action to disconnect from LinkedIn
+      const result = await disconnectLinkedIn(organizationId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to disconnect LinkedIn account')
+      }
+      
+      // Update toast to success
+      toast.success('LinkedIn account disconnected', {
+        id: toastId,
+        description: 'Your LinkedIn account has been successfully disconnected.'
+      })
+      
+      // Close the dialog
       onOpenChange(false)
       
-      // Call onDisconnect to refresh connection status if provided
+      // Call onDisconnect to refresh connection status
       if (onDisconnect) {
         await onDisconnect()
       }
+      
     } catch (error) {
       console.error('Error disconnecting LinkedIn account:', error)
       toast.error('Failed to disconnect LinkedIn account', {
@@ -70,6 +85,7 @@ export function LinkedInDialog({ open, onOpenChange, onDisconnect }: LinkedInDia
       })
     }
   }
+  
 
   // Get display name
   const displayName = userInfo?.displayName || 'LinkedIn User'
