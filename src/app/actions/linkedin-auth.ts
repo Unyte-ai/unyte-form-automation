@@ -1,11 +1,15 @@
 'use server'
 
-export async function initLinkedInOAuth(): Promise<string> {
+export async function initLinkedInOAuth(organizationId?: string): Promise<string> {
   // Get LinkedIn credentials from environment variables
   const clientId = process.env.LINKEDIN_CLIENT_ID
   
   if (!clientId) {
     throw new Error('LinkedIn client ID is not configured')
+  }
+
+  if (!organizationId) {
+    throw new Error('Organization ID is required to connect LinkedIn account')
   }
 
   // Set the redirect URI based on environment
@@ -16,12 +20,17 @@ export async function initLinkedInOAuth(): Promise<string> {
   // Build the authorization URL
   const baseUrl = 'https://www.linkedin.com/oauth/v2/authorization'
   
+  // Create a state parameter that includes the organization ID
+  // Using "__" as delimiter because it won't appear in UUIDs
+  const randomState = crypto.randomUUID()
+  const state = `${randomState}__${organizationId}`
+  
   // Add required parameters with OpenID Connect scopes
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
-    state: crypto.randomUUID(),
+    state: state,
     // OpenID Connect scopes
     scope: 'openid profile email'
   })

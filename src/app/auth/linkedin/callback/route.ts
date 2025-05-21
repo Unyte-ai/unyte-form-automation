@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeLinkedInToken } from '@/app/actions/linkedin-token'
-import { storeLinkedInToken, getActiveOrganizationId } from '@/app/actions/linkedin-store-token'
+import { storeLinkedInToken } from '@/app/actions/linkedin-store-token'
 
 export async function GET(request: NextRequest) {
   // Get URL parameters
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get('code')
+  const state = searchParams.get('state')
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
   
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
   // For debugging
   console.log('LinkedIn Callback Parameters:', {
     code: code ? 'present' : 'missing',
+    state,
     error,
     errorDescription,
     allParams: Object.fromEntries(searchParams.entries())
@@ -30,13 +32,27 @@ export async function GET(request: NextRequest) {
     )
   }
   
-  // If code is missing, handle the error
-  if (!code) {
-    console.error('Authorization code is missing from callback')
+  // If code or state is missing, handle the error
+  if (!code || !state) {
+    console.error('Authorization code or state is missing from callback')
     return NextResponse.redirect(
-      `${baseUrl}/auth/error?error=Missing authorization code`
+      `${baseUrl}/auth/error?error=Missing required parameters`
     )
   }
+  
+  // Extract organization ID from state
+  // Format: randomUUID__organizationId (using double underscore as delimiter)
+  const stateParts = state.split('__')
+  
+  if (stateParts.length !== 2) {
+    console.error('Invalid state format, missing organization ID')
+    return NextResponse.redirect(
+      `${baseUrl}/auth/error?error=Invalid state parameter format`
+    )
+  }
+  
+  // Get the organization ID (the part after the delimiter)
+  const organizationId = stateParts[1]
   
   try {
     // Exchange code for tokens
@@ -51,12 +67,10 @@ export async function GET(request: NextRequest) {
     
     console.log('LinkedIn token exchange successful')
     
-    // Get the active organization ID
-    const organizationId = await getActiveOrganizationId()
-    
+    // Use the extracted organization ID from state parameter
     if (!organizationId) {
       return NextResponse.redirect(
-        `${baseUrl}/auth/error?error=${encodeURIComponent('No active organization found')}`
+        `${baseUrl}/auth/error?error=${encodeURIComponent('Organization ID not found in state parameter')}`
       )
     }
     

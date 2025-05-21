@@ -156,25 +156,25 @@ export async function storeLinkedInToken(
  * Gets the active organization ID for the user
  * Falls back to the first organization if none is active
  */
-export async function getActiveOrganizationId(): Promise<string | null> {
-  try {
-    const supabase = await createClient()
+// export async function getActiveOrganizationId(): Promise<string | null> {
+//   try {
+//     const supabase = await createClient()
     
-    // First, check if the user has a cookie or session indicating active organization
-    // For now, simply get the first organization the user is a member of
-    const { data: organizations, error } = await supabase
-      .from('organizations')
-      .select('id')
-      .order('created_at', { ascending: false })
-      .limit(1)
+//     // First, check if the user has a cookie or session indicating active organization
+//     // For now, simply get the first organization the user is a member of
+//     const { data: organizations, error } = await supabase
+//       .from('organizations')
+//       .select('id')
+//       .order('created_at', { ascending: false })
+//       .limit(1)
     
-    if (error || !organizations || organizations.length === 0) {
-      return null
-    }
+//     if (error || !organizations || organizations.length === 0) {
+//       return null
+//     }
     
-    return organizations[0].id
-  } catch (error) {
-    console.error('Error getting active organization:', error)
-    return null
-  }
-}
+//     return organizations[0].id
+//   } catch (error) {
+//     console.error('Error getting active organization:', error)
+//     return null
+//   }
+// }

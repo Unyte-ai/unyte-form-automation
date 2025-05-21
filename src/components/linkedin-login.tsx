@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { initLinkedInOAuth } from '@/app/actions/linkedin-auth'
 import { LinkedInDialog } from '@/components/linkedin-dialog'
 import { useConnectionStatus } from '@/contexts/connection-status-context'
+import { useParams } from 'next/navigation'
 
 export function LinkedInLogin() {
   const [isConnecting, setIsConnecting] = useState(false)
@@ -15,10 +16,21 @@ export function LinkedInLogin() {
   const { connections, isLoading, refreshConnections } = useConnectionStatus()
   const isConnected = connections.linkedin
   
+  // Get current organization ID from URL params
+  const params = useParams()
+  const organizationId = params?.orgId as string
+  
   async function handleLinkedInClick() {
     if (isConnected) {
       // If already connected, open the dialog instead
       setIsDialogOpen(true)
+      return
+    }
+    
+    if (!organizationId) {
+      toast.error('No organization selected', {
+        description: 'Please select an organization first'
+      })
       return
     }
     
@@ -29,8 +41,8 @@ export function LinkedInLogin() {
         description: 'Redirecting to LinkedIn authorization page'
       })
       
-      // Call our server action to get the LinkedIn authorization URL
-      const authUrl = await initLinkedInOAuth()
+      // Call our server action with the organization ID
+      const authUrl = await initLinkedInOAuth(organizationId)
       
       // Redirect to LinkedIn's authorization page
       window.location.href = authUrl
@@ -52,7 +64,7 @@ export function LinkedInLogin() {
           variant="outline" 
           size="sm" 
           onClick={handleLinkedInClick}
-          disabled={isLoading || isConnecting}
+          disabled={isLoading || isConnecting || !organizationId}
           className={isConnected 
             ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
             : ""}
