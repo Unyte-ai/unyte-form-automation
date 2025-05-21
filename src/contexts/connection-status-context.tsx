@@ -1,9 +1,9 @@
-// src/contexts/connection-status-context.tsx
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { getAllConnectionStatuses } from '@/app/actions/get-all-connections'
 import { toast } from 'sonner'
+import { useParams } from 'next/navigation'
 
 // Define the context type
 interface ConnectionStatusContextType {
@@ -46,12 +46,14 @@ export const useConnectionStatus = () => useContext(ConnectionStatusContext)
 export function ConnectionStatusProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [connections, setConnections] = useState(defaultContext.connections)
+  const params = useParams()
+  const organizationId = params?.orgId as string
 
-  // Function to fetch all connection statuses
-  const refreshConnections = async () => {
+  // Function to fetch all connection statuses - wrapped in useCallback
+  const refreshConnections = useCallback(async () => {
     try {
       setIsLoading(true)
-      const statuses = await getAllConnectionStatuses()
+      const statuses = await getAllConnectionStatuses(organizationId)
       setConnections(statuses)
     } catch (error) {
       console.error('Error fetching connection statuses:', error)
@@ -59,12 +61,12 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [organizationId]) // Add organizationId as a dependency
 
-  // Fetch connection statuses on mount
+  // Fetch connection statuses on mount or when organizationId changes
   useEffect(() => {
     refreshConnections()
-  }, [])
+  }, [refreshConnections]) // Now includes refreshConnections
 
   return (
     <ConnectionStatusContext.Provider 

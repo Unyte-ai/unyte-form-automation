@@ -2,18 +2,20 @@
 
 import { getSocialConnectionStatus } from './social-connections'
 import { getTikTokConnectionStatus } from './tiktok-status'
+import { getLinkedInConnectionStatus } from './linkedin-status'
 
-export async function getAllConnectionStatuses() {
+export async function getAllConnectionStatuses(organizationId?: string) {
   // Fetch all statuses in parallel with Promise.all
-  const [socialStatuses, tiktokStatus] = await Promise.all([
+  const [socialStatuses, tiktokStatus, linkedInStatus] = await Promise.all([
     getSocialConnectionStatus(),
-    getTikTokConnectionStatus()
+    getTikTokConnectionStatus(),
+    getLinkedInConnectionStatus(organizationId) // Pass organizationId
   ])
 
   return {
     google: socialStatuses.google,
     facebook: socialStatuses.facebook,
-    linkedin: false, // Keep this property but set it to false until LinkedIn is implemented
+    linkedin: linkedInStatus.isConnected,
     tiktok: {
       isConnected: tiktokStatus.isConnected,
       username: tiktokStatus.username,
