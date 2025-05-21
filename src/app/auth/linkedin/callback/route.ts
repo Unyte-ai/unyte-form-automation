@@ -1,6 +1,6 @@
-// src/app/auth/linkedin/callback/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeLinkedInToken } from '@/app/actions/linkedin-token'
+import { storeLinkedInToken, getActiveOrganizationId } from '@/app/actions/linkedin-store-token'
 
 export async function GET(request: NextRequest) {
   // Get URL parameters
@@ -40,22 +40,40 @@ export async function GET(request: NextRequest) {
   
   try {
     // Exchange code for tokens
-    const result = await exchangeLinkedInToken(code)
+    const tokenResult = await exchangeLinkedInToken(code)
     
-    if (!result.success) {
+    if (!tokenResult.success || !tokenResult.data) {
       // If token exchange failed, redirect to error page
       return NextResponse.redirect(
-        `${baseUrl}/auth/error?error=${encodeURIComponent(result.error || 'Failed to exchange token')}`
+        `${baseUrl}/auth/error?error=${encodeURIComponent(tokenResult.error || 'Failed to exchange token')}`
       )
     }
     
     console.log('LinkedIn token exchange successful')
     
-    // TODO: Store token in database (will be implemented next)
+    // Get the active organization ID
+    const organizationId = await getActiveOrganizationId()
+    
+    if (!organizationId) {
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=${encodeURIComponent('No active organization found')}`
+      )
+    }
+    
+    // Store the tokens in the database
+    const storeResult = await storeLinkedInToken(tokenResult.data, organizationId)
+    
+    if (!storeResult.success) {
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=${encodeURIComponent(storeResult.error || 'Failed to store token')}`
+      )
+    }
+    
+    console.log('LinkedIn token stored successfully')
     
     // Successful connection, redirect to home with success message
     return NextResponse.redirect(
-      `${baseUrl}/home?linkedin=connected&success=1`
+      `${baseUrl}/home/${organizationId}?linkedin=connected&success=1`
     )
   } catch (error) {
     console.error('Error in LinkedIn callback handler:', error)
