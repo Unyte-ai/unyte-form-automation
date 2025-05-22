@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { LinkedInAdAccount } from '@/components/linkedin-ad-account'
 import { LinkedInCampaignGroups } from '@/components/linkedin-campaign-groups'
+import { LinkedInAdCampaign } from '@/components/linkedin-ad-campaign'
 import { getLinkedInAdAccounts, LinkedInAdAccount as AdAccountType } from '@/app/actions/linkedin-ad-accounts'
 import { getLinkedInCampaignGroups, LinkedInCampaignGroup } from '@/app/actions/linkedin-campaign-groups'
+import { getLinkedInAdCampaigns, LinkedInAdCampaign as AdCampaignType } from '@/app/actions/linkedin-ad-campaign'
 import { toast } from 'sonner'
 
 interface LinkedInCampaignProps {
@@ -19,12 +21,18 @@ interface LinkedInCampaignProps {
 export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampaignProps) {
   const [accounts, setAccounts] = useState<AdAccountType[]>([])
   const [campaignGroups, setCampaignGroups] = useState<LinkedInCampaignGroup[]>([])
+  const [campaigns, setCampaigns] = useState<AdCampaignType[]>([])
+  
   const [selectedAccount, setSelectedAccount] = useState<string>('')
+  const [selectedCampaignGroup, setSelectedCampaignGroup] = useState<string>('')
 
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
   const [isLoadingCampaignGroups, setIsLoadingCampaignGroups] = useState(false)
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false)
+  
   const [accountsError, setAccountsError] = useState<string | null>(null)
   const [campaignGroupsError, setCampaignGroupsError] = useState<string | null>(null)
+  const [campaignsError, setCampaignsError] = useState<string | null>(null)
 
   // Fetch LinkedIn ad accounts when component mounts
   useEffect(() => {
@@ -59,6 +67,8 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
     async function fetchCampaignGroups() {
       if (!selectedAccount) {
         setCampaignGroups([])
+        setSelectedCampaignGroup('')
+        setCampaigns([])
         return
       }
 
@@ -87,15 +97,59 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
     fetchCampaignGroups()
   }, [organizationId, selectedAccount])
 
+  // Fetch campaigns when a campaign group is selected
+  useEffect(() => {
+    async function fetchCampaigns() {
+      if (!selectedAccount || !selectedCampaignGroup) {
+        setCampaigns([])
+        return
+      }
+
+      try {
+        setIsLoadingCampaigns(true)
+        setCampaignsError(null)
+        
+        const result = await getLinkedInAdCampaigns(organizationId, selectedAccount, selectedCampaignGroup)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch LinkedIn campaigns')
+        }
+        
+        setCampaigns(result.data || [])
+      } catch (error) {
+        console.error('Error fetching LinkedIn campaigns:', error)
+        setCampaignsError(error instanceof Error ? error.message : 'Failed to fetch campaigns')
+        toast.error('Failed to fetch LinkedIn campaigns', {
+          description: error instanceof Error ? error.message : 'An unexpected error occurred'
+        })
+      } finally {
+        setIsLoadingCampaigns(false)
+      }
+    }
+    
+    fetchCampaigns()
+  }, [organizationId, selectedAccount, selectedCampaignGroup])
+
   // Handle ad account selection
   const handleAdAccountChange = (value: string) => {
     setSelectedAccount(value)
+    // Reset dependent selections
+    setSelectedCampaignGroup('')
+    setCampaignGroups([])
+    setCampaigns([])
   }
 
   // Handle campaign group selection
   const handleCampaignGroupChange = (value: string) => {
-    // Campaign group selection - value can be used later when needed
-    console.log('Selected campaign group:', value)
+    setSelectedCampaignGroup(value)
+    // Reset dependent selections
+    setCampaigns([])
+  }
+
+  // Handle campaign selection
+  const handleCampaignChange = (value: string) => {
+    console.log('Selected campaign:', value)
+    // You can add additional logic here when a campaign is selected
   }
 
   return (
@@ -113,6 +167,7 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
         <CardDescription>Create a campaign for LinkedIn</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Ad Account Selection */}
         {accountsError ? (
           <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
             <p className="text-sm">{accountsError}</p>
@@ -125,6 +180,7 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
           />
         )}
 
+        {/* Campaign Group Selection */}
         {campaignGroupsError ? (
           <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
             <p className="text-sm">{campaignGroupsError}</p>
@@ -134,6 +190,19 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
             campaignGroups={campaignGroups}
             onChange={handleCampaignGroupChange}
             isLoading={isLoadingCampaignGroups}
+          />
+        )}
+
+        {/* Campaign Selection */}
+        {campaignsError ? (
+          <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
+            <p className="text-sm">{campaignsError}</p>
+          </div>
+        ) : (
+          <LinkedInAdCampaign
+            campaigns={campaigns}
+            onChange={handleCampaignChange}
+            isLoading={isLoadingCampaigns}
           />
         )}
       </CardContent>
