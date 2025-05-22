@@ -12,7 +12,11 @@ import {
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
-export function CreateCampaign() {
+interface CreateCampaignProps {
+  organizationId: string
+}
+
+export function CreateCampaign({ organizationId }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
 
   const addLinkedInCampaign = () => {
@@ -57,7 +61,8 @@ export function CreateCampaign() {
           <LinkedInCampaign 
             key={campaign.id} 
             id={campaign.id} 
-            onRemove={removeLinkedInCampaign} 
+            onRemove={removeLinkedInCampaign}
+            organizationId={organizationId}
           />
         ))}
       </div>

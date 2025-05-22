@@ -25,14 +25,14 @@ export async function initLinkedInOAuth(organizationId?: string): Promise<string
   const randomState = crypto.randomUUID()
   const state = `${randomState}__${organizationId}`
   
-  // Add required parameters with OpenID Connect scopes
+  // Add required parameters with OpenID Connect scopes AND Advertising API scopes
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
     state: state,
-    // OpenID Connect scopes
-    scope: 'openid profile email'
+    // Include both OpenID Connect scopes and Advertising API scopes
+    scope: 'openid profile email r_ads rw_ads'
   })
   
   // Return the full authorization URL

@@ -83,7 +83,7 @@ export default async function FormDetailPage({
           {/* Right column - Campaign creation */}
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="p-4 h-full overflow-y-auto bg-card/50">
-              <CreateCampaign />
+              <CreateCampaign organizationId={submission.organization_id} />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

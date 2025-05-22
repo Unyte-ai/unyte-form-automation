@@ -18,9 +18,10 @@ interface AdAccount {
 interface LinkedInAdAccountProps {
   accounts?: AdAccount[]
   onChange?: (value: string) => void
+  isLoading?: boolean
 }
 
-export function LinkedInAdAccount({ accounts = [], onChange }: LinkedInAdAccountProps) {
+export function LinkedInAdAccount({ accounts = [], onChange, isLoading = false }: LinkedInAdAccountProps) {
   const [value, setValue] = React.useState('')
 
   const handleValueChange = (newValue: string) => {
@@ -36,12 +37,17 @@ export function LinkedInAdAccount({ accounts = [], onChange }: LinkedInAdAccount
       <Select 
         value={value} 
         onValueChange={handleValueChange}
+        disabled={isLoading}
       >
         <SelectTrigger id="ad-account" className="w-full">
-          <SelectValue placeholder="Select an ad account" />
+          <SelectValue placeholder={isLoading ? "Loading accounts..." : "Select an ad account"} />
         </SelectTrigger>
         <SelectContent>
-          {accounts.length > 0 ? (
+          {isLoading ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Loading ad accounts...
+            </div>
+          ) : accounts.length > 0 ? (
             accounts.map(account => (
               <SelectItem key={account.id} value={account.id}>
                 {account.name} <span className="text-xs text-muted-foreground ml-1">({account.id})</span>
