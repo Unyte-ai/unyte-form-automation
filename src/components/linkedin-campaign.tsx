@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { LinkedInAdAccount } from '@/components/linkedin-ad-account'
 import { LinkedInCampaignGroups } from '@/components/linkedin-campaign-groups'
 import { LinkedInAdCampaign } from '@/components/linkedin-ad-campaign'
+import { LinkedInCreateAdCampaign } from '@/components/linkedin-create-ad-campaign'
 import { getLinkedInAdAccounts, LinkedInAdAccount as AdAccountType } from '@/app/actions/linkedin-ad-accounts'
 import { getLinkedInCampaignGroups, LinkedInCampaignGroup } from '@/app/actions/linkedin-campaign-groups'
 import { getLinkedInAdCampaigns, LinkedInAdCampaign as AdCampaignType } from '@/app/actions/linkedin-ad-campaign'
@@ -152,6 +153,23 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
     // You can add additional logic here when a campaign is selected
   }
 
+  // Handle when a new campaign is created
+  const handleCampaignCreated = async (newCampaign: { id: string; name: string }) => {
+    console.log('New campaign created:', newCampaign)
+    
+    // Refresh the campaigns list to include the newly created campaign
+    if (selectedAccount && selectedCampaignGroup) {
+      try {
+        const result = await getLinkedInAdCampaigns(organizationId, selectedAccount, selectedCampaignGroup)
+        if (result.success) {
+          setCampaigns(result.data || [])
+        }
+      } catch (error) {
+        console.error('Error refreshing campaigns after creation:', error)
+      }
+    }
+  }
+
   return (
     <Card className="mb-4 relative">
       <Button 
@@ -205,6 +223,14 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
             isLoading={isLoadingCampaigns}
           />
         )}
+
+        {/* Create New Campaign Component */}
+        <LinkedInCreateAdCampaign
+          organizationId={organizationId}
+          selectedAccount={selectedAccount}
+          selectedCampaignGroup={selectedCampaignGroup}
+          onCampaignCreated={handleCampaignCreated}
+        />
       </CardContent>
     </Card>
   )
