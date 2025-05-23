@@ -7,8 +7,9 @@ import { revalidatePath } from 'next/cache'
 /**
  * Disconnects a user's TikTok account by revoking their token
  * and removing the connection from the database
+ * @param organizationId The organization ID for the connection
  */
-export async function disconnectTikTok(): Promise<{ 
+export async function disconnectTikTok(organizationId: string): Promise<{ 
   success: boolean; 
   error?: string;
 }> {
@@ -23,15 +24,16 @@ export async function disconnectTikTok(): Promise<{
       throw new Error('User not authenticated')
     }
 
-    // Get the TikTok connection information
+    // Get the TikTok connection information for this organization
     const { data: connection, error } = await supabase
       .from('tiktok_connections')
       .select('id, access_token')
       .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .single()
     
     if (error || !connection) {
-      throw new Error('TikTok connection not found')
+      throw new Error('TikTok connection not found for this organization')
     }
 
     // Get client credentials from environment variables
@@ -76,7 +78,7 @@ export async function disconnectTikTok(): Promise<{
     }
     
     // Revalidate relevant paths to update UI
-    revalidatePath('/home')
+    revalidatePath(`/home/${organizationId}`)
     
     return { success: true }
   } catch (error) {

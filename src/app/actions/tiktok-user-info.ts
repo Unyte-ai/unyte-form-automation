@@ -10,9 +10,10 @@ export interface TikTokUserInfo {
 }
 
 /**
- * Fetches TikTok user information for the currently logged in user
+ * Fetches TikTok user information for the currently logged in user and organization
+ * @param organizationId The organization ID for the connection
  */
-export async function getTikTokUserInfo(): Promise<{ 
+export async function getTikTokUserInfo(organizationId: string): Promise<{ 
   success: boolean; 
   data?: TikTokUserInfo | null;
   error?: string;
@@ -27,11 +28,12 @@ export async function getTikTokUserInfo(): Promise<{
       throw new Error('User not authenticated')
     }
 
-    // Get the TikTok connection information
+    // Get the TikTok connection information for this organization
     const { data: connection, error } = await supabase
       .from('tiktok_connections')
       .select('tiktok_open_id, username, display_name, avatar_url')
       .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .single()
     
     if (error || !connection) {

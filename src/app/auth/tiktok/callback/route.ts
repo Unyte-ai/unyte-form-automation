@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Verify state parameter to prevent CSRF attacks
-    const cookieStore = await cookies() // Fix: await the Promise
+    const cookieStore = await cookies()
     const storedState = cookieStore.get('tiktok_csrf_state')?.value
     
     if (!storedState || storedState !== state) {
@@ -44,16 +44,30 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // If code is missing, handle the error
-    if (!code) {
-      console.error('Authorization code is missing from callback')
+    // If code or state is missing, handle the error
+    if (!code || !state) {
+      console.error('Authorization code or state is missing from callback')
       return NextResponse.redirect(
-        `${baseUrl}/auth/error?error=Missing authorization code`
+        `${baseUrl}/auth/error?error=Missing required parameters`
       )
     }
     
+    // Extract organization ID from state (like LinkedIn)
+    // Format: randomUUID__organizationId (using double underscore as delimiter)
+    const stateParts = state.split('__')
+    
+    if (stateParts.length !== 2) {
+      console.error('Invalid state format, missing organization ID')
+      return NextResponse.redirect(
+        `${baseUrl}/auth/error?error=Invalid state parameter format`
+      )
+    }
+    
+    // Get the organization ID (the part after the delimiter)
+    const organizationId = stateParts[1]
+    
     // Exchange code for tokens
-    const result = await exchangeTikTokToken(code)
+    const result = await exchangeTikTokToken(code, organizationId)
     
     if (!result.success) {
       // If token exchange failed, redirect to error page
@@ -62,9 +76,9 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Successful connection, redirect to home with success message
+    // Successful connection, redirect to organization page with success message
     return NextResponse.redirect(
-      `${baseUrl}/home?tiktok=connected&success=1`
+      `${baseUrl}/home/${organizationId}?tiktok=connected&success=1`
     )
     
   } catch (error) {

@@ -9,7 +9,7 @@ export interface TikTokConnectionStatus {
   avatarUrl?: string
 }
 
-export async function getTikTokConnectionStatus(): Promise<TikTokConnectionStatus> {
+export async function getTikTokConnectionStatus(organizationId?: string): Promise<TikTokConnectionStatus> {
   try {
     // Get the current user
     const supabase = await createClient()
@@ -19,11 +19,17 @@ export async function getTikTokConnectionStatus(): Promise<TikTokConnectionStatu
       return { isConnected: false }
     }
 
-    // Check if user has a TikTok connection
+    // If no organizationId provided, return false
+    if (!organizationId) {
+      return { isConnected: false }
+    }
+
+    // Check if user has a TikTok connection for this specific organization
     const { data: connection, error } = await supabase
       .from('tiktok_connections')
       .select('tiktok_open_id, username, display_name, avatar_url')
       .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .single()
     
     if (error || !connection) {

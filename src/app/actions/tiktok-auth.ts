@@ -22,8 +22,8 @@ function generateCodeVerifier(): string {
     .replace(/=+$/, '')
 }
 
-// Initialize TikTok OAuth flow - just returns the authorization URL
-export async function initTikTokOAuth() {
+// Initialize TikTok OAuth flow - now requires organizationId
+export async function initTikTokOAuth(organizationId?: string) {
   // Securely access client ID from environment variables on the server
   const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_ID
   
@@ -31,9 +31,17 @@ export async function initTikTokOAuth() {
   if (!clientKey) {
     throw new Error('TikTok client key is not configured')
   }
+
+  if (!organizationId) {
+    throw new Error('Organization ID is required to connect TikTok account')
+  }
   
   // Create a CSRF state token for security
-  const csrfState = uuidv4()
+  const randomState = uuidv4()
+  
+  // Create state parameter that includes the organization ID (like LinkedIn)
+  // Using "__" as delimiter because it won't appear in UUIDs
+  const csrfState = `${randomState}__${organizationId}`
   
   // Generate PKCE code verifier and challenge
   const codeVerifier = generateCodeVerifier()
@@ -64,10 +72,10 @@ export async function initTikTokOAuth() {
   // Add required parameters including PKCE parameters
   const params = new URLSearchParams({
     client_key: clientKey,
-    scope: 'user.info.basic,user.info.profile', // Updated scope
+    scope: 'user.info.basic,user.info.profile',
     response_type: 'code',
     redirect_uri: redirectUri,
-    state: csrfState,
+    state: csrfState, // Now includes organizationId
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
   });

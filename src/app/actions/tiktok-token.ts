@@ -15,13 +15,11 @@ interface TikTokTokenResponse {
   token_type: string
 }
 
-export async function exchangeTikTokToken(code: string): Promise<{ success: boolean; error?: string }> {
+export async function exchangeTikTokToken(code: string, organizationId: string): Promise<{ success: boolean; error?: string }> {
   try {
     // Get the code verifier from cookies
-    const cookieStore = await cookies() // Fix: await the Promise
+    const cookieStore = await cookies()
     const codeVerifier = cookieStore.get('tiktok_code_verifier')?.value
-    
-    // Remove unused csrfState variable
     
     // Clear the cookies regardless of outcome
     cookieStore.delete('tiktok_code_verifier')
@@ -91,11 +89,12 @@ export async function exchangeTikTokToken(code: string): Promise<{ success: bool
     const tokenExpiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
     const refreshExpiresAt = new Date(now.getTime() + tokenData.refresh_expires_in * 1000)
     
-    // Check if user already has TikTok connection
+    // Check if user already has TikTok connection for this organization
     const { data: existingConnection } = await adminClient
       .from('tiktok_connections')
       .select('id')
       .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .single()
     
     // Insert or update the connection
@@ -118,6 +117,7 @@ export async function exchangeTikTokToken(code: string): Promise<{ success: bool
         .from('tiktok_connections')
         .insert({
           user_id: user.id,
+          organization_id: organizationId,
           tiktok_open_id: tokenData.open_id,
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
@@ -129,7 +129,7 @@ export async function exchangeTikTokToken(code: string): Promise<{ success: bool
     }
     
     // Fetch TikTok user info to store profile data
-    await fetchAndStoreTikTokUserInfo(tokenData.access_token, tokenData.open_id, user.id)
+    await fetchAndStoreTikTokUserInfo(tokenData.access_token, tokenData.open_id, user.id, organizationId)
     
     return { success: true }
   } catch (error) {
@@ -145,7 +145,8 @@ export async function exchangeTikTokToken(code: string): Promise<{ success: bool
 async function fetchAndStoreTikTokUserInfo(
   accessToken: string, 
   openId: string,
-  userId: string
+  userId: string,
+  organizationId: string
 ): Promise<void> {
   try {
     // Make request to TikTok's user info endpoint
@@ -178,6 +179,7 @@ async function fetchAndStoreTikTokUserInfo(
         username: userData.username
       })
       .eq('user_id', userId)
+      .eq('organization_id', organizationId)
       .eq('tiktok_open_id', openId)
       
   } catch (error) {
@@ -189,21 +191,23 @@ async function fetchAndStoreTikTokUserInfo(
 /**
  * Gets a valid access token for TikTok API calls, refreshing if needed
  * @param userId The user ID
+ * @param organizationId The organization ID
  * @returns Access token if available, null otherwise
  */
-export async function getValidTikTokToken(userId: string): Promise<string | null> {
+export async function getValidTikTokToken(userId: string, organizationId: string): Promise<string | null> {
   try {
     const adminClient = createAdminClient()
     
-    // Get the current token information
+    // Get the current token information for this user + organization
     const { data: connection, error } = await adminClient
       .from('tiktok_connections')
       .select('id, access_token, token_expires_at')
       .eq('user_id', userId)
+      .eq('organization_id', organizationId)
       .single()
       
     if (error || !connection) {
-      console.error('No TikTok connection found for user:', userId)
+      console.error('No TikTok connection found for user and organization:', userId, organizationId)
       return null
     }
     
@@ -219,7 +223,7 @@ export async function getValidTikTokToken(userId: string): Promise<string | null
     
     // Token is expired or about to expire, try to refresh it
     console.log('TikTok token expired or about to expire, refreshing...')
-    const refreshResult = await refreshTikTokToken(userId)
+    const refreshResult = await refreshTikTokToken(userId, organizationId)
     
     if (!refreshResult.success) {
       console.error('Failed to refresh TikTok token:', refreshResult.error)
@@ -231,6 +235,7 @@ export async function getValidTikTokToken(userId: string): Promise<string | null
       .from('tiktok_connections')
       .select('access_token')
       .eq('user_id', userId)
+      .eq('organization_id', organizationId)
       .single()
       
     if (refreshedError || !refreshedConnection) {

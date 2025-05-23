@@ -5,9 +5,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 /**
  * Refreshes a TikTok access token using the stored refresh token
  * @param userId The user ID whose token needs refreshing
+ * @param organizationId The organization ID for the connection
  * @returns Success status and error message if applicable
  */
-export async function refreshTikTokToken(userId: string): Promise<{ 
+export async function refreshTikTokToken(userId: string, organizationId: string): Promise<{ 
   success: boolean; 
   error?: string;
 }> {
@@ -23,15 +24,16 @@ export async function refreshTikTokToken(userId: string): Promise<{
     // Get the admin client to access the database
     const adminClient = createAdminClient()
     
-    // Get the current user's TikTok connection
+    // Get the current user's TikTok connection for this organization
     const { data: connection, error: fetchError } = await adminClient
       .from('tiktok_connections')
       .select('id, refresh_token')
       .eq('user_id', userId)
+      .eq('organization_id', organizationId)
       .single()
     
     if (fetchError || !connection) {
-      console.error('No TikTok connection found for user:', userId)
+      console.error('No TikTok connection found for user and organization:', userId, organizationId)
       return { 
         success: false, 
         error: 'No TikTok connection found'
