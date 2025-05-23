@@ -33,6 +33,15 @@ export function LinkedInCreateAdCampaign({
   const [currency, setCurrency] = useState('USD')
   const [country, setCountry] = useState('US')
   const [language, setLanguage] = useState('en')
+  
+  // Date state
+  const [startDate, setStartDate] = useState(() => {
+    // Default to tomorrow to avoid timezone issues
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toISOString().split('T')[0]
+  })
+  const [endDate, setEndDate] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,6 +53,16 @@ export function LinkedInCreateAdCampaign({
 
     if (parseFloat(budgetAmount) <= 0) {
       toast.error('Budget amount must be greater than 0')
+      return
+    }
+
+    if (!startDate) {
+      toast.error('Please select a start date')
+      return
+    }
+
+    if (endDate && new Date(endDate) <= new Date(startDate)) {
+      toast.error('End date must be after start date')
       return
     }
 
@@ -65,6 +84,8 @@ export function LinkedInCreateAdCampaign({
           amount: budgetAmount,
           currencyCode: currency
         },
+        startDate: startDate,
+        endDate: endDate || undefined,
         // Basic targeting criteria - can be expanded later
         targetingCriteria: {
           include: {
@@ -103,6 +124,11 @@ export function LinkedInCreateAdCampaign({
       // Reset form
       setName('')
       setBudgetAmount('')
+      // Reset dates
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      setStartDate(tomorrow.toISOString().split('T')[0])
+      setEndDate('')
       setIsExpanded(false)
 
       // Notify parent component
@@ -237,6 +263,31 @@ export function LinkedInCreateAdCampaign({
                   <SelectItem value="es">Spanish</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Campaign Schedule */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start-date">Start Date *</Label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]} // Can't start in the past
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="end-date">End Date</Label>
+              <Input
+                id="end-date"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate} // End date must be after start date
+              />
             </div>
           </div>
 

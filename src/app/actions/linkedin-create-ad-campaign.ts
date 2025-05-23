@@ -16,6 +16,8 @@ export interface CreateLinkedInCampaignData {
     amount: string
     currencyCode: string
   }
+  startDate: string // ISO date string (YYYY-MM-DD)
+  endDate?: string // Optional ISO date string (YYYY-MM-DD)
   targetingCriteria: {
     include: {
       and: Array<{
@@ -79,6 +81,10 @@ export async function createLinkedInCampaign(
       throw new Error('Campaign group is required')
     }
 
+    if (!campaignData.startDate) {
+      throw new Error('Start date is required')
+    }
+
     // Handle both string URNs and number IDs
     const accountUrn = typeof campaignData.account === 'string' 
       ? campaignData.account 
@@ -108,10 +114,10 @@ export async function createLinkedInCampaign(
       totalBudget: campaignData.totalBudget,
       targetingCriteria: campaignData.targetingCriteria,
       status: 'DRAFT', // Create as draft
-      // Add required runSchedule (start date is required)
+      // Add required runSchedule with user-selected dates
       runSchedule: {
-        start: Date.now() // Start immediately (can be changed later in LinkedIn Campaign Manager)
-        // end is optional - leaving it out means no end date
+        start: new Date(campaignData.startDate).getTime(),
+        ...(campaignData.endDate && { end: new Date(campaignData.endDate).getTime() })
       },
       // Add default required fields
       creativeSelection: creativeSelection,
