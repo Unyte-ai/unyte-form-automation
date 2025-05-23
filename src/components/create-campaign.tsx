@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
+import { TikTokCampaign } from '@/components/tiktok-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
 interface CreateCampaignProps {
@@ -18,6 +19,7 @@ interface CreateCampaignProps {
 
 export function CreateCampaign({ organizationId }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
+  const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
 
   const addLinkedInCampaign = () => {
     const newCampaign = { id: uuidv4() }
@@ -26,6 +28,15 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
 
   const removeLinkedInCampaign = (id: string) => {
     setLinkedInCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+  }
+
+  const addTikTokCampaign = () => {
+    const newCampaign = { id: uuidv4() }
+    setTikTokCampaigns(prev => [...prev, newCampaign])
+  }
+
+  const removeTikTokCampaign = (id: string) => {
+    setTikTokCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
   return (
@@ -45,7 +56,7 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
             <DropdownMenuItem className="cursor-pointer">
               Meta
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
               TikTok
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addLinkedInCampaign}>
@@ -55,13 +66,24 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
         </DropdownMenu>
       </div>
 
-      {/* Display LinkedIn campaigns */}
+      {/* Display campaigns */}
       <div className="space-y-4 mt-4">
+        {/* LinkedIn campaigns */}
         {linkedInCampaigns.map(campaign => (
           <LinkedInCampaign 
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeLinkedInCampaign}
+            organizationId={organizationId}
+          />
+        ))}
+        
+        {/* TikTok campaigns */}
+        {tikTokCampaigns.map(campaign => (
+          <TikTokCampaign 
+            key={campaign.id} 
+            id={campaign.id} 
+            onRemove={removeTikTokCampaign}
             organizationId={organizationId}
           />
         ))}
