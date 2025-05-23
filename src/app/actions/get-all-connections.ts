@@ -8,7 +8,7 @@ export async function getAllConnectionStatuses(organizationId?: string) {
   // Fetch all statuses in parallel with Promise.all
   const [socialStatuses, tiktokStatus, linkedInStatus] = await Promise.all([
     getSocialConnectionStatus(),
-    getTikTokConnectionStatus(),
+    getTikTokConnectionStatus(organizationId), // Pass organizationId to TikTok status check
     getLinkedInConnectionStatus(organizationId) // Pass organizationId
   ])
 

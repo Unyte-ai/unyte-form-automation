@@ -1,4 +1,3 @@
-// src/components/social-platforms.tsx
 import { GoogleLogin } from '@/components/google-login'
 import { MetaLogin } from '@/components/meta-login'
 import { TikTokLogin } from '@/components/tiktok-login'

@@ -13,11 +13,13 @@ import { getTikTokUserInfo, TikTokUserInfo } from '@/app/actions/tiktok-user-inf
 import { disconnectTikTok } from '@/app/actions/tiktok-disconnect'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 interface TikTokDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDisconnect?: () => Promise<void> // New prop for refreshing connection status
+  onDisconnect?: () => Promise<void>
 }
 
 export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogProps) {
@@ -25,17 +27,32 @@ export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogP
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [userInfo, setUserInfo] = useState<TikTokUserInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [organizationName, setOrganizationName] = useState<string>('')
+  
+  const params = useParams()
+  const organizationId = params?.orgId as string
 
-  // Fetch TikTok user info when the dialog opens
+  // Fetch organization name and TikTok user info when the dialog opens
   useEffect(() => {
-    async function fetchTikTokUserInfo() {
-      if (!open) return
+    async function fetchData() {
+      if (!open || !organizationId) return
       
       setIsLoading(true)
       setError(null)
       
       try {
-        const result = await getTikTokUserInfo()
+        // Fetch organization name for better UX context
+        const supabase = createClient()
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('name')
+          .eq('id', organizationId)
+          .single()
+        
+        setOrganizationName(orgData?.name || 'this organization')
+        
+        // Fetch TikTok user info
+        const result = await getTikTokUserInfo(organizationId)
         
         if (!result.success) {
           throw new Error(result.error || 'Failed to fetch TikTok user info')
@@ -43,36 +60,39 @@ export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogP
         
         setUserInfo(result.data || null)
       } catch (error) {
-        console.error('Error fetching TikTok user info:', error)
+        console.error('Error fetching data:', error)
         setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       } finally {
         setIsLoading(false)
       }
     }
     
-    fetchTikTokUserInfo()
-  }, [open])
+    fetchData()
+  }, [open, organizationId])
 
-  // Handle disconnecting the TikTok account
   const handleDisconnect = async () => {
+    if (!organizationId) {
+      toast.error('Organization context missing', {
+        description: 'Unable to determine which organization to disconnect from.'
+      })
+      return
+    }
+    
     try {
       setIsDisconnecting(true)
       
-      // Call the server action to disconnect from TikTok
-      const result = await disconnectTikTok()
+      const result = await disconnectTikTok(organizationId)
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to disconnect TikTok account')
       }
       
       toast.success('TikTok account disconnected', {
-        description: 'Your TikTok account has been successfully disconnected.'
+        description: `Your TikTok account has been disconnected from ${organizationName}.`
       })
       
-      // Close the dialog
       onOpenChange(false)
       
-      // Call onDisconnect to refresh connection status instead of reloading
       if (onDisconnect) {
         await onDisconnect()
       }
@@ -87,17 +107,15 @@ export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogP
     }
   }
 
-  // Get display name and username
-  const displayName = userInfo?.displayName || 'TikTok User';
-  const username = userInfo?.username ? `@${userInfo.username}` : '';
+  const displayName = userInfo?.displayName || 'TikTok User'
+  const username = userInfo?.username ? `@${userInfo.username}` : ''
   
-  // Get initials for avatar fallback
   const initials = displayName
     .split(' ')
     .map(part => part[0])
     .join('')
     .toUpperCase()
-    .substring(0, 2);
+    .substring(0, 2)
     
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,45 +123,67 @@ export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogP
         <DialogHeader>
           <DialogTitle>TikTok Account</DialogTitle>
           <DialogDescription>
-            Manage your connected TikTok account settings.
+            Manage your TikTok connection for {organizationName || 'this organization'}.
           </DialogDescription>
         </DialogHeader>
         
         {isLoading ? (
           <div className="py-8 flex justify-center">
-            <div className="animate-pulse h-4 w-3/4 bg-muted rounded"></div>
+            <div className="space-y-3">
+              <div className="animate-pulse h-4 w-3/4 bg-muted rounded mx-auto"></div>
+              <div className="animate-pulse h-3 w-1/2 bg-muted rounded mx-auto"></div>
+            </div>
           </div>
         ) : error ? (
-          <div className="py-4 text-destructive">
-            <p>{error}</p>
+          <div className="py-4">
+            <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
+              <p className="text-sm font-medium">Connection Error</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
           </div>
         ) : !userInfo ? (
           <div className="py-4">
-            <p className="text-muted-foreground text-sm">
-              No TikTok account information available.
-            </p>
+            <div className="p-3 rounded-md bg-muted/50 border">
+              <p className="text-muted-foreground text-sm">
+                No TikTok account connected to {organizationName || 'this organization'}.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="py-4 space-y-6">
+            {/* User Profile Section */}
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 {userInfo.avatarUrl && <AvatarImage src={userInfo.avatarUrl} alt={displayName} />}
                 <AvatarFallback className="text-lg">{initials}</AvatarFallback>
               </Avatar>
               
-              <div>
+              <div className="flex-1">
                 <h3 className="font-medium text-lg">{displayName}</h3>
                 {username && (
                   <p className="text-muted-foreground text-sm">
                     {username}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Connected to {organizationName}
+                </p>
               </div>
             </div>
             
-            <div className="pt-2">
+            {/* Connection Info */}
+            <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
+              <p className="text-blue-800 dark:text-blue-300 text-sm">
+                <strong>Organization-specific connection:</strong> This TikTok account is only connected to {organizationName}. 
+                You can connect different TikTok accounts to other organizations.
+              </p>
+            </div>
+            
+            {/* Disconnect Section */}
+            <div className="pt-2 border-t">
               <p className="text-muted-foreground text-sm mb-4">
-                This TikTok account is linked to your profile. You can disconnect it at any time.
+                Disconnecting will remove this TikTok account from {organizationName} only. 
+                Your connections to other organizations will remain unchanged.
               </p>
               
               <Button 
@@ -152,7 +192,7 @@ export function TikTokDialog({ open, onOpenChange, onDisconnect }: TikTokDialogP
                 onClick={handleDisconnect}
                 disabled={isDisconnecting}
               >
-                {isDisconnecting ? 'Disconnecting...' : 'Disconnect TikTok'}
+                {isDisconnecting ? 'Disconnecting...' : `Disconnect from ${organizationName}`}
               </Button>
             </div>
           </div>
