@@ -48,7 +48,6 @@ export function TikTokLogin() {
       return
     }
     
-    // Enhanced validation with better error messages
     if (!organizationId) {
       toast.error('No organization selected', {
         description: 'Please select an organization from the dropdown before connecting TikTok.'
@@ -79,11 +78,7 @@ export function TikTokLogin() {
   const getButtonText = () => {
     if (isConnecting) return 'Connecting...'
     if (isLoading) return 'Loading...'
-    if (connectionStatus.isConnected) {
-      // Show connected account info if available
-      const accountInfo = connectionStatus.displayName || connectionStatus.username
-      return accountInfo ? `Connected (${accountInfo})` : 'Connected'
-    }
+    if (connectionStatus.isConnected) return 'Connected'
     return 'Connect'
   }
 
@@ -99,11 +94,6 @@ export function TikTokLogin() {
       <div className="flex justify-between items-center">
         <div className="flex flex-col">
           <span className="font-medium">TikTok</span>
-          {connectionStatus.isConnected && connectionStatus.username && (
-            <span className="text-xs text-muted-foreground">
-              @{connectionStatus.username}
-            </span>
-          )}
         </div>
         
         <Button 
@@ -120,7 +110,6 @@ export function TikTokLogin() {
         </Button>
       </div>
       
-      {/* Show organization context when no organization is selected */}
       {!organizationId && (
         <div className="mt-2 p-2 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
           <p className="text-amber-800 dark:text-amber-300 text-xs">
