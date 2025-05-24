@@ -8,12 +8,12 @@ export async function getAllConnectionStatuses(organizationId?: string) {
   // Fetch all statuses in parallel with Promise.all
   const [socialStatuses, tiktokStatus, linkedInStatus] = await Promise.all([
     getSocialConnectionStatus(),
-    getTikTokConnectionStatus(organizationId), // Pass organizationId to TikTok status check
-    getLinkedInConnectionStatus(organizationId) // Pass organizationId
+    getTikTokConnectionStatus(organizationId),
+    getLinkedInConnectionStatus(organizationId)
   ])
 
   return {
-    google: socialStatuses.google,
+    google: false, // Hardcoded until custom Google auth is implemented
     facebook: socialStatuses.facebook,
     linkedin: linkedInStatus.isConnected,
     tiktok: {
