@@ -1,20 +1,18 @@
 'use server'
 
-import { getSocialConnectionStatus } from './social-connections'
 import { getTikTokConnectionStatus } from './tiktok-status'
 import { getLinkedInConnectionStatus } from './linkedin-status'
 
 export async function getAllConnectionStatuses(organizationId?: string) {
-  // Fetch all statuses in parallel with Promise.all
-  const [socialStatuses, tiktokStatus, linkedInStatus] = await Promise.all([
-    getSocialConnectionStatus(),
+  // Fetch TikTok and LinkedIn statuses in parallel with Promise.all
+  const [tiktokStatus, linkedInStatus] = await Promise.all([
     getTikTokConnectionStatus(organizationId),
     getLinkedInConnectionStatus(organizationId)
   ])
 
   return {
     google: false, // Hardcoded until custom Google auth is implemented
-    facebook: socialStatuses.facebook,
+    facebook: false, // Hardcoded - Meta auth removed
     linkedin: linkedInStatus.isConnected,
     tiktok: {
       isConnected: tiktokStatus.isConnected,
