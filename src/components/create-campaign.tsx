@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
 import { TikTokCampaign } from '@/components/tiktok-campaign'
+import { FacebookCampaign } from '@/components/facebook-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
 interface CreateCampaignProps {
@@ -20,6 +21,7 @@ interface CreateCampaignProps {
 export function CreateCampaign({ organizationId }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
   const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
+  const [facebookCampaigns, setFacebookCampaigns] = useState<{id: string}[]>([])
 
   const addLinkedInCampaign = () => {
     const newCampaign = { id: uuidv4() }
@@ -39,6 +41,15 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
     setTikTokCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
+  const addFacebookCampaign = () => {
+    const newCampaign = { id: uuidv4() }
+    setFacebookCampaigns(prev => [...prev, newCampaign])
+  }
+
+  const removeFacebookCampaign = (id: string) => {
+    setFacebookCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -53,7 +64,7 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
             <DropdownMenuItem className="cursor-pointer">
               Google
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={addFacebookCampaign}>
               Meta
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
@@ -74,6 +85,16 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeLinkedInCampaign}
+            organizationId={organizationId}
+          />
+        ))}
+
+        {/* Facebook campaigns */}
+        {facebookCampaigns.map(campaign => (
+          <FacebookCampaign 
+            key={campaign.id} 
+            id={campaign.id} 
+            onRemove={removeFacebookCampaign}
             organizationId={organizationId}
           />
         ))}
