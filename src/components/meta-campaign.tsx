@@ -4,14 +4,14 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 
-interface FacebookCampaignProps {
+interface MetaCampaignProps {
   id: string
   onRemove: (id: string) => void
   organizationId: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function FacebookCampaign({ id, onRemove, organizationId }: FacebookCampaignProps) {
+export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps) {
   return (
     <Card className="mb-4 relative">
       <Button 
@@ -23,8 +23,8 @@ export function FacebookCampaign({ id, onRemove, organizationId }: FacebookCampa
         <X className="h-4 w-4" />
       </Button>
       <CardHeader>
-        <CardTitle>Facebook</CardTitle>
-        <CardDescription>Create a campaign for Facebook</CardDescription>
+        <CardTitle>Meta</CardTitle>
+        <CardDescription>Create a campaign for Meta</CardDescription>
       </CardHeader>
     </Card>
   )

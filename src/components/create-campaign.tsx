@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
 import { TikTokCampaign } from '@/components/tiktok-campaign'
-import { FacebookCampaign } from '@/components/facebook-campaign'
+import { MetaCampaign } from '@/components/meta-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
 interface CreateCampaignProps {
@@ -21,7 +21,7 @@ interface CreateCampaignProps {
 export function CreateCampaign({ organizationId }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
   const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
-  const [facebookCampaigns, setFacebookCampaigns] = useState<{id: string}[]>([])
+  const [metaCampaigns, setMetaCampaigns] = useState<{id: string}[]>([])
 
   const addLinkedInCampaign = () => {
     const newCampaign = { id: uuidv4() }
@@ -41,13 +41,13 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
     setTikTokCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
-  const addFacebookCampaign = () => {
+  const addMetaCampaign = () => {
     const newCampaign = { id: uuidv4() }
-    setFacebookCampaigns(prev => [...prev, newCampaign])
+    setMetaCampaigns(prev => [...prev, newCampaign])
   }
 
-  const removeFacebookCampaign = (id: string) => {
-    setFacebookCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+  const removeMetaCampaign = (id: string) => {
+    setMetaCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
   return (
@@ -64,7 +64,7 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
             <DropdownMenuItem className="cursor-pointer">
               Google
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={addFacebookCampaign}>
+            <DropdownMenuItem className="cursor-pointer" onClick={addMetaCampaign}>
               Meta
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
@@ -89,12 +89,12 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
           />
         ))}
 
-        {/* Facebook campaigns */}
-        {facebookCampaigns.map(campaign => (
-          <FacebookCampaign 
+        {/* Meta campaigns */}
+        {metaCampaigns.map(campaign => (
+          <MetaCampaign 
             key={campaign.id} 
             id={campaign.id} 
-            onRemove={removeFacebookCampaign}
+            onRemove={removeMetaCampaign}
             organizationId={organizationId}
           />
         ))}
