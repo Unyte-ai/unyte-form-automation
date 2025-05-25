@@ -9,7 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { getFacebookUserInfo, FacebookUserInfo } from '@/app/actions/facebook-user-info'
+import { disconnectFacebook } from '@/app/actions/facebook-disconnect'
+import { toast } from 'sonner'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -19,8 +22,9 @@ interface MetaDialogProps {
   onDisconnect?: () => Promise<void>
 }
 
-export function MetaDialog({ open, onOpenChange }: MetaDialogProps) {
+export function MetaDialog({ open, onOpenChange, onDisconnect }: MetaDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [userInfo, setUserInfo] = useState<FacebookUserInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [organizationName, setOrganizationName] = useState<string>('')
@@ -65,6 +69,43 @@ export function MetaDialog({ open, onOpenChange }: MetaDialogProps) {
     
     fetchData()
   }, [open, organizationId])
+
+  const handleDisconnect = async () => {
+    if (!organizationId) {
+      toast.error('Organization context missing', {
+        description: 'Unable to determine which organization to disconnect from.'
+      })
+      return
+    }
+    
+    try {
+      setIsDisconnecting(true)
+      
+      const result = await disconnectFacebook(organizationId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to disconnect Facebook account')
+      }
+      
+      toast.success('Facebook account disconnected', {
+        description: `Your Facebook account has been disconnected from ${organizationName}.`
+      })
+      
+      onOpenChange(false)
+      
+      if (onDisconnect) {
+        await onDisconnect()
+      }
+      
+    } catch (error) {
+      console.error('Error disconnecting Facebook account:', error)
+      toast.error('Failed to disconnect Facebook account', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+    } finally {
+      setIsDisconnecting(false)
+    }
+  }
 
   const displayName = userInfo?.displayName || 'Facebook User'
   
@@ -137,7 +178,22 @@ export function MetaDialog({ open, onOpenChange }: MetaDialogProps) {
               </p>
             </div>
             
-            {/* Future disconnect section would go here */}
+            {/* Disconnect Section */}
+            <div className="pt-2 border-t">
+              <p className="text-muted-foreground text-sm mb-4">
+                Disconnecting will remove this Meta account from {organizationName} only. 
+                Your connections to other organizations will remain unchanged.
+              </p>
+              
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+              >
+                {isDisconnecting ? 'Disconnecting...' : `Disconnect from ${organizationName}`}
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
