@@ -70,7 +70,7 @@ export interface FacebookTargeting {
 export interface FacebookAdSetData {
   name: string
   campaign_id: string
-  lifetime_budget: number // in cents
+  // lifetime_budget removed - using campaign budget instead
   billing_event: FacebookBillingEvent
   targeting: FacebookTargeting
   status: FacebookCampaignStatus
@@ -97,7 +97,7 @@ export interface FacebookCampaignAPIData {
 export interface FacebookAdSetAPIData {
   name: string
   campaign_id: string
-  lifetime_budget: number
+  // lifetime_budget removed - using campaign budget instead
   billing_event: FacebookBillingEvent
   targeting: string // JSON stringified FacebookTargeting
   status: FacebookCampaignStatus
@@ -215,9 +215,7 @@ export function validateAdSetData(data: Partial<FacebookAdSetData>): string[] {
     errors.push('Ad Set name is required')
   }
   
-  if (!data.lifetime_budget || data.lifetime_budget <= 0) {
-    errors.push('Ad Set lifetime budget must be greater than 0')
-  }
+  // Budget validation removed - using campaign budget instead
   
   if (!data.targeting?.geo_locations?.countries?.length) {
     errors.push('At least one target country is required')
@@ -289,7 +287,7 @@ export function prepareAdSetForAPI(data: FacebookAdSetData): FacebookAdSetAPIDat
   return {
     name: data.name,
     campaign_id: data.campaign_id,
-    lifetime_budget: data.lifetime_budget,
+    // lifetime_budget removed - using campaign budget instead
     billing_event: data.billing_event,
     targeting: JSON.stringify(data.targeting),
     status: data.status,

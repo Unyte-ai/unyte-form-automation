@@ -44,10 +44,9 @@ export function MetaCreateCampaignAdSet({
     lifetime_budget: 0
   })
 
-  // Ad Set form state
+  // Ad Set form state - removed lifetime_budget since using campaign budget
   const [adSetData, setAdSetData] = useState<Partial<Omit<FacebookAdSetData, 'campaign_id'>>>({
     name: '',
-    lifetime_budget: 0,
     targeting: DEFAULT_ADSET_VALUES.targeting,
     status: DEFAULT_ADSET_VALUES.status,
     start_time: getDefaultStartDate(),
@@ -97,7 +96,7 @@ export function MetaCreateCampaignAdSet({
     const adSetErrorObj: Record<string, string> = {}
     adSetValidationErrors.forEach(error => {
       if (error.includes('Ad Set name')) adSetErrorObj.name = error
-      if (error.includes('Ad Set lifetime budget')) adSetErrorObj.lifetime_budget = error
+      // Removed ad set budget validation since we're using campaign budget
       if (error.includes('country')) adSetErrorObj.countries = error
       if (error.includes('publisher platform')) adSetErrorObj.publisher_platforms = error
       if (error.includes('age')) {
@@ -129,7 +128,7 @@ export function MetaCreateCampaignAdSet({
     try {
       setIsCreating(true)
 
-      // Prepare batch data
+      // Prepare batch data - no ad set budget needed
       const batchData: FacebookBatchCampaignAdSetData = {
         campaign: campaignData as FacebookCampaignData,
         adset: adSetData as Omit<FacebookAdSetData, 'campaign_id'>
@@ -147,7 +146,7 @@ export function MetaCreateCampaignAdSet({
         description: `Campaign "${result.data!.campaignName}" and Ad Set "${result.data!.adSetName}" have been created.`
       })
 
-      // Reset form
+      // Reset form - removed ad set budget
       setCampaignData({
         name: '',
         objective: undefined,
@@ -160,7 +159,6 @@ export function MetaCreateCampaignAdSet({
 
       setAdSetData({
         name: '',
-        lifetime_budget: 0,
         targeting: DEFAULT_ADSET_VALUES.targeting,
         status: DEFAULT_ADSET_VALUES.status,
         start_time: getDefaultStartDate(),
@@ -220,7 +218,8 @@ export function MetaCreateCampaignAdSet({
       <CardHeader className="pb-4">
         <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
         <p className="text-sm text-muted-foreground">
-          This will create both a campaign and ad set together using Facebook&apos;s batch API
+          This will create both a campaign and ad set together using Facebook&apos;s batch API. 
+          Budget will be set at the campaign level and distributed across ad sets.
         </p>
       </CardHeader>
       <CardContent>
@@ -242,7 +241,7 @@ export function MetaCreateCampaignAdSet({
           <div className="space-y-4">
             <div className="border-b pb-2">
               <h3 className="font-medium text-sm">Ad Set Settings</h3>
-              <p className="text-xs text-muted-foreground">Configure targeting, budget, and schedule</p>
+              <p className="text-xs text-muted-foreground">Configure targeting and schedule (budget comes from campaign)</p>
             </div>
             <MetaAdSetFields
               value={adSetData}
@@ -259,6 +258,7 @@ export function MetaCreateCampaignAdSet({
                 <br />
                 <span className="text-xs">
                   This billing event is automatically set based on your selected campaign objective.
+                  Budget is managed at the campaign level.
                 </span>
               </p>
             </div>

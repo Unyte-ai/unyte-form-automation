@@ -9,9 +9,7 @@ import {
   FacebookPublisherPlatform,
   COMMON_COUNTRIES,
   PUBLISHER_PLATFORMS,
-  DEFAULT_ADSET_VALUES,
-  formatBudgetCents,
-  parseBudgetToCents
+  DEFAULT_ADSET_VALUES
 } from '@/lib/facebook-campaign-utils'
 
 interface MetaAdSetFieldsProps {
@@ -27,25 +25,6 @@ export function MetaAdSetFields({ value, onChange, errors }: MetaAdSetFieldsProp
       ...value,
       [field]: fieldValue
     })
-  }
-
-  // Handle budget change with cent conversion
-  const handleBudgetChange = (budgetString: string) => {
-    if (budgetString === '') {
-      handleFieldChange('lifetime_budget', 0)
-      return
-    }
-    
-    const cents = parseBudgetToCents(budgetString)
-    handleFieldChange('lifetime_budget', cents)
-  }
-
-  // Get current budget as string for display
-  const getBudgetDisplayValue = (): string => {
-    if (!value.lifetime_budget || value.lifetime_budget === 0) {
-      return ''
-    }
-    return formatBudgetCents(value.lifetime_budget)
   }
 
   // Handle targeting changes - separate functions for type safety
@@ -148,24 +127,11 @@ export function MetaAdSetFields({ value, onChange, errors }: MetaAdSetFieldsProp
         )}
       </div>
 
-      {/* Ad Set Budget */}
-      <div className="grid gap-2">
-        <Label htmlFor="adset-budget">Ad Set Lifetime Budget (USD) *</Label>
-        <Input
-          id="adset-budget"
-          type="number"
-          step="0.01"
-          min="0"
-          value={getBudgetDisplayValue()}
-          onChange={(e) => handleBudgetChange(e.target.value)}
-          placeholder="0.00"
-          className={errors?.lifetime_budget ? 'border-destructive' : ''}
-        />
-        {errors?.lifetime_budget && (
-          <p className="text-xs text-destructive">{errors.lifetime_budget}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          This should typically be less than or equal to the campaign budget
+      {/* Budget Notice */}
+      <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
+        <p className="text-blue-800 dark:text-blue-300 text-sm">
+          <strong>Budget:</strong> This ad set will use the campaign budget. 
+          Facebook will automatically distribute the campaign budget across all ad sets.
         </p>
       </div>
 
