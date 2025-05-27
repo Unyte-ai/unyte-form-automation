@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { MetaAdAccount } from '@/components/meta-ad-account'
 import { MetaAdCampaign } from '@/components/meta-ad-campaign'
+import { MetaCreateCampaignAdSet } from '@/components/meta-create-campaign-adset'
 import { getFacebookAdAccounts, FacebookAdAccount } from '@/app/actions/facebook-ad-accounts'
 import { getFacebookAdCampaigns, FacebookAdCampaign } from '@/app/actions/facebook-ad-campaigns'
 import { toast } from 'sonner'
@@ -91,7 +92,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
 
   // Handle ad account selection
   const handleAdAccountChange = (value: string) => {
-
     setSelectedAccount(value)
     // Reset campaigns when account changes
     setCampaigns([])
@@ -101,6 +101,33 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
   const handleCampaignChange = (value: string) => {
     console.log('Selected Facebook campaign:', value)
     // You can add additional logic here when a campaign is selected
+  }
+
+  // Handle successful campaign creation
+  const handleCampaignCreated = async (createdCampaign: { 
+    campaignId: string
+    campaignName: string
+    adSetId: string
+    adSetName: string 
+  }) => {
+    console.log('Campaign created successfully:', createdCampaign)
+    
+    // Refresh the campaigns list to include the new campaign
+    if (selectedAccount) {
+      try {
+        setIsLoadingCampaigns(true)
+        const result = await getFacebookAdCampaigns(organizationId, selectedAccount)
+        
+        if (result.success) {
+          setCampaigns(result.data || [])
+        }
+      } catch (error) {
+        console.error('Error refreshing campaigns after creation:', error)
+        // Still show success message even if refresh fails
+      } finally {
+        setIsLoadingCampaigns(false)
+      }
+    }
   }
 
   return (
@@ -141,6 +168,15 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
             campaigns={campaigns}
             onChange={handleCampaignChange}
             isLoading={isLoadingCampaigns}
+          />
+        )}
+
+        {/* Create New Campaign & Ad Set - Only show when ad account is selected */}
+        {selectedAccount && (
+          <MetaCreateCampaignAdSet
+            organizationId={organizationId}
+            selectedAdAccount={selectedAccount}
+            onCampaignCreated={handleCampaignCreated}
           />
         )}
       </CardContent>
