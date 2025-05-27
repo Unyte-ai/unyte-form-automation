@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { 
   FacebookBatchCampaignAdSetData,
-  getBillingEventForObjective,
+  getBillingEventForUIObjective,
   validateCampaignData,
   validateAdSetData
 } from '@/lib/facebook-campaign-utils'
@@ -55,7 +55,7 @@ export async function createFacebookCampaignAndAdSet(
     const adSetData = {
       ...adSetDataWithoutCampaignId,
       campaign_id: 'temp', // Will be replaced in batch request
-      billing_event: getBillingEventForObjective(campaignData.objective)
+      billing_event: getBillingEventForUIObjective(campaignData.objective)
     }
 
     // Validate ad set data
@@ -92,7 +92,7 @@ export async function createFacebookCampaignAndAdSet(
       throw new Error('Facebook access token has expired. Please reconnect your Facebook account.')
     }
 
-    // Build batch requests
+    // Build batch requests - buildCampaignBatchRequest does its own conversion internally
     const campaignRequest = buildCampaignBatchRequest(adAccountId, campaignData)
     const adSetRequest = buildAdSetBatchRequest(adAccountId, adSetDataWithoutCampaignId)
 
@@ -141,29 +141,39 @@ export async function createFacebookCampaignAndAdSet(
     const [campaignResult, adSetResult] = batchResults
 
     // Check campaign creation result
-    if (campaignResult.code !== 200) {
-      let errorMessage = `Campaign creation failed with status ${campaignResult.code}`
-      try {
-        const errorData = JSON.parse(campaignResult.body)
-        if (errorData.error?.message) {
-          errorMessage = `Campaign creation failed: ${errorData.error.message}`
+    if (!campaignResult || campaignResult.code !== 200) {
+      let errorMessage = !campaignResult 
+        ? 'Campaign creation failed: No response received'
+        : `Campaign creation failed with status ${campaignResult.code}`
+      
+      if (campaignResult?.body) {
+        try {
+          const errorData = JSON.parse(campaignResult.body)
+          if (errorData.error?.message) {
+            errorMessage = `Campaign creation failed: ${errorData.error.message}`
+          }
+        } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+          // Use default error message if parsing fails
         }
-      } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Use default error message if parsing fails
       }
       throw new Error(errorMessage)
     }
 
     // Check ad set creation result
-    if (adSetResult.code !== 200) {
-      let errorMessage = `Ad Set creation failed with status ${adSetResult.code}`
-      try {
-        const errorData = JSON.parse(adSetResult.body)
-        if (errorData.error?.message) {
-          errorMessage = `Ad Set creation failed: ${errorData.error.message}`
+    if (!adSetResult || adSetResult.code !== 200) {
+      let errorMessage = !adSetResult
+        ? 'Ad Set creation failed: No response received'
+        : `Ad Set creation failed with status ${adSetResult.code}`
+      
+      if (adSetResult?.body) {
+        try {
+          const errorData = JSON.parse(adSetResult.body)
+          if (errorData.error?.message) {
+            errorMessage = `Ad Set creation failed: ${errorData.error.message}`
+          }
+        } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+          // Use default error message if parsing fails
         }
-      } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Use default error message if parsing fails
       }
       throw new Error(errorMessage)
     }

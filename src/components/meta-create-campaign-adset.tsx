@@ -16,7 +16,7 @@ import {
   DEFAULT_ADSET_VALUES,
   validateCampaignData,
   validateAdSetData,
-  getBillingEventForObjective
+  getBillingEventForUIObjective
 } from '@/lib/facebook-campaign-utils'
 
 interface MetaCreateCampaignAdSetProps {
@@ -90,7 +90,7 @@ export function MetaCreateCampaignAdSet({
     const tempAdSetData: FacebookAdSetData = {
       ...(adSetData as Omit<FacebookAdSetData, 'campaign_id' | 'billing_event'>),
       campaign_id: 'temp',
-      billing_event: campaignData.objective ? getBillingEventForObjective(campaignData.objective) : 'IMPRESSIONS'
+      billing_event: campaignData.objective ? getBillingEventForUIObjective(campaignData.objective) : 'IMPRESSIONS'
     }
     
     const adSetValidationErrors = validateAdSetData(tempAdSetData)
@@ -220,7 +220,7 @@ export function MetaCreateCampaignAdSet({
       <CardHeader className="pb-4">
         <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
         <p className="text-sm text-muted-foreground">
-          This will create both a campaign and ad set together using Facebook&apo;s batch API
+          This will create both a campaign and ad set together using Facebook&apos;s batch API
         </p>
       </CardHeader>
       <CardContent>
@@ -255,7 +255,7 @@ export function MetaCreateCampaignAdSet({
           {campaignData.objective && (
             <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
               <p className="text-blue-800 dark:text-blue-300 text-sm">
-                <strong>Billing Event:</strong> {getBillingEventForObjective(campaignData.objective)} 
+                <strong>Billing Event:</strong> {getBillingEventForUIObjective(campaignData.objective)} 
                 <br />
                 <span className="text-xs">
                   This billing event is automatically set based on your selected campaign objective.
