@@ -146,14 +146,38 @@ export async function createFacebookCampaignAndAdSet(
         ? 'Ad Set creation failed: No response received'
         : `Ad Set creation failed with status ${adSetResult.code}`
       
+      // Enhanced error logging - log the full response for debugging
+      console.error('Ad Set creation failed - Full response:', {
+        code: adSetResult?.code,
+        body: adSetResult?.body,
+        headers: adSetResult?.headers
+      })
+      
       if (adSetResult?.body) {
         try {
           const errorData = JSON.parse(adSetResult.body)
-          if (errorData.error?.message) {
+          console.error('Parsed Facebook API error:', errorData)
+          
+          if (errorData.error) {
             errorMessage = `Ad Set creation failed: ${errorData.error.message}`
+            
+            // Log specific error details if available
+            if (errorData.error.error_user_title) {
+              console.error('Error user title:', errorData.error.error_user_title)
+            }
+            if (errorData.error.error_user_msg) {
+              console.error('Error user message:', errorData.error.error_user_msg)
+            }
+            if (errorData.error.error_subcode) {
+              console.error('Error subcode:', errorData.error.error_subcode)
+            }
+            if (errorData.error.fbtrace_id) {
+              console.error('Facebook trace ID:', errorData.error.fbtrace_id)
+            }
           }
-        } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-          // Use default error message if parsing fails
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError)
+          console.error('Raw error body:', adSetResult.body)
         }
       }
       throw new Error(errorMessage)

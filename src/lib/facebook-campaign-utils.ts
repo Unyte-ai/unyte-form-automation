@@ -4,19 +4,11 @@
 export type FacebookCampaignObjective = 
   | 'AWARENESS'
   | 'TRAFFIC'
-  | 'ENGAGEMENT'
-  | 'LEADS'
-  | 'APP_PROMOTION'
-  | 'SALES'
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
   | 'OUTCOME_AWARENESS'
   | 'OUTCOME_TRAFFIC'
-  | 'OUTCOME_ENGAGEMENT'
-  | 'OUTCOME_LEADS'
-  | 'OUTCOME_APP_PROMOTION'
-  | 'OUTCOME_SALES'
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -108,31 +100,19 @@ export interface FacebookAdSetAPIData {
 // UI to API objective mapping
 export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCampaignAPIObjective> = {
   'AWARENESS': 'OUTCOME_AWARENESS',
-  'TRAFFIC': 'OUTCOME_TRAFFIC',
-  'ENGAGEMENT': 'OUTCOME_ENGAGEMENT',
-  'LEADS': 'OUTCOME_LEADS',
-  'APP_PROMOTION': 'OUTCOME_APP_PROMOTION',
-  'SALES': 'OUTCOME_SALES'
+  'TRAFFIC': 'OUTCOME_TRAFFIC'
 }
 
-// Objective to Billing Event mapping (using UI objectives)
+// Objective to Billing Event mapping (using IMPRESSIONS for all objectives for shell campaigns)
 export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
   'AWARENESS': 'IMPRESSIONS',
-  'TRAFFIC': 'LINK_CLICKS',
-  'ENGAGEMENT': 'POST_ENGAGEMENT',
-  'LEADS': 'NONE',
-  'APP_PROMOTION': 'APP_INSTALLS',
-  'SALES': 'PURCHASE'
+  'TRAFFIC': 'IMPRESSIONS'
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
 export const CAMPAIGN_OBJECTIVES = [
   { value: 'AWARENESS', label: 'Brand Awareness' },
-  { value: 'TRAFFIC', label: 'Traffic' },
-  { value: 'ENGAGEMENT', label: 'Engagement' },
-  { value: 'LEADS', label: 'Lead Generation' },
-  { value: 'APP_PROMOTION', label: 'App Promotion' },
-  { value: 'SALES', label: 'Sales' }
+  { value: 'TRAFFIC', label: 'Traffic' }
 ] as const
 
 // Publisher platforms with human-readable labels
