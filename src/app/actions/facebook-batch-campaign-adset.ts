@@ -7,8 +7,7 @@ import {
   validateCampaignData,
   validateAdSetData
 } from '@/lib/facebook-campaign-utils'
-import { buildCampaignBatchRequest } from './facebook-create-campaign'
-import { buildAdSetBatchRequest } from './facebook-create-adset'
+import { buildCampaignBatchRequest, buildAdSetBatchRequest } from '@/lib/facebook-batch-utils'
 
 export interface BatchCampaignAdSetResult {
   success: boolean
