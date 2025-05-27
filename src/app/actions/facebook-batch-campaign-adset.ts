@@ -99,13 +99,6 @@ export async function createFacebookCampaignAndAdSet(
     // Create the batch request array
     const batchRequests = [campaignRequest, adSetRequest]
 
-    // ADD THIS DEBUGGING CODE:
-    console.log('=== BATCH REQUEST DEBUGGING ===')
-    console.log('Campaign request:', JSON.stringify(campaignRequest, null, 2))
-    console.log('AdSet request:', JSON.stringify(adSetRequest, null, 2))
-    console.log('AdSet data billing_event:', adSetData.billing_event)
-    console.log('=== END DEBUGGING ===')
-
     console.log('Creating Facebook campaign and ad set batch request:', {
       adAccountId,
       campaignName: campaignData.name,
@@ -134,22 +127,9 @@ export async function createFacebookCampaignAndAdSet(
 
     const batchResults: FacebookBatchResponse[] = await response.json()
 
-    // ADD THIS DEBUGGING CODE:
-    console.log('Raw Facebook batch response:', JSON.stringify(batchResults, null, 2))
-    console.log('Campaign result structure:', batchResults[0])
-    console.log('AdSet result structure:', batchResults[1])
-
-    // ADD MORE DETAILED LOGGING:
-    console.log('Raw batch response length:', batchResults.length)
-    console.log('Campaign result (index 0):', batchResults[0])
-    console.log('Campaign result type:', typeof batchResults[0])
-    console.log('Campaign result === null:', batchResults[0] === null)
-    console.log('Campaign result === undefined:', batchResults[0] === undefined)
-    console.log('AdSet result (index 1):', batchResults[1])
-    
     console.log('Facebook batch request completed:', {
       resultsCount: batchResults.length,
-      campaignResult: batchResults[0]?.code,
+      campaignResult: batchResults[0]?.code || 'null',
       adSetResult: batchResults[1]?.code
     })
 
@@ -160,26 +140,7 @@ export async function createFacebookCampaignAndAdSet(
 
     const [campaignResult, adSetResult] = batchResults
 
-    // Check campaign creation result
-    if (!campaignResult || campaignResult.code !== 200) {
-      let errorMessage = !campaignResult 
-        ? 'Campaign creation failed: No response received'
-        : `Campaign creation failed with status ${campaignResult.code}`
-      
-      if (campaignResult?.body) {
-        try {
-          const errorData = JSON.parse(campaignResult.body)
-          if (errorData.error?.message) {
-            errorMessage = `Campaign creation failed: ${errorData.error.message}`
-          }
-        } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-          // Use default error message if parsing fails
-        }
-      }
-      throw new Error(errorMessage)
-    }
-
-    // Check ad set creation result
+    // Check ad set creation result first
     if (!adSetResult || adSetResult.code !== 200) {
       let errorMessage = !adSetResult
         ? 'Ad Set creation failed: No response received'
@@ -198,21 +159,8 @@ export async function createFacebookCampaignAndAdSet(
       throw new Error(errorMessage)
     }
 
-    // Parse successful results
-    let campaignId: string
+    // Parse ad set result (we know it's successful at this point)
     let adSetId: string
-
-    try {
-      const campaignResponseData = JSON.parse(campaignResult.body)
-      campaignId = campaignResponseData.id
-
-      if (!campaignId) {
-        throw new Error('Campaign created but no ID returned')
-      }
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      throw new Error('Failed to parse campaign creation response')
-    }
-
     try {
       const adSetResponseData = JSON.parse(adSetResult.body)
       adSetId = adSetResponseData.id
@@ -222,6 +170,75 @@ export async function createFacebookCampaignAndAdSet(
       }
     } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       throw new Error('Failed to parse ad set creation response')
+    }
+
+    // Handle campaign result - Facebook sometimes returns null for successful requests
+    let campaignId: string
+
+    if (!campaignResult || campaignResult.code !== 200) {
+      // Check if campaign result is null but ad set creation succeeded
+      // This indicates campaign was created (batch reference was resolved) but Facebook returned null
+      if (campaignResult === null && adSetResult.code === 200) {
+        console.log('Campaign result is null but ad set creation succeeded - fetching campaign ID from ad set details')
+        
+        // Make a follow-up API call to get ad set details including campaign_id
+        try {
+          const adSetDetailsResponse = await fetch(
+            `https://graph.facebook.com/v22.0/${adSetId}?fields=campaign_id&access_token=${connection.access_token}`,
+            {
+              method: 'GET',
+              headers: {
+                'Cache-Control': 'no-cache'
+              }
+            }
+          )
+
+          if (!adSetDetailsResponse.ok) {
+            throw new Error(`Failed to fetch ad set details: ${adSetDetailsResponse.status}`)
+          }
+
+          const adSetDetails = await adSetDetailsResponse.json()
+          campaignId = adSetDetails.campaign_id
+
+          if (!campaignId) {
+            throw new Error('Could not retrieve campaign ID from ad set details')
+          }
+
+          console.log('Successfully retrieved campaign ID from ad set details:', campaignId)
+        } catch (fetchError) {
+          console.error('Error fetching campaign ID from ad set details:', fetchError)
+          throw new Error('Campaign creation succeeded but could not retrieve campaign ID')
+        }
+      } else {
+        // Genuine campaign creation failure
+        let errorMessage = !campaignResult 
+          ? 'Campaign creation failed: No response received'
+          : `Campaign creation failed with status ${campaignResult.code}`
+        
+        if (campaignResult?.body) {
+          try {
+            const errorData = JSON.parse(campaignResult.body)
+            if (errorData.error?.message) {
+              errorMessage = `Campaign creation failed: ${errorData.error.message}`
+            }
+          } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+            // Use default error message if parsing fails
+          }
+        }
+        throw new Error(errorMessage)
+      }
+    } else {
+      // Normal successful campaign result
+      try {
+        const campaignResponseData = JSON.parse(campaignResult.body)
+        campaignId = campaignResponseData.id
+
+        if (!campaignId) {
+          throw new Error('Campaign created but no ID returned')
+        }
+      } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        throw new Error('Failed to parse campaign creation response')
+      }
     }
 
     console.log('Facebook campaign and ad set created successfully:', {
