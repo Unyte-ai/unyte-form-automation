@@ -1,0 +1,222 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { 
+  FacebookBatchCampaignAdSetData,
+  getBillingEventForObjective,
+  validateCampaignData,
+  validateAdSetData
+} from '@/lib/facebook-campaign-utils'
+import { buildCampaignBatchRequest } from './facebook-create-campaign'
+import { buildAdSetBatchRequest } from './facebook-create-adset'
+
+export interface BatchCampaignAdSetResult {
+  success: boolean
+  data?: {
+    campaignId: string
+    campaignName: string
+    adSetId: string
+    adSetName: string
+  }
+  error?: string
+}
+
+interface FacebookBatchResponse {
+  code: number
+  headers?: Array<{ name: string; value: string }>
+  body: string
+}
+
+/**
+ * Creates both a Facebook campaign and ad set in a single batch request
+ * @param organizationId - The organization ID in our system
+ * @param adAccountId - The Facebook ad account ID (with act_ prefix)
+ * @param batchData - Combined campaign and ad set data
+ */
+export async function createFacebookCampaignAndAdSet(
+  organizationId: string,
+  adAccountId: string,
+  batchData: FacebookBatchCampaignAdSetData
+): Promise<BatchCampaignAdSetResult> {
+  try {
+    const { campaign: campaignData, adset: adSetDataWithoutCampaignId } = batchData
+
+    // Validate input parameters
+    if (!organizationId || !adAccountId) {
+      throw new Error('Organization ID and Ad Account ID are required')
+    }
+
+    // Validate campaign data
+    const campaignErrors = validateCampaignData(campaignData)
+    if (campaignErrors.length > 0) {
+      throw new Error(`Campaign validation failed: ${campaignErrors.join(', ')}`)
+    }
+
+    // Create complete ad set data with billing event derived from campaign objective
+    const adSetData = {
+      ...adSetDataWithoutCampaignId,
+      campaign_id: 'temp', // Will be replaced in batch request
+      billing_event: getBillingEventForObjective(campaignData.objective)
+    }
+
+    // Validate ad set data
+    const adSetErrors = validateAdSetData(adSetData)
+    if (adSetErrors.length > 0) {
+      throw new Error(`Ad Set validation failed: ${adSetErrors.join(', ')}`)
+    }
+
+    // Get current user and Facebook connection
+    const supabase = await createClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      throw new Error('User not authenticated')
+    }
+
+    // Get the Facebook connection for this user and organization
+    const { data: connection, error: connectionError } = await supabase
+      .from('facebook_connections')
+      .select('access_token, token_expires_at')
+      .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
+      .single()
+    
+    if (connectionError || !connection) {
+      throw new Error('Facebook connection not found for this organization')
+    }
+
+    // Check if the token is expired
+    const tokenExpiresAt = new Date(connection.token_expires_at)
+    const now = new Date()
+    
+    if (tokenExpiresAt <= now) {
+      throw new Error('Facebook access token has expired. Please reconnect your Facebook account.')
+    }
+
+    // Build batch requests
+    const campaignRequest = buildCampaignBatchRequest(adAccountId, campaignData)
+    const adSetRequest = buildAdSetBatchRequest(adAccountId, adSetDataWithoutCampaignId)
+
+    // Create the batch request array
+    const batchRequests = [campaignRequest, adSetRequest]
+
+    console.log('Creating Facebook campaign and ad set batch request:', {
+      adAccountId,
+      campaignName: campaignData.name,
+      adSetName: adSetData.name,
+      objective: campaignData.objective,
+      billingEvent: adSetData.billing_event,
+      batchSize: batchRequests.length
+    })
+
+    // Make the batch API call
+    const formData = new FormData()
+    formData.append('access_token', connection.access_token)
+    formData.append('batch', JSON.stringify(batchRequests))
+    formData.append('include_headers', 'false') // Exclude headers for efficiency
+
+    const response = await fetch('https://graph.facebook.com/v22.0', {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Facebook Batch API request failed:', response.status, errorText)
+      throw new Error(`Facebook Batch API request failed: ${response.status} ${errorText}`)
+    }
+
+    const batchResults: FacebookBatchResponse[] = await response.json()
+
+    console.log('Facebook batch request completed:', {
+      resultsCount: batchResults.length,
+      campaignResult: batchResults[0]?.code,
+      adSetResult: batchResults[1]?.code
+    })
+
+    // Validate batch response structure
+    if (!Array.isArray(batchResults) || batchResults.length !== 2) {
+      throw new Error('Invalid batch response: expected array with 2 results')
+    }
+
+    const [campaignResult, adSetResult] = batchResults
+
+    // Check campaign creation result
+    if (campaignResult.code !== 200) {
+      let errorMessage = `Campaign creation failed with status ${campaignResult.code}`
+      try {
+        const errorData = JSON.parse(campaignResult.body)
+        if (errorData.error?.message) {
+          errorMessage = `Campaign creation failed: ${errorData.error.message}`
+        }
+      } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        // Use default error message if parsing fails
+      }
+      throw new Error(errorMessage)
+    }
+
+    // Check ad set creation result
+    if (adSetResult.code !== 200) {
+      let errorMessage = `Ad Set creation failed with status ${adSetResult.code}`
+      try {
+        const errorData = JSON.parse(adSetResult.body)
+        if (errorData.error?.message) {
+          errorMessage = `Ad Set creation failed: ${errorData.error.message}`
+        }
+      } catch (parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        // Use default error message if parsing fails
+      }
+      throw new Error(errorMessage)
+    }
+
+    // Parse successful results
+    let campaignId: string
+    let adSetId: string
+
+    try {
+      const campaignResponseData = JSON.parse(campaignResult.body)
+      campaignId = campaignResponseData.id
+
+      if (!campaignId) {
+        throw new Error('Campaign created but no ID returned')
+      }
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      throw new Error('Failed to parse campaign creation response')
+    }
+
+    try {
+      const adSetResponseData = JSON.parse(adSetResult.body)
+      adSetId = adSetResponseData.id
+
+      if (!adSetId) {
+        throw new Error('Ad Set created but no ID returned')
+      }
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      throw new Error('Failed to parse ad set creation response')
+    }
+
+    console.log('Facebook campaign and ad set created successfully:', {
+      campaignId,
+      adSetId,
+      campaignName: campaignData.name,
+      adSetName: adSetData.name
+    })
+
+    return {
+      success: true,
+      data: {
+        campaignId,
+        campaignName: campaignData.name,
+        adSetId,
+        adSetName: adSetData.name
+      }
+    }
+
+  } catch (error) {
+    console.error('Error creating Facebook campaign and ad set:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred'
+    }
+  }
+}
