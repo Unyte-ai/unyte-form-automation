@@ -1,7 +1,7 @@
 // Facebook Campaign and Ad Set Types and Utilities
 
-// UI-level objectives (what users see in Meta Ads Manager)
-export type FacebookCampaignUIObjective = 
+// UI Objectives (what users see in forms)
+export type FacebookCampaignObjective = 
   | 'AWARENESS'
   | 'TRAFFIC'
   | 'ENGAGEMENT'
@@ -9,16 +9,14 @@ export type FacebookCampaignUIObjective =
   | 'APP_PROMOTION'
   | 'SALES'
 
-// API-level objectives (what gets sent to Facebook API)
+// API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
-  | 'BRAND_AWARENESS'
-  | 'REACH'
-  | 'TRAFFIC'
-  | 'POST_ENGAGEMENT'
-  | 'LEAD_GENERATION'
-  | 'APP_INSTALLS'
-  | 'CONVERSIONS'
-  | 'PRODUCT_CATALOG_SALES'
+  | 'OUTCOME_AWARENESS'
+  | 'OUTCOME_TRAFFIC'
+  | 'OUTCOME_ENGAGEMENT'
+  | 'OUTCOME_LEADS'
+  | 'OUTCOME_APP_PROMOTION'
+  | 'OUTCOME_SALES'
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -36,8 +34,6 @@ export type FacebookBillingEvent =
   | 'LEAD_GENERATION'
   | 'MESSAGES'
   | 'OFFSITE_CONVERSIONS'
-  | 'THRUPLAY'
-  | 'TWO_SECOND_CONTINUOUS_VIDEO_VIEWS'
 
 export type FacebookPublisherPlatform = 
   | 'facebook'
@@ -48,7 +44,7 @@ export type FacebookPublisherPlatform =
 
 export interface FacebookCampaignData {
   name: string
-  objective: FacebookCampaignUIObjective // UI objective for form handling
+  objective: FacebookCampaignObjective
   status: FacebookCampaignStatus
   special_ad_categories: FacebookSpecialAdCategory[] | []
   buying_type: FacebookBuyingType
@@ -86,7 +82,7 @@ export interface FacebookBatchCampaignAdSetData {
 // API-ready interfaces (what gets sent to Facebook)
 export interface FacebookCampaignAPIData {
   name: string
-  objective: FacebookCampaignAPIObjective // API objective for Facebook
+  objective: FacebookCampaignAPIObjective // Note: API objective type
   status: FacebookCampaignStatus
   special_ad_categories: FacebookSpecialAdCategory[] | []
   buying_type: FacebookBuyingType
@@ -105,34 +101,32 @@ export interface FacebookAdSetAPIData {
   end_time: string
 }
 
-// Mapping from UI objectives to API objectives
-export const UI_TO_API_OBJECTIVE_MAPPING: Record<FacebookCampaignUIObjective, FacebookCampaignAPIObjective> = {
-  AWARENESS: 'BRAND_AWARENESS',
-  TRAFFIC: 'TRAFFIC',
-  ENGAGEMENT: 'POST_ENGAGEMENT',
-  LEADS: 'LEAD_GENERATION',
-  APP_PROMOTION: 'APP_INSTALLS',
-  SALES: 'CONVERSIONS'
+// UI to API objective mapping
+export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCampaignAPIObjective> = {
+  'AWARENESS': 'OUTCOME_AWARENESS',
+  'TRAFFIC': 'OUTCOME_TRAFFIC',
+  'ENGAGEMENT': 'OUTCOME_ENGAGEMENT',
+  'LEADS': 'OUTCOME_LEADS',
+  'APP_PROMOTION': 'OUTCOME_APP_PROMOTION',
+  'SALES': 'OUTCOME_SALES'
 }
 
-// API Objective to Billing Event mapping
-export const API_OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignAPIObjective, FacebookBillingEvent> = {
-  BRAND_AWARENESS: 'IMPRESSIONS',
-  REACH: 'IMPRESSIONS',
-  TRAFFIC: 'LINK_CLICKS',
-  POST_ENGAGEMENT: 'IMPRESSIONS',
-  LEAD_GENERATION: 'LEAD_GENERATION',
-  APP_INSTALLS: 'IMPRESSIONS',
-  CONVERSIONS: 'OFFSITE_CONVERSIONS',
-  PRODUCT_CATALOG_SALES: 'IMPRESSIONS'
+// Objective to Billing Event mapping (using UI objectives)
+export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
+  'AWARENESS': 'IMPRESSIONS',
+  'TRAFFIC': 'LINK_CLICKS',
+  'ENGAGEMENT': 'POST_ENGAGEMENT',
+  'LEADS': 'LEAD_GENERATION',
+  'APP_PROMOTION': 'IMPRESSIONS',
+  'SALES': 'OFFSITE_CONVERSIONS'
 }
 
-// Campaign objectives with human-readable labels (what users see)
+// Campaign objectives with human-readable labels (for UI dropdowns)
 export const CAMPAIGN_OBJECTIVES = [
-  { value: 'AWARENESS', label: 'Awareness' },
+  { value: 'AWARENESS', label: 'Brand Awareness' },
   { value: 'TRAFFIC', label: 'Traffic' },
   { value: 'ENGAGEMENT', label: 'Engagement' },
-  { value: 'LEADS', label: 'Leads' },
+  { value: 'LEADS', label: 'Lead Generation' },
   { value: 'APP_PROMOTION', label: 'App Promotion' },
   { value: 'SALES', label: 'Sales' }
 ] as const
@@ -184,17 +178,12 @@ export const DEFAULT_ADSET_VALUES: Partial<FacebookAdSetData> = {
 }
 
 // Utility functions
-export function convertUIObjectiveToAPI(uiObjective: FacebookCampaignUIObjective): FacebookCampaignAPIObjective {
-  return UI_TO_API_OBJECTIVE_MAPPING[uiObjective]
+export function getBillingEventForUIObjective(objective: FacebookCampaignObjective): FacebookBillingEvent {
+  return OBJECTIVE_TO_BILLING_EVENT[objective]
 }
 
-export function getBillingEventForUIObjective(uiObjective: FacebookCampaignUIObjective): FacebookBillingEvent {
-  const apiObjective = convertUIObjectiveToAPI(uiObjective)
-  return API_OBJECTIVE_TO_BILLING_EVENT[apiObjective]
-}
-
-export function getBillingEventForAPIObjective(apiObjective: FacebookCampaignAPIObjective): FacebookBillingEvent {
-  return API_OBJECTIVE_TO_BILLING_EVENT[apiObjective]
+export function getAPIObjectiveFromUIObjective(uiObjective: FacebookCampaignObjective): FacebookCampaignAPIObjective {
+  return UI_TO_API_OBJECTIVE[uiObjective]
 }
 
 export function validateCampaignData(data: Partial<FacebookCampaignData>): string[] {
@@ -283,7 +272,7 @@ export function parseBudgetToCents(dollarAmount: string): number {
 export function prepareCampaignForAPI(data: FacebookCampaignData): FacebookCampaignAPIData {
   return {
     name: data.name,
-    objective: convertUIObjectiveToAPI(data.objective), // Convert UI objective to API objective
+    objective: getAPIObjectiveFromUIObjective(data.objective), // Convert UI to API objective
     status: data.status,
     special_ad_categories: data.special_ad_categories,
     buying_type: data.buying_type,
