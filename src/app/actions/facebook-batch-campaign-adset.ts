@@ -94,10 +94,17 @@ export async function createFacebookCampaignAndAdSet(
 
     // Build batch requests - buildCampaignBatchRequest does its own conversion internally
     const campaignRequest = buildCampaignBatchRequest(adAccountId, campaignData)
-    const adSetRequest = buildAdSetBatchRequest(adAccountId, adSetDataWithoutCampaignId)
+    const adSetRequest = buildAdSetBatchRequest(adAccountId, adSetData)
 
     // Create the batch request array
     const batchRequests = [campaignRequest, adSetRequest]
+
+    // ADD THIS DEBUGGING CODE:
+    console.log('=== BATCH REQUEST DEBUGGING ===')
+    console.log('Campaign request:', JSON.stringify(campaignRequest, null, 2))
+    console.log('AdSet request:', JSON.stringify(adSetRequest, null, 2))
+    console.log('AdSet data billing_event:', adSetData.billing_event)
+    console.log('=== END DEBUGGING ===')
 
     console.log('Creating Facebook campaign and ad set batch request:', {
       adAccountId,
@@ -127,6 +134,11 @@ export async function createFacebookCampaignAndAdSet(
 
     const batchResults: FacebookBatchResponse[] = await response.json()
 
+    // ADD THIS DEBUGGING CODE:
+    console.log('Raw Facebook batch response:', JSON.stringify(batchResults, null, 2))
+    console.log('Campaign result structure:', batchResults[0])
+    console.log('AdSet result structure:', batchResults[1])
+    
     console.log('Facebook batch request completed:', {
       resultsCount: batchResults.length,
       campaignResult: batchResults[0]?.code,

@@ -27,13 +27,17 @@ export type FacebookBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
 export type FacebookSpecialAdCategory = 'NONE'
 
 export type FacebookBillingEvent = 
+  | 'APP_INSTALLS'
+  | 'CLICKS'
   | 'IMPRESSIONS'
   | 'LINK_CLICKS'
+  | 'NONE'
+  | 'OFFER_CLAIMS'
+  | 'PAGE_LIKES'
   | 'POST_ENGAGEMENT'
-  | 'VIDEO_VIEWS'
-  | 'LEAD_GENERATION'
-  | 'MESSAGES'
-  | 'OFFSITE_CONVERSIONS'
+  | 'THRUPLAY'
+  | 'PURCHASE'
+  | 'LISTING_INTERACTION'
 
 export type FacebookPublisherPlatform = 
   | 'facebook'
@@ -116,9 +120,9 @@ export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, Faceb
   'AWARENESS': 'IMPRESSIONS',
   'TRAFFIC': 'LINK_CLICKS',
   'ENGAGEMENT': 'POST_ENGAGEMENT',
-  'LEADS': 'LEAD_GENERATION',
-  'APP_PROMOTION': 'IMPRESSIONS',
-  'SALES': 'OFFSITE_CONVERSIONS'
+  'LEADS': 'NONE',
+  'APP_PROMOTION': 'APP_INSTALLS',
+  'SALES': 'PURCHASE'
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)

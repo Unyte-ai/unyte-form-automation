@@ -57,7 +57,7 @@ import {
    */
   export function buildAdSetBatchRequest(
     adAccountId: string,
-    adSetData: Omit<FacebookAdSetData, 'campaign_id'>
+    adSetData: FacebookAdSetData
   ): {
     method: string
     name: string
