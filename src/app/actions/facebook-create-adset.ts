@@ -84,7 +84,6 @@ export async function createFacebookAdSet(
       campaignId: adSetData.campaign_id,
       adSetName: adSetData.name,
       billingEvent: adSetData.billing_event,
-      budget: adSetData.lifetime_budget,
       targetingCountries: adSetData.targeting.geo_locations.countries
     })
 

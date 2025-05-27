@@ -138,6 +138,14 @@ export async function createFacebookCampaignAndAdSet(
     console.log('Raw Facebook batch response:', JSON.stringify(batchResults, null, 2))
     console.log('Campaign result structure:', batchResults[0])
     console.log('AdSet result structure:', batchResults[1])
+
+    // ADD MORE DETAILED LOGGING:
+    console.log('Raw batch response length:', batchResults.length)
+    console.log('Campaign result (index 0):', batchResults[0])
+    console.log('Campaign result type:', typeof batchResults[0])
+    console.log('Campaign result === null:', batchResults[0] === null)
+    console.log('Campaign result === undefined:', batchResults[0] === undefined)
+    console.log('AdSet result (index 1):', batchResults[1])
     
     console.log('Facebook batch request completed:', {
       resultsCount: batchResults.length,
