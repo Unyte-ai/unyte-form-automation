@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { MetaAdAccount } from '@/components/meta-ad-account'
 import { MetaAdCampaign } from '@/components/meta-ad-campaign'
-import { MetaCreateAdSet } from '@/components/meta-create-adset'
 import { getFacebookAdAccounts, FacebookAdAccount } from '@/app/actions/facebook-ad-accounts'
 import { getFacebookAdCampaigns, FacebookAdCampaign } from '@/app/actions/facebook-ad-campaigns'
 import { toast } from 'sonner'
@@ -22,7 +21,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
   const [campaigns, setCampaigns] = useState<FacebookAdCampaign[]>([])
   
   const [selectedAccount, setSelectedAccount] = useState<string>('')
-  const [selectedCampaign, setSelectedCampaign] = useState<string>('')
 
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false)
@@ -36,13 +34,13 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
       try {
         setIsLoadingAccounts(true)
         setAccountsError(null)
-        
+
         const result = await getFacebookAdAccounts(organizationId)
-        
+
         if (!result.success) {
           throw new Error(result.error || 'Failed to fetch Facebook ad accounts')
         }
-        
+
         setAccounts(result.data || [])
       } catch (error) {
         console.error('Error fetching Facebook ad accounts:', error)
@@ -54,7 +52,7 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
         setIsLoadingAccounts(false)
       }
     }
-    
+
     fetchAdAccounts()
   }, [organizationId])
 
@@ -63,7 +61,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
     async function fetchCampaigns() {
       if (!selectedAccount) {
         setCampaigns([])
-        setSelectedCampaign('')
         return
       }
 
@@ -94,27 +91,16 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
 
   // Handle ad account selection
   const handleAdAccountChange = (value: string) => {
+
     setSelectedAccount(value)
-    // Reset campaigns and selected campaign when account changes
+    // Reset campaigns when account changes
     setCampaigns([])
-    setSelectedCampaign('')
   }
 
   // Handle campaign selection
   const handleCampaignChange = (value: string) => {
-    setSelectedCampaign(value)
     console.log('Selected Facebook campaign:', value)
-  }
-
-  // Handle when a new ad set is created
-  const handleAdSetCreated = async (newAdSet: { id: string; name: string }) => {
-    console.log('New Meta ad set created:', newAdSet)
-    
-    toast.success('Ad set created successfully', {
-      description: `Ad set "${newAdSet.name}" is ready for creative assignment.`
-    })
-    
-    // You could refresh campaigns or ad sets list here if needed
+    // You can add additional logic here when a campaign is selected
   }
 
   return (
@@ -157,14 +143,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
             isLoading={isLoadingCampaigns}
           />
         )}
-
-        {/* Create New Ad Set Component */}
-        <MetaCreateAdSet
-          organizationId={organizationId}
-          selectedAccount={selectedAccount}
-          selectedCampaign={selectedCampaign}
-          onAdSetCreated={handleAdSetCreated}
-        />
       </CardContent>
     </Card>
   )
