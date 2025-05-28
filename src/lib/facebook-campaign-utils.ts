@@ -6,6 +6,7 @@ export type FacebookCampaignObjective =
   | 'TRAFFIC'
   | 'SALES'
   | 'APP_PROMOTION'
+  | 'LEAD_GENERATION' // Added Lead Generation
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
@@ -13,6 +14,7 @@ export type FacebookCampaignAPIObjective =
   | 'OUTCOME_TRAFFIC'
   | 'OUTCOME_SALES'
   | 'OUTCOME_APP_PROMOTION'
+  | 'OUTCOME_LEADS' // Added for Lead Generation
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -43,6 +45,7 @@ export type FacebookOptimizationGoal =
   | 'LANDING_PAGE_VIEWS'
   | 'POST_ENGAGEMENT'
   | 'THRUPLAY'
+  | 'LEAD_GENERATION' // Added for Lead Generation
 
 export type FacebookPublisherPlatform = 
   | 'facebook'
@@ -84,6 +87,8 @@ export interface FacebookAdSetData {
   // App promotion fields
   application_id?: string // For APP_PROMOTION campaigns
   object_store_url?: string // App store URL for APP_PROMOTION campaigns
+  // Lead generation fields
+  page_id?: string // For LEAD_GENERATION campaigns
 }
 
 export interface FacebookBatchCampaignAdSetData {
@@ -111,7 +116,7 @@ export interface FacebookAdSetAPIData {
   status: FacebookCampaignStatus
   start_time: string
   end_time: string
-  promoted_object?: string // JSON stringified promoted object for APP_PROMOTION
+  promoted_object?: string // JSON stringified promoted object for APP_PROMOTION and LEAD_GENERATION
 }
 
 // UI to API objective mapping
@@ -119,23 +124,26 @@ export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCamp
   'AWARENESS': 'OUTCOME_AWARENESS',
   'TRAFFIC': 'OUTCOME_TRAFFIC',
   'SALES': 'OUTCOME_SALES',
-  'APP_PROMOTION': 'OUTCOME_APP_PROMOTION'
+  'APP_PROMOTION': 'OUTCOME_APP_PROMOTION',
+  'LEAD_GENERATION': 'OUTCOME_LEADS' // Added Lead Generation mapping
 }
 
-// Objective to Billing Event mapping (using IMPRESSIONS for most, LINK_CLICKS for SALES)
+// Objective to Billing Event mapping
 export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
   'AWARENESS': 'IMPRESSIONS',
   'TRAFFIC': 'IMPRESSIONS',
-  'SALES': 'LINK_CLICKS', // Changed to LINK_CLICKS for SALES campaigns
-  'APP_PROMOTION': 'LINK_CLICKS' // LINK_CLICKS for app promotion campaigns
+  'SALES': 'LINK_CLICKS',
+  'APP_PROMOTION': 'LINK_CLICKS',
+  'LEAD_GENERATION': 'IMPRESSIONS' // Use IMPRESSIONS for lead generation
 }
 
-// Objective to Optimization Goal mapping (only SALES needs explicit optimization goal)
+// Objective to Optimization Goal mapping
 export const OBJECTIVE_TO_OPTIMIZATION_GOAL: Record<FacebookCampaignObjective, FacebookOptimizationGoal | undefined> = {
   'AWARENESS': undefined, // Facebook uses defaults
   'TRAFFIC': undefined,   // Facebook uses defaults
   'SALES': 'LINK_CLICKS',  // Explicit optimization for SALES campaigns
-  'APP_PROMOTION': 'LINK_CLICKS' // Explicit optimization for APP_PROMOTION campaigns
+  'APP_PROMOTION': 'LINK_CLICKS', // Explicit optimization for APP_PROMOTION campaigns
+  'LEAD_GENERATION': 'LEAD_GENERATION' // Explicit optimization for LEAD_GENERATION campaigns
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
@@ -143,7 +151,8 @@ export const CAMPAIGN_OBJECTIVES = [
   { value: 'AWARENESS', label: 'Brand Awareness' },
   { value: 'TRAFFIC', label: 'Traffic' },
   { value: 'SALES', label: 'Sales' },
-  { value: 'APP_PROMOTION', label: 'App Promotion' }
+  { value: 'APP_PROMOTION', label: 'App Promotion' },
+  { value: 'LEAD_GENERATION', label: 'Lead Generation' } // Added Lead Generation
 ] as const
 
 // Publisher platforms with human-readable labels
@@ -288,6 +297,13 @@ export function validateAdSetDataWithObjective(data: Partial<FacebookAdSetData>,
     }
   }
   
+  // Additional validation for LEAD_GENERATION campaigns
+  if (campaignObjective === 'LEAD_GENERATION') {
+    if (!data.page_id?.trim()) {
+      errors.push('Facebook Page ID is required for lead generation campaigns')
+    }
+  }
+  
   return errors
 }
 
@@ -334,6 +350,13 @@ export function prepareAdSetForAPI(data: FacebookAdSetData): FacebookAdSetAPIDat
     apiData.promoted_object = JSON.stringify({
       application_id: data.application_id,
       object_store_url: data.object_store_url
+    })
+  }
+
+  // Include promoted_object for LEAD_GENERATION campaigns
+  if (data.page_id?.trim()) {
+    apiData.promoted_object = JSON.stringify({
+      page_id: data.page_id
     })
   }
 

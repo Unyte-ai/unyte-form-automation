@@ -114,6 +114,9 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: 
 
   // Show app promotion fields when campaign objective is APP_PROMOTION
   const showAppPromotionFields = campaignObjective === 'APP_PROMOTION'
+  
+  // Show lead generation fields when campaign objective is LEAD_GENERATION
+  const showLeadGenerationFields = campaignObjective === 'LEAD_GENERATION'
 
   return (
     <div className="space-y-4">
@@ -161,7 +164,7 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: 
               <p className="text-xs text-destructive">{errors.application_id}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Your app&apo;s Facebook application ID (required for app promotion campaigns)
+              Your app&apos;s Facebook application ID (required for app promotion campaigns)
             </p>
           </div>
 
@@ -181,6 +184,33 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: 
             )}
             <p className="text-xs text-muted-foreground">
               Direct link to your app in the App Store or Google Play
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Generation Fields - Only show when objective is LEAD_GENERATION */}
+      {showLeadGenerationFields && (
+        <div className="space-y-4 p-4 rounded-md bg-green-50 border border-green-200 dark:bg-green-950/20 dark:border-green-800">
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="font-medium text-sm text-green-800 dark:text-green-300">Lead Generation Settings</h4>
+          </div>
+          
+          {/* Facebook Page ID */}
+          <div className="grid gap-2">
+            <Label htmlFor="page-id">Facebook Page ID *</Label>
+            <Input
+              id="page-id"
+              value={value.page_id || ''}
+              onChange={(e) => handleFieldChange('page_id', e.target.value)}
+              placeholder="Enter your Facebook Page ID"
+              className={errors?.page_id ? 'border-destructive' : ''}
+            />
+            {errors?.page_id && (
+              <p className="text-xs text-destructive">{errors.page_id}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              The Facebook Page ID where leads will be collected (required for lead generation campaigns)
             </p>
           </div>
         </div>
