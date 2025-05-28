@@ -4,11 +4,13 @@
 export type FacebookCampaignObjective = 
   | 'AWARENESS'
   | 'TRAFFIC'
+  | 'SALES'
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
   | 'OUTCOME_AWARENESS'
   | 'OUTCOME_TRAFFIC'
+  | 'OUTCOME_SALES'
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -100,19 +102,22 @@ export interface FacebookAdSetAPIData {
 // UI to API objective mapping
 export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCampaignAPIObjective> = {
   'AWARENESS': 'OUTCOME_AWARENESS',
-  'TRAFFIC': 'OUTCOME_TRAFFIC'
+  'TRAFFIC': 'OUTCOME_TRAFFIC',
+  'SALES': 'OUTCOME_SALES'
 }
 
 // Objective to Billing Event mapping (using IMPRESSIONS for all objectives for shell campaigns)
 export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
   'AWARENESS': 'IMPRESSIONS',
-  'TRAFFIC': 'IMPRESSIONS'
+  'TRAFFIC': 'IMPRESSIONS',
+  'SALES': 'IMPRESSIONS'
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
 export const CAMPAIGN_OBJECTIVES = [
   { value: 'AWARENESS', label: 'Brand Awareness' },
-  { value: 'TRAFFIC', label: 'Traffic' }
+  { value: 'TRAFFIC', label: 'Traffic' },
+  { value: 'SALES', label: 'Sales' }
 ] as const
 
 // Publisher platforms with human-readable labels
