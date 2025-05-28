@@ -6,7 +6,8 @@ export type FacebookCampaignObjective =
   | 'TRAFFIC'
   | 'SALES'
   | 'APP_PROMOTION'
-  | 'LEAD_GENERATION' // Added Lead Generation
+  | 'LEAD_GENERATION'
+  | 'POST_ENGAGEMENT' // 🆕 Added POST_ENGAGEMENT
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
@@ -14,7 +15,8 @@ export type FacebookCampaignAPIObjective =
   | 'OUTCOME_TRAFFIC'
   | 'OUTCOME_SALES'
   | 'OUTCOME_APP_PROMOTION'
-  | 'OUTCOME_LEADS' // Added for Lead Generation
+  | 'OUTCOME_LEADS'
+  | 'OUTCOME_ENGAGEMENT' // 🆕 Added OUTCOME_ENGAGEMENT
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -125,7 +127,8 @@ export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCamp
   'TRAFFIC': 'OUTCOME_TRAFFIC',
   'SALES': 'OUTCOME_SALES',
   'APP_PROMOTION': 'OUTCOME_APP_PROMOTION',
-  'LEAD_GENERATION': 'OUTCOME_LEADS' // Added Lead Generation mapping
+  'LEAD_GENERATION': 'OUTCOME_LEADS',
+  'POST_ENGAGEMENT': 'OUTCOME_ENGAGEMENT' // 🆕 Added POST_ENGAGEMENT mapping
 }
 
 // Objective to Billing Event mapping
@@ -134,16 +137,18 @@ export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, Faceb
   'TRAFFIC': 'IMPRESSIONS',
   'SALES': 'LINK_CLICKS',
   'APP_PROMOTION': 'LINK_CLICKS',
-  'LEAD_GENERATION': 'IMPRESSIONS' // Use IMPRESSIONS for lead generation
+  'LEAD_GENERATION': 'IMPRESSIONS',
+  'POST_ENGAGEMENT': 'IMPRESSIONS' // 🆕 Use IMPRESSIONS for post engagement
 }
 
 // Objective to Optimization Goal mapping
 export const OBJECTIVE_TO_OPTIMIZATION_GOAL: Record<FacebookCampaignObjective, FacebookOptimizationGoal | undefined> = {
-  'AWARENESS': undefined, // Facebook uses defaults
-  'TRAFFIC': undefined,   // Facebook uses defaults
-  'SALES': 'LINK_CLICKS',  // Explicit optimization for SALES campaigns
-  'APP_PROMOTION': 'LINK_CLICKS', // Explicit optimization for APP_PROMOTION campaigns
-  'LEAD_GENERATION': 'LEAD_GENERATION' // Explicit optimization for LEAD_GENERATION campaigns
+  'AWARENESS': undefined,
+  'TRAFFIC': undefined,
+  'SALES': 'LINK_CLICKS',
+  'APP_PROMOTION': 'LINK_CLICKS',
+  'LEAD_GENERATION': 'LEAD_GENERATION',
+  'POST_ENGAGEMENT': 'POST_ENGAGEMENT' // 🆕 Use POST_ENGAGEMENT optimization goal
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
@@ -152,7 +157,8 @@ export const CAMPAIGN_OBJECTIVES = [
   { value: 'TRAFFIC', label: 'Traffic' },
   { value: 'SALES', label: 'Sales' },
   { value: 'APP_PROMOTION', label: 'App Promotion' },
-  { value: 'LEAD_GENERATION', label: 'Lead Generation' } // Added Lead Generation
+  { value: 'LEAD_GENERATION', label: 'Lead Generation' },
+  { value: 'POST_ENGAGEMENT', label: 'Engagement' } // 🆕 Added to UI dropdown
 ] as const
 
 // Publisher platforms with human-readable labels
