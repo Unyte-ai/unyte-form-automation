@@ -16,7 +16,8 @@ import {
   DEFAULT_ADSET_VALUES,
   validateCampaignData,
   validateAdSetData,
-  getBillingEventForUIObjective
+  getBillingEventForUIObjective,
+  getOptimizationGoalForUIObjective
 } from '@/lib/facebook-campaign-utils'
 
 interface MetaCreateCampaignAdSetProps {
@@ -85,11 +86,17 @@ export function MetaCreateCampaignAdSet({
     })
     setCampaignErrors(campaignErrorObj)
 
-    // Validate ad set data (with temporary campaign_id for validation)
+    // Validate ad set data (with temporary campaign_id, billing_event, and optimization_goal for validation)
     const tempAdSetData: FacebookAdSetData = {
-      ...(adSetData as Omit<FacebookAdSetData, 'campaign_id' | 'billing_event'>),
+      ...(adSetData as Omit<FacebookAdSetData, 'campaign_id' | 'billing_event' | 'optimization_goal'>),
       campaign_id: 'temp',
       billing_event: campaignData.objective ? getBillingEventForUIObjective(campaignData.objective) : 'IMPRESSIONS'
+    }
+    
+    // Add optimization goal if one is specified for this objective
+    const optimizationGoal = campaignData.objective ? getOptimizationGoalForUIObjective(campaignData.objective) : undefined
+    if (optimizationGoal) {
+      tempAdSetData.optimization_goal = optimizationGoal
     }
     
     const adSetValidationErrors = validateAdSetData(tempAdSetData)
@@ -250,14 +257,20 @@ export function MetaCreateCampaignAdSet({
             />
           </div>
 
-          {/* Billing Event Info */}
+          {/* Billing Event and Optimization Goal Info */}
           {campaignData.objective && (
             <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
               <p className="text-blue-800 dark:text-blue-300 text-sm">
-                <strong>Billing Event:</strong> {getBillingEventForUIObjective(campaignData.objective)} 
+                <strong>Billing Event:</strong> {getBillingEventForUIObjective(campaignData.objective)}
+                {getOptimizationGoalForUIObjective(campaignData.objective) && (
+                  <>
+                    <br />
+                    <strong>Optimization Goal:</strong> {getOptimizationGoalForUIObjective(campaignData.objective)}
+                  </>
+                )}
                 <br />
                 <span className="text-xs">
-                  This billing event is automatically set based on your selected campaign objective.
+                  These settings are automatically configured based on your selected campaign objective.
                   Budget is managed at the campaign level.
                 </span>
               </p>

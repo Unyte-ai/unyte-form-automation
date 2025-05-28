@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { 
   FacebookBatchCampaignAdSetData,
   getBillingEventForUIObjective,
+  getOptimizationGoalForUIObjective,
   validateCampaignData,
   validateAdSetData
 } from '@/lib/facebook-campaign-utils'
@@ -51,11 +52,17 @@ export async function createFacebookCampaignAndAdSet(
       throw new Error(`Campaign validation failed: ${campaignErrors.join(', ')}`)
     }
 
-    // Create complete ad set data with billing event derived from campaign objective
+    // Create complete ad set data with billing event and optimization goal derived from campaign objective
     const adSetData = {
       ...adSetDataWithoutCampaignId,
       campaign_id: 'temp', // Will be replaced in batch request
       billing_event: getBillingEventForUIObjective(campaignData.objective)
+    }
+
+    // Add optimization goal only if one is specified for this objective
+    const optimizationGoal = getOptimizationGoalForUIObjective(campaignData.objective)
+    if (optimizationGoal) {
+      adSetData.optimization_goal = optimizationGoal
     }
 
     // Validate ad set data
@@ -105,6 +112,7 @@ export async function createFacebookCampaignAndAdSet(
       adSetName: adSetData.name,
       objective: campaignData.objective,
       billingEvent: adSetData.billing_event,
+      optimizationGoal: adSetData.optimization_goal || 'default',
       batchSize: batchRequests.length
     })
 

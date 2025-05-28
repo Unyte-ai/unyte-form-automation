@@ -33,6 +33,15 @@ export type FacebookBillingEvent =
   | 'PURCHASE'
   | 'LISTING_INTERACTION'
 
+export type FacebookOptimizationGoal = 
+  | 'LINK_CLICKS'
+  | 'IMPRESSIONS'
+  | 'REACH'
+  | 'OFFSITE_CONVERSIONS'
+  | 'LANDING_PAGE_VIEWS'
+  | 'POST_ENGAGEMENT'
+  | 'THRUPLAY'
+
 export type FacebookPublisherPlatform = 
   | 'facebook'
   | 'instagram'
@@ -64,8 +73,8 @@ export interface FacebookTargeting {
 export interface FacebookAdSetData {
   name: string
   campaign_id: string
-  // lifetime_budget removed - using campaign budget instead
   billing_event: FacebookBillingEvent
+  optimization_goal?: FacebookOptimizationGoal // Optional - only needed for certain objectives
   targeting: FacebookTargeting
   status: FacebookCampaignStatus
   start_time: string // ISO string
@@ -91,8 +100,8 @@ export interface FacebookCampaignAPIData {
 export interface FacebookAdSetAPIData {
   name: string
   campaign_id: string
-  // lifetime_budget removed - using campaign budget instead
   billing_event: FacebookBillingEvent
+  optimization_goal?: FacebookOptimizationGoal // Optional - only included when specified
   targeting: string // JSON stringified FacebookTargeting
   status: FacebookCampaignStatus
   start_time: string
@@ -106,11 +115,18 @@ export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCamp
   'SALES': 'OUTCOME_SALES'
 }
 
-// Objective to Billing Event mapping (using IMPRESSIONS for all objectives for shell campaigns)
+// Objective to Billing Event mapping (using IMPRESSIONS for most, LINK_CLICKS for SALES)
 export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
   'AWARENESS': 'IMPRESSIONS',
   'TRAFFIC': 'IMPRESSIONS',
-  'SALES': 'IMPRESSIONS'
+  'SALES': 'LINK_CLICKS' // Changed to LINK_CLICKS for SALES campaigns
+}
+
+// Objective to Optimization Goal mapping (only SALES needs explicit optimization goal)
+export const OBJECTIVE_TO_OPTIMIZATION_GOAL: Record<FacebookCampaignObjective, FacebookOptimizationGoal | undefined> = {
+  'AWARENESS': undefined, // Facebook uses defaults
+  'TRAFFIC': undefined,   // Facebook uses defaults
+  'SALES': 'LINK_CLICKS'  // Explicit optimization for SALES campaigns
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
@@ -171,6 +187,10 @@ export function getBillingEventForUIObjective(objective: FacebookCampaignObjecti
   return OBJECTIVE_TO_BILLING_EVENT[objective]
 }
 
+export function getOptimizationGoalForUIObjective(objective: FacebookCampaignObjective): FacebookOptimizationGoal | undefined {
+  return OBJECTIVE_TO_OPTIMIZATION_GOAL[objective]
+}
+
 export function getAPIObjectiveFromUIObjective(uiObjective: FacebookCampaignObjective): FacebookCampaignAPIObjective {
   return UI_TO_API_OBJECTIVE[uiObjective]
 }
@@ -199,8 +219,6 @@ export function validateAdSetData(data: Partial<FacebookAdSetData>): string[] {
   if (!data.name?.trim()) {
     errors.push('Ad Set name is required')
   }
-  
-  // Budget validation removed - using campaign budget instead
   
   if (!data.targeting?.geo_locations?.countries?.length) {
     errors.push('At least one target country is required')
@@ -269,14 +287,20 @@ export function prepareCampaignForAPI(data: FacebookCampaignData): FacebookCampa
 }
 
 export function prepareAdSetForAPI(data: FacebookAdSetData): FacebookAdSetAPIData {
-  return {
+  const apiData: FacebookAdSetAPIData = {
     name: data.name,
     campaign_id: data.campaign_id,
-    // lifetime_budget removed - using campaign budget instead
     billing_event: data.billing_event,
     targeting: JSON.stringify(data.targeting),
     status: data.status,
     start_time: data.start_time,
     end_time: data.end_time
   }
+
+  // Only include optimization_goal if it's specified
+  if (data.optimization_goal) {
+    apiData.optimization_goal = data.optimization_goal
+  }
+
+  return apiData
 }
