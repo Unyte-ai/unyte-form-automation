@@ -5,12 +5,14 @@ export type FacebookCampaignObjective =
   | 'AWARENESS'
   | 'TRAFFIC'
   | 'SALES'
+  | 'APP_PROMOTION'
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
   | 'OUTCOME_AWARENESS'
   | 'OUTCOME_TRAFFIC'
   | 'OUTCOME_SALES'
+  | 'OUTCOME_APP_PROMOTION'
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -79,6 +81,9 @@ export interface FacebookAdSetData {
   status: FacebookCampaignStatus
   start_time: string // ISO string
   end_time: string // ISO string
+  // App promotion fields
+  application_id?: string // For APP_PROMOTION campaigns
+  object_store_url?: string // App store URL for APP_PROMOTION campaigns
 }
 
 export interface FacebookBatchCampaignAdSetData {
@@ -106,34 +111,39 @@ export interface FacebookAdSetAPIData {
   status: FacebookCampaignStatus
   start_time: string
   end_time: string
+  promoted_object?: string // JSON stringified promoted object for APP_PROMOTION
 }
 
 // UI to API objective mapping
 export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCampaignAPIObjective> = {
   'AWARENESS': 'OUTCOME_AWARENESS',
   'TRAFFIC': 'OUTCOME_TRAFFIC',
-  'SALES': 'OUTCOME_SALES'
+  'SALES': 'OUTCOME_SALES',
+  'APP_PROMOTION': 'OUTCOME_APP_PROMOTION'
 }
 
 // Objective to Billing Event mapping (using IMPRESSIONS for most, LINK_CLICKS for SALES)
 export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, FacebookBillingEvent> = {
   'AWARENESS': 'IMPRESSIONS',
   'TRAFFIC': 'IMPRESSIONS',
-  'SALES': 'LINK_CLICKS' // Changed to LINK_CLICKS for SALES campaigns
+  'SALES': 'LINK_CLICKS', // Changed to LINK_CLICKS for SALES campaigns
+  'APP_PROMOTION': 'LINK_CLICKS' // LINK_CLICKS for app promotion campaigns
 }
 
 // Objective to Optimization Goal mapping (only SALES needs explicit optimization goal)
 export const OBJECTIVE_TO_OPTIMIZATION_GOAL: Record<FacebookCampaignObjective, FacebookOptimizationGoal | undefined> = {
   'AWARENESS': undefined, // Facebook uses defaults
   'TRAFFIC': undefined,   // Facebook uses defaults
-  'SALES': 'LINK_CLICKS'  // Explicit optimization for SALES campaigns
+  'SALES': 'LINK_CLICKS',  // Explicit optimization for SALES campaigns
+  'APP_PROMOTION': 'LINK_CLICKS' // Explicit optimization for APP_PROMOTION campaigns
 }
 
 // Campaign objectives with human-readable labels (for UI dropdowns)
 export const CAMPAIGN_OBJECTIVES = [
   { value: 'AWARENESS', label: 'Brand Awareness' },
   { value: 'TRAFFIC', label: 'Traffic' },
-  { value: 'SALES', label: 'Sales' }
+  { value: 'SALES', label: 'Sales' },
+  { value: 'APP_PROMOTION', label: 'App Promotion' }
 ] as const
 
 // Publisher platforms with human-readable labels
@@ -264,6 +274,23 @@ export function validateAdSetData(data: Partial<FacebookAdSetData>): string[] {
   return errors
 }
 
+// Enhanced validation function that accepts campaign objective for context
+export function validateAdSetDataWithObjective(data: Partial<FacebookAdSetData>, campaignObjective?: FacebookCampaignObjective): string[] {
+  const errors = validateAdSetData(data)
+  
+  // Additional validation for APP_PROMOTION campaigns
+  if (campaignObjective === 'APP_PROMOTION') {
+    if (!data.object_store_url?.trim()) {
+      errors.push('App store URL is required for app promotion campaigns')
+    }
+    if (!data.application_id?.trim()) {
+      errors.push('Application ID is required for app promotion campaigns')
+    }
+  }
+  
+  return errors
+}
+
 export function formatBudgetCents(cents: number): string {
   return (cents / 100).toFixed(2)
 }
@@ -300,6 +327,14 @@ export function prepareAdSetForAPI(data: FacebookAdSetData): FacebookAdSetAPIDat
   // Only include optimization_goal if it's specified
   if (data.optimization_goal) {
     apiData.optimization_goal = data.optimization_goal
+  }
+
+  // Include promoted_object for APP_PROMOTION campaigns
+  if (data.object_store_url?.trim() && data.application_id?.trim()) {
+    apiData.promoted_object = JSON.stringify({
+      application_id: data.application_id,
+      object_store_url: data.object_store_url
+    })
   }
 
   return apiData

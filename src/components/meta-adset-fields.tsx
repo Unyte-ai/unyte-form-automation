@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { 
   FacebookAdSetData,
+  FacebookCampaignObjective,
   FacebookPublisherPlatform,
   COMMON_COUNTRIES,
   PUBLISHER_PLATFORMS,
@@ -16,9 +17,10 @@ interface MetaAdSetFieldsProps {
   value: Partial<Omit<FacebookAdSetData, 'campaign_id'>>
   onChange: (value: Partial<Omit<FacebookAdSetData, 'campaign_id'>>) => void
   errors?: Record<string, string>
+  campaignObjective?: FacebookCampaignObjective // Add campaign objective prop
 }
 
-export function MetaAdSetFields({ value, onChange, errors }: MetaAdSetFieldsProps) {
+export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: MetaAdSetFieldsProps) {
   // Handle form field changes  
   const handleFieldChange = (field: keyof Omit<FacebookAdSetData, 'campaign_id'>, fieldValue: Omit<FacebookAdSetData, 'campaign_id'>[keyof Omit<FacebookAdSetData, 'campaign_id'>]) => {
     onChange({
@@ -110,6 +112,9 @@ export function MetaAdSetFields({ value, onChange, errors }: MetaAdSetFieldsProp
   const selectedCountries = value.targeting?.geo_locations?.countries || DEFAULT_ADSET_VALUES.targeting!.geo_locations.countries
   const selectedPlatforms = value.targeting?.publisher_platforms || DEFAULT_ADSET_VALUES.targeting!.publisher_platforms
 
+  // Show app promotion fields when campaign objective is APP_PROMOTION
+  const showAppPromotionFields = campaignObjective === 'APP_PROMOTION'
+
   return (
     <div className="space-y-4">
       {/* Ad Set Name */}
@@ -134,6 +139,52 @@ export function MetaAdSetFields({ value, onChange, errors }: MetaAdSetFieldsProp
           Facebook will automatically distribute the campaign budget across all ad sets.
         </p>
       </div>
+
+      {/* App Promotion Fields - Only show when objective is APP_PROMOTION */}
+      {showAppPromotionFields && (
+        <div className="space-y-4 p-4 rounded-md bg-purple-50 border border-purple-200 dark:bg-purple-950/20 dark:border-purple-800">
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="font-medium text-sm text-purple-800 dark:text-purple-300">App Promotion Settings</h4>
+          </div>
+          
+          {/* Application ID */}
+          <div className="grid gap-2">
+            <Label htmlFor="application-id">Application ID *</Label>
+            <Input
+              id="application-id"
+              value={value.application_id || ''}
+              onChange={(e) => handleFieldChange('application_id', e.target.value)}
+              placeholder="Enter your app's Facebook application ID"
+              className={errors?.application_id ? 'border-destructive' : ''}
+            />
+            {errors?.application_id && (
+              <p className="text-xs text-destructive">{errors.application_id}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Your app&apo;s Facebook application ID (required for app promotion campaigns)
+            </p>
+          </div>
+
+          {/* App Store URL */}
+          <div className="grid gap-2">
+            <Label htmlFor="object-store-url">App Store URL *</Label>
+            <Input
+              id="object-store-url"
+              type="url"
+              value={value.object_store_url || ''}
+              onChange={(e) => handleFieldChange('object_store_url', e.target.value)}
+              placeholder="https://apps.apple.com/... or https://play.google.com/..."
+              className={errors?.object_store_url ? 'border-destructive' : ''}
+            />
+            {errors?.object_store_url && (
+              <p className="text-xs text-destructive">{errors.object_store_url}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Direct link to your app in the App Store or Google Play
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Geographic Targeting */}
       <div className="grid gap-2">

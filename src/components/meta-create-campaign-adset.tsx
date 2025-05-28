@@ -15,7 +15,7 @@ import {
   DEFAULT_CAMPAIGN_VALUES,
   DEFAULT_ADSET_VALUES,
   validateCampaignData,
-  validateAdSetData,
+  validateAdSetDataWithObjective,
   getBillingEventForUIObjective,
   getOptimizationGoalForUIObjective
 } from '@/lib/facebook-campaign-utils'
@@ -51,7 +51,10 @@ export function MetaCreateCampaignAdSet({
     targeting: DEFAULT_ADSET_VALUES.targeting,
     status: DEFAULT_ADSET_VALUES.status,
     start_time: getDefaultStartDate(),
-    end_time: getDefaultEndDate()
+    end_time: getDefaultEndDate(),
+    // Initialize app promotion fields as empty
+    application_id: '',
+    object_store_url: ''
   })
 
   // Form validation errors
@@ -79,14 +82,14 @@ export function MetaCreateCampaignAdSet({
     // Validate campaign data
     const campaignValidationErrors = validateCampaignData(campaignData)
     const campaignErrorObj: Record<string, string> = {}
-    campaignValidationErrors.forEach(error => {
+    campaignValidationErrors.forEach((error: string) => {
       if (error.includes('name')) campaignErrorObj.name = error
       if (error.includes('objective')) campaignErrorObj.objective = error
       if (error.includes('budget')) campaignErrorObj.lifetime_budget = error
     })
     setCampaignErrors(campaignErrorObj)
 
-    // Validate ad set data (with temporary campaign_id, billing_event, and optimization_goal for validation)
+    // Prepare ad set data for validation - include app promotion fields if objective is APP_PROMOTION
     const tempAdSetData: FacebookAdSetData = {
       ...(adSetData as Omit<FacebookAdSetData, 'campaign_id' | 'billing_event' | 'optimization_goal'>),
       campaign_id: 'temp',
@@ -98,14 +101,21 @@ export function MetaCreateCampaignAdSet({
     if (optimizationGoal) {
       tempAdSetData.optimization_goal = optimizationGoal
     }
+
+    // For APP_PROMOTION, ensure both fields are provided for validation
+    if (campaignData.objective === 'APP_PROMOTION') {
+      tempAdSetData.object_store_url = adSetData.object_store_url || ''
+      tempAdSetData.application_id = adSetData.application_id || ''
+    }
     
-    const adSetValidationErrors = validateAdSetData(tempAdSetData)
+    const adSetValidationErrors = validateAdSetDataWithObjective(tempAdSetData, campaignData.objective)
     const adSetErrorObj: Record<string, string> = {}
-    adSetValidationErrors.forEach(error => {
+    adSetValidationErrors.forEach((error: string) => {
       if (error.includes('Ad Set name')) adSetErrorObj.name = error
-      // Removed ad set budget validation since we're using campaign budget
       if (error.includes('country')) adSetErrorObj.countries = error
       if (error.includes('publisher platform')) adSetErrorObj.publisher_platforms = error
+      if (error.includes('Application ID')) adSetErrorObj.application_id = error
+      if (error.includes('App store URL')) adSetErrorObj.object_store_url = error
       if (error.includes('age')) {
         if (error.includes('Minimum')) adSetErrorObj.age_min = error
         if (error.includes('Maximum')) adSetErrorObj.age_max = error
@@ -135,10 +145,19 @@ export function MetaCreateCampaignAdSet({
     try {
       setIsCreating(true)
 
-      // Prepare batch data - no ad set budget needed
+      // Prepare ad set data - only include app promotion fields for APP_PROMOTION campaigns
+      let finalAdSetData = { ...adSetData }
+      
+      if (campaignData.objective !== 'APP_PROMOTION') {
+        // Remove app promotion fields for other objectives
+        const { application_id, object_store_url, ...adSetWithoutAppFields } = finalAdSetData // eslint-disable-line @typescript-eslint/no-unused-vars
+        finalAdSetData = adSetWithoutAppFields
+      }
+
+      // Prepare batch data
       const batchData: FacebookBatchCampaignAdSetData = {
         campaign: campaignData as FacebookCampaignData,
-        adset: adSetData as Omit<FacebookAdSetData, 'campaign_id'>
+        adset: finalAdSetData as Omit<FacebookAdSetData, 'campaign_id'>
       }
 
       // Call batch server action
@@ -153,7 +172,7 @@ export function MetaCreateCampaignAdSet({
         description: `Campaign "${result.data!.campaignName}" and Ad Set "${result.data!.adSetName}" have been created.`
       })
 
-      // Reset form - removed ad set budget
+      // Reset form
       setCampaignData({
         name: '',
         objective: undefined,
@@ -169,7 +188,9 @@ export function MetaCreateCampaignAdSet({
         targeting: DEFAULT_ADSET_VALUES.targeting,
         status: DEFAULT_ADSET_VALUES.status,
         start_time: getDefaultStartDate(),
-        end_time: getDefaultEndDate()
+        end_time: getDefaultEndDate(),
+        application_id: '',
+        object_store_url: ''
       })
 
       // Clear errors
@@ -254,6 +275,7 @@ export function MetaCreateCampaignAdSet({
               value={adSetData}
               onChange={setAdSetData}
               errors={adSetErrors}
+              campaignObjective={campaignData.objective} // Pass campaign objective
             />
           </div>
 
