@@ -9,7 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { getGoogleConnectionStatus, GoogleConnectionStatus } from '@/app/actions/google-status'
+import { disconnectGoogle } from '@/app/actions/google-disconnect'
+import { toast } from 'sonner'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -19,8 +22,9 @@ interface GoogleDialogProps {
   onDisconnect?: () => Promise<void>
 }
 
-export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
+export function GoogleDialog({ open, onOpenChange, onDisconnect }: GoogleDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [userInfo, setUserInfo] = useState<GoogleConnectionStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [organizationName, setOrganizationName] = useState<string>('')
@@ -61,6 +65,43 @@ export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
     fetchData()
   }, [open, organizationId])
 
+  const handleDisconnect = async () => {
+    if (!organizationId) {
+      toast.error('Organization context missing', {
+        description: 'Unable to determine which organization to disconnect from.'
+      })
+      return
+    }
+    
+    try {
+      setIsDisconnecting(true)
+      
+      const result = await disconnectGoogle(organizationId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to disconnect Google account')
+      }
+      
+      toast.success('Google account disconnected', {
+        description: `Your Google account has been disconnected from ${organizationName}.`
+      })
+      
+      onOpenChange(false)
+      
+      if (onDisconnect) {
+        await onDisconnect()
+      }
+      
+    } catch (error) {
+      console.error('Error disconnecting Google account:', error)
+      toast.error('Failed to disconnect Google account', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+    } finally {
+      setIsDisconnecting(false)
+    }
+  }
+
   const displayName = userInfo?.displayName || 'Google User'
   
   const initials = displayName
@@ -76,7 +117,7 @@ export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
         <DialogHeader>
           <DialogTitle>Google Account</DialogTitle>
           <DialogDescription>
-            Your Google connection for {organizationName || 'this organization'}.
+            Manage your Google connection for {organizationName || 'this organization'}.
           </DialogDescription>
         </DialogHeader>
         
@@ -137,6 +178,23 @@ export function GoogleDialog({ open, onOpenChange }: GoogleDialogProps) {
               <p className="text-green-800 dark:text-green-300 text-sm">
                 <strong>Connected Services:</strong> Google Ads API access is enabled for campaign management and analytics.
               </p>
+            </div>
+            
+            {/* Disconnect Section */}
+            <div className="pt-2 border-t">
+              <p className="text-muted-foreground text-sm mb-4">
+                Disconnecting will remove this Google account from {organizationName} only. 
+                Your connections to other organizations will remain unchanged.
+              </p>
+              
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+              >
+                {isDisconnecting ? 'Disconnecting...' : `Disconnect from ${organizationName}`}
+              </Button>
             </div>
           </div>
         )}
