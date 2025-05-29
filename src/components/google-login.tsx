@@ -4,16 +4,26 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { initGoogleOAuth } from '@/app/actions/google-auth'
+import { useConnectionStatus } from '@/contexts/connection-status-context'
 import { useParams } from 'next/navigation'
 
 export function GoogleLogin() {
   const [isConnecting, setIsConnecting] = useState(false)
+  
+  // Use the context instead of individual status check
+  const { connections, isLoading } = useConnectionStatus()
+  const isConnected = connections.google
   
   // Get current organization ID from URL params
   const params = useParams()
   const organizationId = params?.orgId as string
   
   async function handleGoogleClick() {
+    if (isConnected) {
+      // If already connected, do nothing for now (no dialog yet)
+      return
+    }
+    
     if (!organizationId) {
       toast.error('No organization selected', {
         description: 'Please select an organization first'
@@ -50,9 +60,12 @@ export function GoogleLogin() {
         variant="outline" 
         size="sm" 
         onClick={handleGoogleClick}
-        disabled={isConnecting || !organizationId}
+        disabled={isLoading || isConnecting || !organizationId}
+        className={isConnected 
+          ? "text-green-700 border-green-500 bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-700 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/30 dark:hover:text-green-400" 
+          : ""}
       >
-        {isConnecting ? 'Connecting...' : 'Connect'}
+        {isConnecting ? 'Connecting...' : isLoading ? 'Loading...' : isConnected ? 'Connected' : 'Connect'}
       </Button>
     </div>
   )
