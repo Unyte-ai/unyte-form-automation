@@ -12,6 +12,7 @@ import {
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
 import { TikTokCampaign } from '@/components/tiktok-campaign'
 import { MetaCampaign } from '@/components/meta-campaign'
+import { GoogleCampaign } from '@/components/google-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
 interface CreateCampaignProps {
@@ -22,6 +23,7 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
   const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
   const [metaCampaigns, setMetaCampaigns] = useState<{id: string}[]>([])
+  const [googleCampaigns, setGoogleCampaigns] = useState<{id: string}[]>([])
 
   const addLinkedInCampaign = () => {
     const newCampaign = { id: uuidv4() }
@@ -50,6 +52,15 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
     setMetaCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
+  const addGoogleCampaign = () => {
+    const newCampaign = { id: uuidv4() }
+    setGoogleCampaigns(prev => [...prev, newCampaign])
+  }
+
+  const removeGoogleCampaign = (id: string) => {
+    setGoogleCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -61,7 +72,7 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={addGoogleCampaign}>
               Google
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addMetaCampaign}>
@@ -79,6 +90,16 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
 
       {/* Display campaigns */}
       <div className="space-y-4 mt-4">
+        {/* Google campaigns */}
+        {googleCampaigns.map(campaign => (
+          <GoogleCampaign 
+            key={campaign.id} 
+            id={campaign.id} 
+            onRemove={removeGoogleCampaign}
+            organizationId={organizationId}
+          />
+        ))}
+
         {/* LinkedIn campaigns */}
         {linkedInCampaigns.map(campaign => (
           <LinkedInCampaign 
