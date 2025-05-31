@@ -29,12 +29,34 @@ export function GoogleAdCampaign({
 }: GoogleAdCampaignProps) {
   const [campaignName, setCampaignName] = useState('')
   const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY'>('SEARCH')
-  const [dailyBudget, setDailyBudget] = useState('1.00')
+  const [totalBudget, setTotalBudget] = useState('100.00')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createdCampaign, setCreatedCampaign] = useState<{
     campaignId: string
     campaignName: string
   } | null>(null)
+
+  // Get tomorrow's date as default start date
+  const getTomorrowDate = () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toISOString().split('T')[0]
+  }
+
+  // Get date one month from tomorrow as default end date
+  const getDefaultEndDate = () => {
+    const endDate = new Date()
+    endDate.setDate(endDate.getDate() + 31) // Tomorrow + 30 days
+    return endDate.toISOString().split('T')[0]
+  }
+
+  // Set default dates on first render
+  useState(() => {
+    if (!startDate) setStartDate(getTomorrowDate())
+    if (!endDate) setEndDate(getDefaultEndDate())
+  })
 
   const handleCreateCampaign = async () => {
     if (!campaignName.trim()) {
@@ -42,9 +64,35 @@ export function GoogleAdCampaign({
       return
     }
 
-    const budgetValue = parseFloat(dailyBudget)
+    const budgetValue = parseFloat(totalBudget)
     if (isNaN(budgetValue) || budgetValue <= 0) {
-      toast.error('Please enter a valid daily budget')
+      toast.error('Please enter a valid total budget')
+      return
+    }
+
+    if (!startDate) {
+      toast.error('Start date is required')
+      return
+    }
+
+    if (!endDate) {
+      toast.error('End date is required')
+      return
+    }
+
+    // Validate date range
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    if (start <= today) {
+      toast.error('Start date must be in the future')
+      return
+    }
+
+    if (end <= start) {
+      toast.error('End date must be after start date')
       return
     }
 
@@ -54,7 +102,9 @@ export function GoogleAdCampaign({
       const campaignData: CreateGoogleCampaignData = {
         campaignName: campaignName.trim(),
         campaignType,
-        dailyBudget: budgetValue,
+        totalBudget: budgetValue,
+        startDate,
+        endDate,
         customerId,
         ...(managerCustomerId && { managerCustomerId })
       }
@@ -74,7 +124,9 @@ export function GoogleAdCampaign({
         // Reset form
         setCampaignName('')
         setCampaignType('SEARCH')
-        setDailyBudget('1.00')
+        setTotalBudget('100.00')
+        setStartDate(getTomorrowDate())
+        setEndDate(getDefaultEndDate())
       } else {
         throw new Error(result.error || 'Failed to create campaign')
       }
@@ -160,26 +212,58 @@ export function GoogleAdCampaign({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="daily-budget">Daily Budget (USD)</Label>
+              <Label htmlFor="total-budget">Total Budget (USD)</Label>
               <Input
-                id="daily-budget"
+                id="total-budget"
                 type="number"
                 step="0.01"
                 min="0.01"
-                value={dailyBudget}
-                onChange={(e) => setDailyBudget(e.target.value)}
-                placeholder="1.00"
+                value={totalBudget}
+                onChange={(e) => setTotalBudget(e.target.value)}
+                placeholder="100.00"
                 disabled={isCreating}
               />
               <p className="text-xs text-muted-foreground">
-                Set a minimal daily budget (can be increased later in Google Ads Manager)
+                Set the total budget for the entire campaign duration
               </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  disabled={isCreating}
+                  min={getTomorrowDate()}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Campaign start date (must be future)
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="end-date">End Date</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  disabled={isCreating}
+                  min={startDate || getTomorrowDate()}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Campaign end date
+                </p>
+              </div>
             </div>
 
             <div className="pt-2">
               <Button 
                 onClick={handleCreateCampaign}
-                disabled={isCreating || !campaignName.trim()}
+                disabled={isCreating || !campaignName.trim() || !startDate || !endDate}
                 className="w-full"
               >
                 {isCreating ? 'Creating Campaign...' : 'Create Paused Campaign'}

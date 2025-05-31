@@ -6,7 +6,9 @@ import { GoogleAdsApi, resources, enums, toMicros, ResourceNames, MutateOperatio
 export interface CreateGoogleCampaignData {
   campaignName: string
   campaignType: 'SEARCH' | 'DISPLAY'
-  dailyBudget: number
+  totalBudget: number
+  startDate: string // YYYY-MM-DD format
+  endDate: string   // YYYY-MM-DD format
   customerId: string
   managerCustomerId?: string
 }
@@ -108,7 +110,7 @@ export async function createGoogleCampaign(
           resource_name: budgetResourceName,
           name: `${campaignData.campaignName} Budget`,
           delivery_method: enums.BudgetDeliveryMethod.STANDARD,
-          amount_micros: toMicros(campaignData.dailyBudget),
+          amount_micros: toMicros(campaignData.totalBudget), // Total budget instead of daily
         },
       },
       {
@@ -119,6 +121,8 @@ export async function createGoogleCampaign(
           advertising_channel_type: getAdvertisingChannelType(campaignData.campaignType),
           status: enums.CampaignStatus.PAUSED, // Keep paused for safety
           campaign_budget: budgetResourceName, // Reference the budget created above
+          start_date: campaignData.startDate,
+          end_date: campaignData.endDate,
           manual_cpc: {
             enhanced_cpc_enabled: false, // Basic bidding strategy
           },
