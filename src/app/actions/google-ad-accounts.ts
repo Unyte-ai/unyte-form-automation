@@ -43,12 +43,8 @@ export async function getGoogleAdAccounts(organizationId: string): Promise<{
       throw new Error('Google connection not found for this organization')
     }
 
-    // Check if the token is expired
-    const tokenExpiresAt = new Date(connection.token_expires_at)
-    const now = new Date()
-    
-    if (tokenExpiresAt <= now) {
-      throw new Error('Google access token has expired. Please reconnect your Google account.')
+    if (!connection.refresh_token) {
+      throw new Error('No refresh token available. Please reconnect your Google account.')
     }
 
     // Get Google credentials from environment variables
@@ -67,7 +63,7 @@ export async function getGoogleAdAccounts(organizationId: string): Promise<{
       developer_token: developerToken,
     })
 
-    // Get accessible customers using refresh token
+    // Get accessible customers using refresh token - this will auto-refresh if needed
     const accessibleCustomers = await client.listAccessibleCustomers(connection.refresh_token)
     
     if (!accessibleCustomers.resource_names || accessibleCustomers.resource_names.length === 0) {
@@ -87,7 +83,7 @@ export async function getGoogleAdAccounts(organizationId: string): Promise<{
         
         if (!customerId) continue
 
-        // Create customer instance to query details
+        // Create customer instance to query details - this will also auto-refresh if needed
         const customer = client.Customer({
           customer_id: customerId,
           refresh_token: connection.refresh_token,
