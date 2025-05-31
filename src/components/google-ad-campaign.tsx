@@ -28,7 +28,7 @@ export function GoogleAdCampaign({
   managerCustomerId
 }: GoogleAdCampaignProps) {
   const [campaignName, setCampaignName] = useState('')
-  const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY' | 'VIDEO' | 'SHOPPING'>('SEARCH')
+  const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY'>('SEARCH')
   const [dailyBudget, setDailyBudget] = useState('1.00')
   const [isCreating, setIsCreating] = useState(false)
   const [createdCampaign, setCreatedCampaign] = useState<{
@@ -143,7 +143,7 @@ export function GoogleAdCampaign({
               <Label htmlFor="campaign-type">Campaign Type</Label>
               <Select 
                 value={campaignType} 
-                onValueChange={(value: 'SEARCH' | 'DISPLAY' | 'VIDEO' | 'SHOPPING') => setCampaignType(value)}
+                onValueChange={(value: 'SEARCH' | 'DISPLAY') => setCampaignType(value)}
                 disabled={isCreating}
               >
                 <SelectTrigger id="campaign-type">
@@ -152,8 +152,6 @@ export function GoogleAdCampaign({
                 <SelectContent>
                   <SelectItem value="SEARCH">Search</SelectItem>
                   <SelectItem value="DISPLAY">Display</SelectItem>
-                  <SelectItem value="VIDEO">Video</SelectItem>
-                  <SelectItem value="SHOPPING">Shopping</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

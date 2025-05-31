@@ -5,7 +5,7 @@ import { GoogleAdsApi, resources, enums, toMicros, ResourceNames, MutateOperatio
 
 export interface CreateGoogleCampaignData {
   campaignName: string
-  campaignType: 'SEARCH' | 'DISPLAY' | 'VIDEO' | 'SHOPPING'
+  campaignType: 'SEARCH' | 'DISPLAY'
   dailyBudget: number
   customerId: string
   managerCustomerId?: string
@@ -93,8 +93,6 @@ export async function createGoogleCampaign(
       switch (type) {
         case 'SEARCH': return enums.AdvertisingChannelType.SEARCH
         case 'DISPLAY': return enums.AdvertisingChannelType.DISPLAY
-        case 'VIDEO': return enums.AdvertisingChannelType.VIDEO
-        case 'SHOPPING': return enums.AdvertisingChannelType.SHOPPING
         default: return enums.AdvertisingChannelType.SEARCH
       }
     }
