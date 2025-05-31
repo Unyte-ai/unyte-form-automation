@@ -23,10 +23,10 @@ export async function disconnectGoogle(organizationId: string): Promise<{
       throw new Error('User not authenticated')
     }
 
-    // Get the Google connection information
+    // Get the Google connection information - include both tokens
     const { data: connection, error } = await supabase
       .from('google_connections')
-      .select('id, access_token')
+      .select('id, access_token, refresh_token')
       .eq('user_id', user.id)
       .eq('organization_id', organizationId)
       .single()
@@ -35,28 +35,36 @@ export async function disconnectGoogle(organizationId: string): Promise<{
       throw new Error('Google connection not found')
     }
 
-    if (connection.access_token) {
+    // Attempt to revoke the token with Google
+    // Prioritize refresh_token as it's more reliable for revocation
+    const tokenToRevoke = connection.refresh_token || connection.access_token
+    
+    if (tokenToRevoke) {
       try {
-        // Attempt to revoke the token with Google
-        // Using Google's OAuth2 token revocation endpoint
+        // Use Google's OAuth2 token revocation endpoint
         const response = await fetch('https://oauth2.googleapis.com/revoke', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           },
           body: new URLSearchParams({
-            token: connection.access_token
+            token: tokenToRevoke
           }).toString()
         })
         
         // Log but don't fail if token revocation fails
         if (!response.ok) {
-          console.warn('Google token revocation may have failed:', await response.text())
+          const errorText = await response.text()
+          console.warn('Google token revocation may have failed:', errorText)
+        } else {
+          console.log('Google token revoked successfully')
         }
       } catch (revokeError) {
         // Log but continue - we still want to remove from our database
         console.warn('Error revoking Google token:', revokeError)
       }
+    } else {
+      console.warn('No token available for revocation')
     }
     
     // Delete the connection from the database
