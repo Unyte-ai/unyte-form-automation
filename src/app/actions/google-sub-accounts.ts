@@ -78,12 +78,8 @@ export async function getGoogleSubAccounts(
       throw new Error('Google connection not found for this organization')
     }
 
-    // Check if the token is expired
-    const tokenExpiresAt = new Date(connection.token_expires_at)
-    const now = new Date()
-    
-    if (tokenExpiresAt <= now) {
-      throw new Error('Google access token has expired. Please reconnect your Google account.')
+    if (!connection.refresh_token) {
+      throw new Error('No refresh token available. Please reconnect your Google account.')
     }
 
     // Get Google credentials from environment variables
@@ -102,7 +98,7 @@ export async function getGoogleSubAccounts(
       developer_token: developerToken,
     })
 
-    // Create customer instance for the manager account
+    // Create customer instance for the manager account - this will auto-refresh if needed
     const managerCustomer = client.Customer({
       customer_id: managerAccountId,
       refresh_token: connection.refresh_token,

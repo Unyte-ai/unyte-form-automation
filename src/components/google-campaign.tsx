@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { GoogleAdAccount } from '@/components/google-ad-account'
 import { GoogleSubAccounts } from '@/components/google-sub-accounts'
+import { GoogleAdCampaign } from '@/components/google-ad-campaign'
 import { getGoogleAdAccounts, GoogleAdAccount as GoogleAdAccountType } from '@/app/actions/google-ad-accounts'
 import { getGoogleSubAccounts, GoogleSubAccount } from '@/app/actions/google-sub-accounts'
 import { useState, useEffect } from 'react'
@@ -115,7 +116,6 @@ export function GoogleCampaign({ id, onRemove, organizationId }: GoogleCampaignP
   const handleSubAccountChange = (subAccountId: string) => {
     setSelectedSubAccountId(subAccountId)
     console.log('Selected Google sub-account:', subAccountId)
-    // TODO: Store the selected sub-account for campaign creation
   }
 
   // Determine which account to show as selected (sub-account takes precedence if available)
@@ -178,6 +178,16 @@ export function GoogleCampaign({ id, onRemove, organizationId }: GoogleCampaignP
               <strong>Manager Account Selected:</strong> Please select a sub-account to use for campaign creation.
             </p>
           </div>
+        )}
+
+        {/* Show GoogleAdCampaign component when an account is selected */}
+        {finalSelectedAccount && (
+          <GoogleAdCampaign
+            customerId={finalSelectedAccount.id}
+            accountName={finalSelectedAccount.name}
+            organizationId={organizationId}
+            managerCustomerId={selectedSubAccount ? selectedAccountId : undefined}
+          />
         )}
       </CardContent>
     </Card>
