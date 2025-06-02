@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Home',
+  title: 'Unyte AI',
   description: 'Automate the creation and deployment of ad campaigns on Google, Meta, TikTok, and LinkedIn with ease.',
 }
 
