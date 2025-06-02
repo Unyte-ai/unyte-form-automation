@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { CurrentUserAvatar } from '@/components/current-user-avatar';
 import { createClient } from '@/lib/supabase/server';
 import { OrganisationSwitch } from '@/components/organisation-switch';
@@ -23,8 +24,17 @@ export default async function HomeLayout({
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
-          <div className="font-bold text-xl">
-            <Link href="/home">LOGO</Link>
+          <div>
+            <Link href="/home">
+              <Image
+                src="/unyte-logo.png"
+                alt="Unyte Logo"
+                height={40}
+                width={134}
+                className="h-10 w-auto"
+                priority
+              />
+            </Link>
           </div>
 
           {/* Center/Right Side */}
