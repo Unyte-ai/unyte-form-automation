@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Metadata } from 'next'
+import { AddOrganisationButton } from '@/components/add-organisation-button'
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -28,13 +29,14 @@ export default async function HomePage() {
     redirect(`/home/${organizations[0].id}`)
   }
 
-  // If no organizations, show a message
+  // If no organizations, show a message with add organisation button
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex h-full w-full items-center justify-center p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Welcome to Unyte Form Automation</h1>
-          <p className="text-muted-foreground mb-4">Please create an organization to get started.</p>
+          <p className="text-muted-foreground mb-6">Please create an organization to get started.</p>
+          <AddOrganisationButton />
         </div>
       </div>
     </div>
