@@ -5,6 +5,12 @@ import {
     CardHeader,
     CardTitle,
   } from '@/components/ui/card'
+import { Metadata } from 'next'
+
+  export const metadata: Metadata = {
+    title: 'Sign Up Success',
+    description: 'Thank you for signing up! Please check your email to confirm your account.',
+  }
   
   export default function Page() {
     return (

@@ -7,6 +7,12 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Accept Invitation',
+  description: 'Accept your organization invitation',
+}
 
 function InvitationProcessor() {
   const router = useRouter()

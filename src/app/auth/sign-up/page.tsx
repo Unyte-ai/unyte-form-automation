@@ -1,4 +1,10 @@
 import { SignUpForm } from '@/components/sign-up-form'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Sign Up',
+  description: 'Create your Unyte AI account to get started with automated ad campaigns',
+}
 
 export default function Page() {
   return (

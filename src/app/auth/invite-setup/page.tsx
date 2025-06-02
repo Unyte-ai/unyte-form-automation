@@ -1,4 +1,10 @@
 import { InviteSetupForm } from '@/components/invite-setup-form'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Setup Invitation',
+  description: 'Complete your organization invitation setup',
+}
 
 export default function InviteSetupPage() {
   return (

@@ -1,5 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Your Unyte AI dashboard',
+}
 
 export default async function HomePage() {
   const supabase = await createClient()

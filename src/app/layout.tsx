@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Unyte AI",
+  title: {
+    template: "%s | Unyte AI",
+    default: "Unyte AI", // This will be used when no title is set on a page
+  },
   description: "Access the Unyte AI app to automate budget optimisation and the creation and deployment of ad campaigns",
 };
 
