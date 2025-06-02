@@ -3,6 +3,7 @@ import { MetaLogin } from '@/components/meta-login'
 import { TikTokLogin } from '@/components/tiktok-login'
 import { LinkedInLogin } from '@/components/linkedin-login'
 import { ConnectionStatusProvider } from '@/contexts/connection-status-context'
+import { PlatformConnectionWarning } from '@/components/platform-connection-warning'
 
 export function SocialPlatforms() {
   return (
@@ -15,6 +16,7 @@ export function SocialPlatforms() {
           <TikTokLogin />
           <LinkedInLogin />
         </div>
+        <PlatformConnectionWarning />
       </ConnectionStatusProvider>
     </div>
   )
