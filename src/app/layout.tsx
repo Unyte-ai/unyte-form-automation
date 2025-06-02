@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Unyte Form Automation",
-  description: "Automate the creation and deployment of ad campaigns",
+  title: "Unyte AI",
+  description: "Access the Unyte AI app to automate budget optimisation and the creation and deployment of ad campaigns",
 };
 
 export default function RootLayout({
