@@ -4,6 +4,32 @@ import { OrgInfo } from '@/components/org-info';
 import { SocialPlatforms } from '@/components/social-platforms';
 import { OrgTeam } from '@/components/org-team';
 import { Forms } from '@/components/forms';
+import { Metadata } from 'next';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orgId: string }>;
+}): Promise<Metadata> {
+  // Await the params before accessing properties
+  const { orgId } = await params;
+  
+  const supabase = await createClient();
+  
+  // Fetch organization data for metadata
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', orgId)
+    .single();
+  
+  const organizationName = organization?.name || 'Organization';
+  
+  return {
+    title: organizationName,
+    description: `Dashboard for ${organizationName} - manage forms, campaigns, and team members`,
+  };
+}
 
 export default async function OrganizationPage({
     params,

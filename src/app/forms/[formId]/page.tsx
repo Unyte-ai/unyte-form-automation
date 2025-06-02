@@ -4,6 +4,47 @@ import { FormBreadcrumb } from '@/components/form-breadcrumb'
 import { FormBody } from '@/components/form-body'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { CreateCampaign } from '@/components/create-campaign'
+import { Metadata } from 'next'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ formId: string }>
+}): Promise<Metadata> {
+  // Await the params before using them
+  const { formId } = await params
+  
+  const supabase = await createClient()
+  
+  // Get the form submission and organization data for metadata
+  const { data: submission } = await supabase
+    .from('form_submissions')
+    .select('email_subject, organization_id')
+    .eq('id', formId)
+    .single()
+
+  if (!submission) {
+    return {
+      title: 'Form Not Found',
+      description: 'The requested form could not be found',
+    }
+  }
+
+  // Fetch the organization name
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', submission.organization_id)
+    .single()
+  
+  const organizationName = organization?.name || 'Organization'
+  const formTitle = submission.email_subject || 'Untitled Submission'
+  
+  return {
+    title: `${formTitle} - ${organizationName}`,
+    description: `View and manage the "${formTitle}" form submission for ${organizationName}`,
+  }
+}
 
 export default async function FormDetailPage({
   params,
