@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/google-create-campaign'
+import { GoogleAutoPopulateButton } from '@/components/google-autopopulate'
 import { toast } from 'sonner'
 
 interface GoogleAdCampaignProps {
@@ -58,6 +59,11 @@ export function GoogleAdCampaign({
     if (!startDate) setStartDate(getTomorrowDate())
     if (!endDate) setEndDate(getDefaultEndDate())
   })
+
+  const handleAutoPopulate = () => {
+    // TODO: Add auto-populate logic here
+    console.log('Auto-populate clicked')
+  }
 
   const handleCreateCampaign = async () => {
     if (!campaignName.trim()) {
@@ -146,7 +152,13 @@ export function GoogleAdCampaign({
   return (
     <div className="space-y-4 mt-4">
       <div className="p-4 border rounded-lg bg-muted/30">
-        <h3 className="font-medium mb-4">Create Campaign</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-medium">Create Campaign</h3>
+          <GoogleAutoPopulateButton 
+            onClick={handleAutoPopulate}
+            disabled={isCreating}
+          />
+        </div>
         <p className="text-sm text-muted-foreground mb-4">
           Creating campaign for: <strong>{accountName}</strong>
           {managerCustomerId && (
