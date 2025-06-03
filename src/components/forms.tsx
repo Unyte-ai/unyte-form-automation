@@ -28,8 +28,18 @@ export async function Forms({ organizationId }: FormsProps) {
           Unable to load form submissions. Please try again later.
         </div>
       ) : !hasSubmissions ? (
-        <div className="text-muted-foreground">
-          No forms available yet.
+        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+            ⚠️ No forms available yet.
+          </p>
+          <div className="text-amber-800 dark:text-amber-300 text-xs space-y-1">
+            <p className="font-medium">To receive forms:</p>
+            <div className="ml-2 space-y-0.5">
+              <p>• Set up Power Automate on your Microsoft Forms</p>
+              <p>• Send form data to your organization email (see above)</p>
+              <p>• Ensure data is sent in JSON format</p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
