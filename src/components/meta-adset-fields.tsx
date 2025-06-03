@@ -325,18 +325,9 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: 
       {/* Ad Set Status */}
       <div className="grid gap-2">
         <Label htmlFor="adset-status">Ad Set Status</Label>
-        <Select 
-          value={value.status || DEFAULT_ADSET_VALUES.status} 
-          onValueChange={(selectedValue) => handleFieldChange('status', selectedValue)}
-        >
-          <SelectTrigger id="adset-status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PAUSED">Paused</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="px-3 py-2 bg-muted text-muted-foreground rounded-md text-sm">
+          Paused
+        </div>
         <p className="text-xs text-muted-foreground">
           Ad sets start paused by default for safety
         </p>

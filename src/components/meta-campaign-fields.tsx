@@ -5,7 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   FacebookCampaignData,
   CAMPAIGN_OBJECTIVES,
-  DEFAULT_CAMPAIGN_VALUES,
   formatBudgetCents,
   parseBudgetToCents
 } from '@/lib/facebook-campaign-utils'
@@ -90,18 +89,9 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
       {/* Campaign Status */}
       <div className="grid gap-2">
         <Label htmlFor="campaign-status">Campaign Status</Label>
-        <Select 
-          value={value.status || DEFAULT_CAMPAIGN_VALUES.status} 
-          onValueChange={(selectedValue) => handleFieldChange('status', selectedValue)}
-        >
-          <SelectTrigger id="campaign-status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PAUSED">Paused</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="px-3 py-2 bg-muted text-muted-foreground rounded-md text-sm">
+          Paused
+        </div>
         <p className="text-xs text-muted-foreground">
           Campaigns start paused by default for safety
         </p>
