@@ -29,7 +29,8 @@ export function GoogleAdCampaign({
 }: GoogleAdCampaignProps) {
   const [campaignName, setCampaignName] = useState('')
   const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY'>('SEARCH')
-  const [totalBudget, setTotalBudget] = useState('100.00')
+  const [budgetType, setBudgetType] = useState<'daily' | 'total'>('total')
+  const [budgetAmount, setBudgetAmount] = useState('100.00')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -64,9 +65,9 @@ export function GoogleAdCampaign({
       return
     }
 
-    const budgetValue = parseFloat(totalBudget)
+    const budgetValue = parseFloat(budgetAmount)
     if (isNaN(budgetValue) || budgetValue <= 0) {
-      toast.error('Please enter a valid total budget')
+      toast.error('Please enter a valid budget amount')
       return
     }
 
@@ -102,7 +103,8 @@ export function GoogleAdCampaign({
       const campaignData: CreateGoogleCampaignData = {
         campaignName: campaignName.trim(),
         campaignType,
-        totalBudget: budgetValue,
+        budgetType, // Pass the budget type to backend
+        budgetAmount: budgetValue,
         startDate,
         endDate,
         customerId,
@@ -124,7 +126,8 @@ export function GoogleAdCampaign({
         // Reset form
         setCampaignName('')
         setCampaignType('SEARCH')
-        setTotalBudget('100.00')
+        setBudgetType('total')
+        setBudgetAmount('100.00')
         setStartDate(getTomorrowDate())
         setEndDate(getDefaultEndDate())
       } else {
@@ -211,20 +214,50 @@ export function GoogleAdCampaign({
               </p>
             </div>
 
+            {/* Budget Type Selection */}
             <div className="grid gap-2">
-              <Label htmlFor="total-budget">Total Budget (USD)</Label>
+              <Label htmlFor="budget-type">Budget Type</Label>
+              <Select 
+                value={budgetType} 
+                onValueChange={(value: 'daily' | 'total') => setBudgetType(value)}
+                disabled={isCreating}
+              >
+                <SelectTrigger id="budget-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily Budget</SelectItem>
+                  <SelectItem value="total">Total Budget (Lifetime)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {budgetType === 'daily' 
+                  ? "Amount to spend per day. Google may spend up to 200% on high-opportunity days, but won't exceed your monthly limit (daily budget × 30.4)."
+                  : "Total amount to spend over the entire campaign duration"
+                }
+              </p>
+            </div>
+
+            {/* Budget Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="budget-amount">
+                {budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
+              </Label>
               <Input
-                id="total-budget"
+                id="budget-amount"
                 type="number"
                 step="0.01"
                 min="0.01"
-                value={totalBudget}
-                onChange={(e) => setTotalBudget(e.target.value)}
+                value={budgetAmount}
+                onChange={(e) => setBudgetAmount(e.target.value)}
                 placeholder="100.00"
                 disabled={isCreating}
               />
               <p className="text-xs text-muted-foreground">
-                Set the total budget for the entire campaign duration
+                {budgetType === 'daily' 
+                  ? "Set the daily budget amount. Minimum $1.00 per day."
+                  : "Set the total budget for the entire campaign duration"
+                }
               </p>
             </div>
 

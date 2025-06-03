@@ -6,7 +6,8 @@ import { GoogleAdsApi, resources, enums, toMicros, ResourceNames, MutateOperatio
 export interface CreateGoogleCampaignData {
   campaignName: string
   campaignType: 'SEARCH' | 'DISPLAY'
-  totalBudget: number
+  budgetType: 'daily' | 'total'  // New field
+  budgetAmount: number           // Renamed from totalBudget
   startDate: string // YYYY-MM-DD format
   endDate: string   // YYYY-MM-DD format
   customerId: string
@@ -18,6 +19,37 @@ export interface CreatedGoogleCampaign {
   budgetId: string
   campaignResourceName: string
   budgetResourceName: string
+}
+
+/**
+ * Calculate daily budget based on budget type
+ * @param budgetType - 'daily' or 'total'
+ * @param budgetAmount - The budget amount
+ * @param startDate - Campaign start date
+ * @param endDate - Campaign end date
+ * @returns Daily budget amount
+ */
+function calculateDailyBudget(
+  budgetType: 'daily' | 'total',
+  budgetAmount: number,
+  startDate: string,
+  endDate: string
+): number {
+  if (budgetType === 'daily') {
+    return budgetAmount
+  }
+  
+  // For total budget, calculate daily budget by dividing total by number of days
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const timeDiff = end.getTime() - start.getTime()
+  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) // Number of days
+  
+  if (daysDiff <= 0) {
+    throw new Error('End date must be after start date')
+  }
+  
+  return Math.round((budgetAmount / daysDiff) * 100) / 100 // Round to 2 decimal places
 }
 
 /**
@@ -67,6 +99,23 @@ export async function createGoogleCampaign(
       throw new Error('Google Ads API credentials are not properly configured')
     }
 
+    // Calculate the appropriate daily budget based on budget type
+    const dailyBudget = calculateDailyBudget(
+      campaignData.budgetType,
+      campaignData.budgetAmount,
+      campaignData.startDate,
+      campaignData.endDate
+    )
+
+    // Validate minimum daily budget (Google Ads minimum is typically $1.00)
+    if (dailyBudget < 1.0) {
+      throw new Error(`Daily budget too low: $${dailyBudget.toFixed(2)}. ${
+        campaignData.budgetType === 'total' 
+          ? 'Try increasing your total budget or reducing the campaign duration.'
+          : 'Minimum daily budget is $1.00.'
+      }`)
+    }
+
     // Initialize Google Ads API client
     const client = new GoogleAdsApi({
       client_id: clientId,
@@ -99,6 +148,11 @@ export async function createGoogleCampaign(
       }
     }
 
+    // Create budget name with type indicator for clarity
+    const budgetName = `${campaignData.campaignName} Budget (${
+      campaignData.budgetType === 'daily' ? 'Daily' : 'Total'
+    })`
+
     // Create operations for atomic budget and campaign creation
     const operations: MutateOperation<
       resources.ICampaignBudget | resources.ICampaign
@@ -108,9 +162,9 @@ export async function createGoogleCampaign(
         operation: "create",
         resource: {
           resource_name: budgetResourceName,
-          name: `${campaignData.campaignName} Budget`,
+          name: budgetName,
           delivery_method: enums.BudgetDeliveryMethod.STANDARD,
-          amount_micros: toMicros(campaignData.totalBudget), // Total budget instead of daily
+          amount_micros: toMicros(dailyBudget), // Always use daily budget for Google Ads API
         },
       },
       {
@@ -156,6 +210,14 @@ export async function createGoogleCampaign(
     const budgetId = budgetResult.resource_name.split('/').pop() || ''
     const campaignId = campaignResult.resource_name.split('/').pop() || ''
 
+    // Log budget information for debugging
+    console.log(`Campaign created with ${campaignData.budgetType} budget:`, {
+      budgetType: campaignData.budgetType,
+      originalAmount: campaignData.budgetAmount,
+      dailyBudget: dailyBudget,
+      campaignDuration: `${campaignData.startDate} to ${campaignData.endDate}`
+    })
+
     return {
       success: true,
       data: {
@@ -178,6 +240,8 @@ export async function createGoogleCampaign(
         errorMessage = 'Permission denied. Please ensure your Google account has access to Google Ads and can create campaigns.'
       } else if (error.message.includes('QUOTA_ERROR')) {
         errorMessage = 'Google Ads API quota exceeded. Please try again later.'
+      } else if (error.message.includes('Daily budget too low')) {
+        errorMessage = error.message // Use our custom budget validation message
       } else {
         errorMessage = error.message
       }
