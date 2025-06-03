@@ -15,11 +15,23 @@ import { MetaCampaign } from '@/components/meta-campaign'
 import { GoogleCampaign } from '@/components/google-campaign'
 import { v4 as uuidv4 } from 'uuid'
 
-interface CreateCampaignProps {
-  organizationId: string
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
 }
 
-export function CreateCampaign({ organizationId }: CreateCampaignProps) {
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
+interface CreateCampaignProps {
+  organizationId: string
+  formData?: StructuredData
+}
+
+export function CreateCampaign({ organizationId, formData }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
   const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
   const [metaCampaigns, setMetaCampaigns] = useState<{id: string}[]>([])
@@ -90,13 +102,14 @@ export function CreateCampaign({ organizationId }: CreateCampaignProps) {
 
       {/* Display campaigns */}
       <div className="space-y-4 mt-4">
-        {/* Google campaigns */}
+        {/* Google campaigns - now with form data */}
         {googleCampaigns.map(campaign => (
           <GoogleCampaign 
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeGoogleCampaign}
             organizationId={organizationId}
+            formData={formData}
           />
         ))}
 

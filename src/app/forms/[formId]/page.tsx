@@ -6,6 +6,23 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { CreateCampaign } from '@/components/create-campaign'
 import { Metadata } from 'next'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
+interface FormSubmission {
+  email_subject: string;
+  organization_id: string;
+  structured_data: StructuredData;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -64,10 +81,10 @@ export default async function FormDetailPage({
     redirect('/auth/login')
   }
   
-  // First, get the form submission to determine which organization it belongs to
+  // Fetch the form submission with structured_data - now we get all the data we need
   const { data: submission, error } = await supabase
     .from('form_submissions')
-    .select('email_subject, organization_id')
+    .select('email_subject, organization_id, structured_data')
     .eq('id', formId)
     .single()
 
@@ -76,11 +93,14 @@ export default async function FormDetailPage({
     notFound()
   }
 
+  // Type the submission data
+  const typedSubmission = submission as FormSubmission
+
   // Now check if user belongs to this organization
   const { data: memberData } = await supabase
     .from('organization_members')
     .select('id')
-    .eq('organization', submission.organization_id)
+    .eq('organization', typedSubmission.organization_id)
     .eq('user_id', userData.user.id)
     .single()
   
@@ -93,16 +113,16 @@ export default async function FormDetailPage({
   const { data: organization } = await supabase
     .from('organizations')
     .select('name')
-    .eq('id', submission.organization_id)
+    .eq('id', typedSubmission.organization_id)
     .single()
   
   const organizationName = organization?.name || 'Organization'
-  const formTitle = submission.email_subject || 'Untitled Submission'
+  const formTitle = typedSubmission.email_subject || 'Untitled Submission'
 
   return (
     <>
       <FormBreadcrumb 
-        organizationId={submission.organization_id}
+        organizationId={typedSubmission.organization_id}
         organizationName={organizationName}
         formTitle={formTitle}
       />
@@ -124,7 +144,10 @@ export default async function FormDetailPage({
           {/* Right column - Campaign creation */}
           <ResizablePanel defaultSize={50} minSize={20}>
             <div className="p-4 h-full overflow-y-auto bg-card/50">
-              <CreateCampaign organizationId={submission.organization_id} />
+              <CreateCampaign 
+                organizationId={typedSubmission.organization_id}
+                formData={typedSubmission.structured_data}
+              />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

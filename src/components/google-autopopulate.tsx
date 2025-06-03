@@ -4,16 +4,16 @@ import { Button } from '@/components/ui/button'
 import { Wand2 } from 'lucide-react'
 
 interface GoogleAutoPopulateButtonProps {
-  onClick?: () => void
+  onAutoPopulate?: () => void
   disabled?: boolean
 }
 
-export function GoogleAutoPopulateButton({ onClick, disabled = false }: GoogleAutoPopulateButtonProps) {
+export function GoogleAutoPopulateButton({ onAutoPopulate, disabled = false }: GoogleAutoPopulateButtonProps) {
   return (
     <Button 
       variant="outline" 
       size="sm" 
-      onClick={onClick}
+      onClick={onAutoPopulate}
       disabled={disabled}
       className="flex items-center gap-2"
     >

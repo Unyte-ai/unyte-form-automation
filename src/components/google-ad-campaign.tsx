@@ -15,18 +15,31 @@ import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/go
 import { GoogleAutoPopulateButton } from '@/components/google-autopopulate'
 import { toast } from 'sonner'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface GoogleAdCampaignProps {
   customerId: string
   accountName: string
   organizationId: string
   managerCustomerId?: string
+  formData?: StructuredData
 }
 
 export function GoogleAdCampaign({ 
   customerId, 
   accountName, 
   organizationId,
-  managerCustomerId
+  managerCustomerId,
+  formData
 }: GoogleAdCampaignProps) {
   const [campaignName, setCampaignName] = useState('')
   const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY'>('SEARCH')
@@ -60,9 +73,148 @@ export function GoogleAdCampaign({
     if (!endDate) setEndDate(getDefaultEndDate())
   })
 
+  // Auto-populate logic
+  const findAnswerByQuestion = (searchTerms: string[]): string => {
+    if (!formData?.formData) return ''
+    
+    const found = formData.formData.find(item => 
+      searchTerms.some(term => 
+        item.question.toLowerCase().includes(term.toLowerCase())
+      )
+    )
+    return found?.answer || ''
+  }
+
+  const parseDateFromForm = (dateString: string): string => {
+    if (!dateString) return ''
+    
+    try {
+      // Try to parse various date formats
+      const date = new Date(dateString)
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
+      }
+    } catch (error) {
+      console.warn('Could not parse date:', dateString, error)
+    }
+    
+    return ''
+  }
+
+  const determineCampaignTypeFromChannels = (channelsString: string): 'SEARCH' | 'DISPLAY' => {
+    if (!channelsString) return 'SEARCH'
+    
+    const lowerChannels = channelsString.toLowerCase()
+    
+    // Parse JSON array if it looks like one
+    if (channelsString.includes('[') && channelsString.includes(']')) {
+      try {
+        const channelsArray = JSON.parse(channelsString)
+        if (Array.isArray(channelsArray)) {
+          const joinedChannels = channelsArray.join(' ').toLowerCase()
+          // If contains search terms but not display, prefer search
+          if (joinedChannels.includes('search') && !joinedChannels.includes('display')) {
+            return 'SEARCH'
+          }
+          // If contains display terms, prefer display
+          if (joinedChannels.includes('display')) {
+            return 'DISPLAY'
+          }
+        }
+      } catch (e) {
+        // If JSON parsing fails, continue with string analysis
+        console.warn('Failed to parse channels as JSON:', channelsString, e)
+      }
+    }
+    
+    // Fallback to string analysis
+    if (lowerChannels.includes('display')) {
+      return 'DISPLAY'
+    }
+    
+    return 'SEARCH' // Default to search
+  }
+
   const handleAutoPopulate = () => {
-    // TODO: Add auto-populate logic here
-    console.log('Auto-populate clicked')
+    if (!formData?.formData) {
+      toast.error('No form data available for auto-population')
+      return
+    }
+
+    try {
+      // Campaign Name - look for campaign name related questions
+      const campaignNameFromForm = findAnswerByQuestion([
+        'campaign name', 
+        'name of campaign',
+        'campaign title'
+      ])
+      if (campaignNameFromForm) {
+        setCampaignName(campaignNameFromForm)
+      }
+
+      // Campaign Type - analyze preferred channels
+      const preferredChannels = findAnswerByQuestion([
+        'preferred channels',
+        'channels',
+        'networks',
+        'preferred networks'
+      ])
+      if (preferredChannels) {
+        const detectedType = determineCampaignTypeFromChannels(preferredChannels)
+        setCampaignType(detectedType)
+      }
+
+      // Start Date
+      const startDateFromForm = findAnswerByQuestion([
+        'start date',
+        'campaign start',
+        'begin date',
+        'launch date'
+      ])
+      if (startDateFromForm) {
+        const parsedStartDate = parseDateFromForm(startDateFromForm)
+        if (parsedStartDate) {
+          setStartDate(parsedStartDate)
+        }
+      }
+
+      // End Date
+      const endDateFromForm = findAnswerByQuestion([
+        'end date',
+        'campaign end',
+        'finish date',
+        'completion date'
+      ])
+      if (endDateFromForm) {
+        const parsedEndDate = parseDateFromForm(endDateFromForm)
+        if (parsedEndDate) {
+          setEndDate(parsedEndDate)
+        }
+      }
+
+      // Show success message with what was populated
+      const populatedFields = []
+      if (campaignNameFromForm) populatedFields.push('Campaign Name')
+      if (preferredChannels) populatedFields.push('Campaign Type')
+      if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
+      if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
+
+      if (populatedFields.length > 0) {
+        toast.success('Auto-populated successfully!', {
+          description: `Filled: ${populatedFields.join(', ')}`
+        })
+      } else {
+        toast.info('No matching fields found in form data', {
+          description: 'Form data may not contain the expected campaign information'
+        })
+      }
+
+    } catch (error) {
+      console.error('Error during auto-populate:', error)
+      toast.error('Auto-populate failed', {
+        description: 'An error occurred while processing the form data'
+      })
+    }
   }
 
   const handleCreateCampaign = async () => {
@@ -155,7 +307,7 @@ export function GoogleAdCampaign({
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium">Create Campaign</h3>
           <GoogleAutoPopulateButton 
-            onClick={handleAutoPopulate}
+            onAutoPopulate={handleAutoPopulate}
             disabled={isCreating}
           />
         </div>

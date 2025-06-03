@@ -11,13 +11,25 @@ import { getGoogleSubAccounts, GoogleSubAccount } from '@/app/actions/google-sub
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface GoogleCampaignProps {
   id: string
   onRemove: (id: string) => void
   organizationId: string
+  formData?: StructuredData
 }
 
-export function GoogleCampaign({ id, onRemove, organizationId }: GoogleCampaignProps) {
+export function GoogleCampaign({ id, onRemove, organizationId, formData }: GoogleCampaignProps) {
   const [accounts, setAccounts] = useState<GoogleAdAccountType[]>([])
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
   const [selectedAccountId, setSelectedAccountId] = useState<string>('')
@@ -180,13 +192,14 @@ export function GoogleCampaign({ id, onRemove, organizationId }: GoogleCampaignP
           </div>
         )}
 
-        {/* Show GoogleAdCampaign component when an account is selected */}
+        {/* Show GoogleAdCampaign component when an account is selected - now with form data */}
         {finalSelectedAccount && (
           <GoogleAdCampaign
             customerId={finalSelectedAccount.id}
             accountName={finalSelectedAccount.name}
             organizationId={organizationId}
             managerCustomerId={selectedSubAccount ? selectedAccountId : undefined}
+            formData={formData}
           />
         )}
       </CardContent>
