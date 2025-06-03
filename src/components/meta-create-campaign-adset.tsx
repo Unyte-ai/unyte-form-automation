@@ -17,7 +17,8 @@ import {
   validateCampaignData,
   validateAdSetDataWithObjective,
   getBillingEventForUIObjective,
-  getOptimizationGoalForUIObjective
+  getOptimizationGoalForUIObjective,
+  getBudgetLabel
 } from '@/lib/facebook-campaign-utils'
 
 interface MetaCreateCampaignAdSetProps {
@@ -42,17 +43,18 @@ export function MetaCreateCampaignAdSet({
     special_ad_categories: DEFAULT_CAMPAIGN_VALUES.special_ad_categories,
     buying_type: DEFAULT_CAMPAIGN_VALUES.buying_type,
     bid_strategy: DEFAULT_CAMPAIGN_VALUES.bid_strategy,
-    lifetime_budget: 0
+    budget_type: DEFAULT_CAMPAIGN_VALUES.budget_type, // 'LIFETIME' by default
+    lifetime_budget: 0,
+    daily_budget: undefined
   })
 
-  // Ad Set form state - removed lifetime_budget since using campaign budget
+  // Ad Set form state
   const [adSetData, setAdSetData] = useState<Partial<Omit<FacebookAdSetData, 'campaign_id'>>>({
     name: '',
     targeting: DEFAULT_ADSET_VALUES.targeting,
     status: DEFAULT_ADSET_VALUES.status,
     start_time: getDefaultStartDate(),
     end_time: getDefaultEndDate(),
-    // Initialize app promotion fields as empty
     application_id: '',
     object_store_url: ''
   })
@@ -85,11 +87,15 @@ export function MetaCreateCampaignAdSet({
     campaignValidationErrors.forEach((error: string) => {
       if (error.includes('name')) campaignErrorObj.name = error
       if (error.includes('objective')) campaignErrorObj.objective = error
-      if (error.includes('budget')) campaignErrorObj.lifetime_budget = error
+      if (error.includes('budget type')) campaignErrorObj.budget_type = error
+      if (error.includes('Lifetime budget')) campaignErrorObj.lifetime_budget = error
+      if (error.includes('Daily budget')) campaignErrorObj.daily_budget = error
+      if (error.includes('lifetime budget')) campaignErrorObj.lifetime_budget = error
+      if (error.includes('daily budget')) campaignErrorObj.daily_budget = error
     })
     setCampaignErrors(campaignErrorObj)
 
-    // Prepare ad set data for validation - include app promotion fields if objective is APP_PROMOTION
+    // Prepare ad set data for validation
     const tempAdSetData: FacebookAdSetData = {
       ...(adSetData as Omit<FacebookAdSetData, 'campaign_id' | 'billing_event' | 'optimization_goal'>),
       campaign_id: 'temp',
@@ -168,8 +174,9 @@ export function MetaCreateCampaignAdSet({
       }
 
       // Success
+      const budgetTypeLabel = campaignData.budget_type === 'LIFETIME' ? 'lifetime' : 'daily'
       toast.success('Campaign and Ad Set created successfully', {
-        description: `Campaign "${result.data!.campaignName}" and Ad Set "${result.data!.adSetName}" have been created.`
+        description: `Campaign "${result.data!.campaignName}" with ${budgetTypeLabel} budget and Ad Set "${result.data!.adSetName}" have been created.`
       })
 
       // Reset form
@@ -180,7 +187,9 @@ export function MetaCreateCampaignAdSet({
         special_ad_categories: DEFAULT_CAMPAIGN_VALUES.special_ad_categories,
         buying_type: DEFAULT_CAMPAIGN_VALUES.buying_type,
         bid_strategy: DEFAULT_CAMPAIGN_VALUES.bid_strategy,
-        lifetime_budget: 0
+        budget_type: DEFAULT_CAMPAIGN_VALUES.budget_type,
+        lifetime_budget: 0,
+        daily_budget: undefined
       })
 
       setAdSetData({
@@ -269,13 +278,15 @@ export function MetaCreateCampaignAdSet({
           <div className="space-y-4">
             <div className="border-b pb-2">
               <h3 className="font-medium text-sm">Ad Set Settings</h3>
-              <p className="text-xs text-muted-foreground">Configure targeting and schedule (budget comes from campaign)</p>
+              <p className="text-xs text-muted-foreground">
+                Configure targeting and schedule (budget comes from campaign)
+              </p>
             </div>
             <MetaAdSetFields
               value={adSetData}
               onChange={setAdSetData}
               errors={adSetErrors}
-              campaignObjective={campaignData.objective} // Pass campaign objective
+              campaignObjective={campaignData.objective}
             />
           </div>
 
@@ -290,6 +301,8 @@ export function MetaCreateCampaignAdSet({
                     <strong>Optimization Goal:</strong> {getOptimizationGoalForUIObjective(campaignData.objective)}
                   </>
                 )}
+                <br />
+                <strong>Budget Type:</strong> {getBudgetLabel(campaignData.budget_type || 'LIFETIME')}
                 <br />
                 <span className="text-xs">
                   These settings are automatically configured based on your selected campaign objective.

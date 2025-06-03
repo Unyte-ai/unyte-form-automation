@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   FacebookCampaignData,
+  FacebookBudgetType,
   CAMPAIGN_OBJECTIVES,
   formatBudgetCents,
   parseBudgetToCents
@@ -24,24 +25,55 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
     })
   }
 
+  // Handle budget type change - clear the opposite budget when switching types
+  const handleBudgetTypeChange = (budgetType: FacebookBudgetType) => {
+    const updates: Partial<FacebookCampaignData> = {
+      ...value,
+      budget_type: budgetType
+    }
+
+    // Clear the budget that's not being used
+    if (budgetType === 'LIFETIME') {
+      updates.daily_budget = undefined
+    } else {
+      updates.lifetime_budget = undefined
+    }
+
+    onChange(updates)
+  }
+
   // Handle budget change with cent conversion
-  const handleBudgetChange = (budgetString: string) => {
+  const handleBudgetChange = (budgetString: string, budgetType: FacebookBudgetType) => {
     if (budgetString === '') {
-      handleFieldChange('lifetime_budget', 0)
+      if (budgetType === 'LIFETIME') {
+        handleFieldChange('lifetime_budget', 0)
+      } else {
+        handleFieldChange('daily_budget', 0)
+      }
       return
     }
     
     const cents = parseBudgetToCents(budgetString)
-    handleFieldChange('lifetime_budget', cents)
+    if (budgetType === 'LIFETIME') {
+      handleFieldChange('lifetime_budget', cents)
+    } else {
+      handleFieldChange('daily_budget', cents)
+    }
   }
 
   // Get current budget as string for display
   const getBudgetDisplayValue = (): string => {
-    if (!value.lifetime_budget || value.lifetime_budget === 0) {
+    const currentBudgetType = value.budget_type || 'LIFETIME'
+    const budgetAmount = currentBudgetType === 'LIFETIME' ? value.lifetime_budget : value.daily_budget
+    
+    if (!budgetAmount || budgetAmount === 0) {
       return ''
     }
-    return formatBudgetCents(value.lifetime_budget)
+    return formatBudgetCents(budgetAmount)
   }
+
+  // Get the current budget type (default to LIFETIME)
+  const currentBudgetType = value.budget_type || 'LIFETIME'
 
   return (
     <div className="space-y-4">
@@ -86,6 +118,57 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
         </p>
       </div>
 
+      {/* Budget Type Selection */}
+      <div className="grid gap-2">
+        <Label htmlFor="budget-type">Budget Type *</Label>
+        <Select value={currentBudgetType} onValueChange={handleBudgetTypeChange}>
+          <SelectTrigger id="budget-type" className={errors?.budget_type ? 'border-destructive' : ''}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="DAILY">Daily Budget</SelectItem>
+            <SelectItem value="LIFETIME">Lifetime Budget</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {currentBudgetType === 'DAILY' 
+            ? "Amount to spend per day. Facebook will continue spending until you pause the campaign or it reaches an end date."
+            : "Total amount to spend over the campaign lifetime. Facebook will pace spending automatically."
+          }
+        </p>
+        {errors?.budget_type && (
+          <p className="text-xs text-destructive">{errors.budget_type}</p>
+        )}
+      </div>
+
+      {/* Budget Amount */}
+      <div className="grid gap-2">
+        <Label htmlFor="campaign-budget">
+          {currentBudgetType === 'LIFETIME' ? 'Lifetime Budget (USD) *' : 'Daily Budget (USD) *'}
+        </Label>
+        <Input
+          id="campaign-budget"
+          type="number"
+          step="0.01"
+          min="0"
+          value={getBudgetDisplayValue()}
+          onChange={(e) => handleBudgetChange(e.target.value, currentBudgetType)}
+          placeholder="0.00"
+          className={errors?.lifetime_budget || errors?.daily_budget ? 'border-destructive' : ''}
+        />
+        {(errors?.lifetime_budget || errors?.daily_budget) && (
+          <p className="text-xs text-destructive">
+            {errors?.lifetime_budget || errors?.daily_budget}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {currentBudgetType === 'LIFETIME' 
+            ? 'Enter the total amount you want to spend on this campaign'
+            : 'Enter the maximum amount you want to spend per day'
+          }
+        </p>
+      </div>
+
       {/* Campaign Status */}
       <div className="grid gap-2">
         <Label htmlFor="campaign-status">Campaign Status</Label>
@@ -94,27 +177,6 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
         </div>
         <p className="text-xs text-muted-foreground">
           Campaigns start paused by default for safety
-        </p>
-      </div>
-
-      {/* Lifetime Budget */}
-      <div className="grid gap-2">
-        <Label htmlFor="campaign-budget">Lifetime Budget (USD) *</Label>
-        <Input
-          id="campaign-budget"
-          type="number"
-          step="0.01"
-          min="0"
-          value={getBudgetDisplayValue()}
-          onChange={(e) => handleBudgetChange(e.target.value)}
-          placeholder="0.00"
-          className={errors?.lifetime_budget ? 'border-destructive' : ''}
-        />
-        {errors?.lifetime_budget && (
-          <p className="text-xs text-destructive">{errors.lifetime_budget}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          Enter the total amount you want to spend on this campaign
         </p>
       </div>
     </div>

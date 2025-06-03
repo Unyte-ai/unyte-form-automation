@@ -7,7 +7,7 @@ export type FacebookCampaignObjective =
   | 'SALES'
   | 'APP_PROMOTION'
   | 'LEAD_GENERATION'
-  | 'POST_ENGAGEMENT' // 🆕 Added POST_ENGAGEMENT
+  | 'POST_ENGAGEMENT'
 
 // API Objectives (what Facebook API expects)
 export type FacebookCampaignAPIObjective = 
@@ -16,7 +16,7 @@ export type FacebookCampaignAPIObjective =
   | 'OUTCOME_SALES'
   | 'OUTCOME_APP_PROMOTION'
   | 'OUTCOME_LEADS'
-  | 'OUTCOME_ENGAGEMENT' // 🆕 Added OUTCOME_ENGAGEMENT
+  | 'OUTCOME_ENGAGEMENT'
 
 export type FacebookCampaignStatus = 'ACTIVE' | 'PAUSED'
 
@@ -25,6 +25,9 @@ export type FacebookBuyingType = 'AUCTION'
 export type FacebookBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
 
 export type FacebookSpecialAdCategory = 'NONE'
+
+// Budget type for campaign
+export type FacebookBudgetType = 'LIFETIME' | 'DAILY'
 
 export type FacebookBillingEvent = 
   | 'APP_INSTALLS'
@@ -47,7 +50,7 @@ export type FacebookOptimizationGoal =
   | 'LANDING_PAGE_VIEWS'
   | 'POST_ENGAGEMENT'
   | 'THRUPLAY'
-  | 'LEAD_GENERATION' // Added for Lead Generation
+  | 'LEAD_GENERATION'
 
 export type FacebookPublisherPlatform = 
   | 'facebook'
@@ -63,7 +66,9 @@ export interface FacebookCampaignData {
   special_ad_categories: FacebookSpecialAdCategory[] | []
   buying_type: FacebookBuyingType
   bid_strategy: FacebookBidStrategy
-  lifetime_budget: number // in cents
+  budget_type: FacebookBudgetType // NEW: Budget type selection
+  lifetime_budget?: number // in cents - optional, used when budget_type is LIFETIME
+  daily_budget?: number // in cents - optional, used when budget_type is DAILY
 }
 
 export interface FacebookGeoTargeting {
@@ -81,44 +86,45 @@ export interface FacebookAdSetData {
   name: string
   campaign_id: string
   billing_event: FacebookBillingEvent
-  optimization_goal?: FacebookOptimizationGoal // Optional - only needed for certain objectives
+  optimization_goal?: FacebookOptimizationGoal
   targeting: FacebookTargeting
   status: FacebookCampaignStatus
   start_time: string // ISO string
   end_time: string // ISO string
   // App promotion fields
-  application_id?: string // For APP_PROMOTION campaigns
-  object_store_url?: string // App store URL for APP_PROMOTION campaigns
+  application_id?: string
+  object_store_url?: string
   // Lead generation fields
-  page_id?: string // For LEAD_GENERATION campaigns
+  page_id?: string
 }
 
 export interface FacebookBatchCampaignAdSetData {
   campaign: FacebookCampaignData
-  adset: Omit<FacebookAdSetData, 'campaign_id'> // campaign_id will be set automatically
+  adset: Omit<FacebookAdSetData, 'campaign_id'>
 }
 
 // API-ready interfaces (what gets sent to Facebook)
 export interface FacebookCampaignAPIData {
   name: string
-  objective: FacebookCampaignAPIObjective // Note: API objective type
+  objective: FacebookCampaignAPIObjective
   status: FacebookCampaignStatus
   special_ad_categories: FacebookSpecialAdCategory[] | []
   buying_type: FacebookBuyingType
   bid_strategy: FacebookBidStrategy
-  lifetime_budget: number
+  lifetime_budget?: number // Only included if budget_type is LIFETIME
+  daily_budget?: number // Only included if budget_type is DAILY
 }
 
 export interface FacebookAdSetAPIData {
   name: string
   campaign_id: string
   billing_event: FacebookBillingEvent
-  optimization_goal?: FacebookOptimizationGoal // Optional - only included when specified
+  optimization_goal?: FacebookOptimizationGoal
   targeting: string // JSON stringified FacebookTargeting
   status: FacebookCampaignStatus
   start_time: string
   end_time: string
-  promoted_object?: string // JSON stringified promoted object for APP_PROMOTION and LEAD_GENERATION
+  promoted_object?: string // JSON stringified promoted object
 }
 
 // UI to API objective mapping
@@ -128,7 +134,7 @@ export const UI_TO_API_OBJECTIVE: Record<FacebookCampaignObjective, FacebookCamp
   'SALES': 'OUTCOME_SALES',
   'APP_PROMOTION': 'OUTCOME_APP_PROMOTION',
   'LEAD_GENERATION': 'OUTCOME_LEADS',
-  'POST_ENGAGEMENT': 'OUTCOME_ENGAGEMENT' // 🆕 Added POST_ENGAGEMENT mapping
+  'POST_ENGAGEMENT': 'OUTCOME_ENGAGEMENT'
 }
 
 // Objective to Billing Event mapping
@@ -138,7 +144,7 @@ export const OBJECTIVE_TO_BILLING_EVENT: Record<FacebookCampaignObjective, Faceb
   'SALES': 'LINK_CLICKS',
   'APP_PROMOTION': 'LINK_CLICKS',
   'LEAD_GENERATION': 'IMPRESSIONS',
-  'POST_ENGAGEMENT': 'IMPRESSIONS' // 🆕 Use IMPRESSIONS for post engagement
+  'POST_ENGAGEMENT': 'IMPRESSIONS'
 }
 
 // Objective to Optimization Goal mapping
@@ -148,17 +154,17 @@ export const OBJECTIVE_TO_OPTIMIZATION_GOAL: Record<FacebookCampaignObjective, F
   'SALES': 'LINK_CLICKS',
   'APP_PROMOTION': 'LINK_CLICKS',
   'LEAD_GENERATION': 'LEAD_GENERATION',
-  'POST_ENGAGEMENT': 'POST_ENGAGEMENT' // 🆕 Use POST_ENGAGEMENT optimization goal
+  'POST_ENGAGEMENT': 'POST_ENGAGEMENT'
 }
 
-// Campaign objectives with human-readable labels (for UI dropdowns)
+// Campaign objectives with human-readable labels
 export const CAMPAIGN_OBJECTIVES = [
   { value: 'AWARENESS', label: 'Brand Awareness' },
   { value: 'TRAFFIC', label: 'Traffic' },
   { value: 'SALES', label: 'Sales' },
   { value: 'APP_PROMOTION', label: 'App Promotion' },
   { value: 'LEAD_GENERATION', label: 'Lead Generation' },
-  { value: 'POST_ENGAGEMENT', label: 'Engagement' } // 🆕 Added to UI dropdown
+  { value: 'POST_ENGAGEMENT', label: 'Engagement' }
 ] as const
 
 // Publisher platforms with human-readable labels
@@ -192,7 +198,8 @@ export const DEFAULT_CAMPAIGN_VALUES: Partial<FacebookCampaignData> = {
   status: 'PAUSED',
   special_ad_categories: [],
   buying_type: 'AUCTION',
-  bid_strategy: 'LOWEST_COST_WITHOUT_CAP'
+  bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+  budget_type: 'LIFETIME' // Default to lifetime budget
 }
 
 export const DEFAULT_ADSET_VALUES: Partial<FacebookAdSetData> = {
@@ -231,8 +238,25 @@ export function validateCampaignData(data: Partial<FacebookCampaignData>): strin
     errors.push('Campaign objective is required')
   }
   
-  if (!data.lifetime_budget || data.lifetime_budget <= 0) {
-    errors.push('Campaign lifetime budget must be greater than 0')
+  if (!data.budget_type) {
+    errors.push('Budget type is required')
+  }
+  
+  // Validate budget based on budget type
+  if (data.budget_type === 'LIFETIME') {
+    if (!data.lifetime_budget || data.lifetime_budget <= 0) {
+      errors.push('Lifetime budget must be greater than 0')
+    }
+    if (data.daily_budget) {
+      errors.push('Cannot set daily budget when using lifetime budget')
+    }
+  } else if (data.budget_type === 'DAILY') {
+    if (!data.daily_budget || data.daily_budget <= 0) {
+      errors.push('Daily budget must be greater than 0')
+    }
+    if (data.lifetime_budget) {
+      errors.push('Cannot set lifetime budget when using daily budget')
+    }
   }
   
   return errors
@@ -322,17 +346,37 @@ export function parseBudgetToCents(dollarAmount: string): number {
   return Math.round(parsed * 100)
 }
 
+// Helper function to get the budget amount based on type
+export function getBudgetAmount(campaign: FacebookCampaignData): number {
+  return campaign.budget_type === 'LIFETIME' 
+    ? campaign.lifetime_budget || 0 
+    : campaign.daily_budget || 0
+}
+
+// Helper function to get budget label for UI
+export function getBudgetLabel(budgetType: FacebookBudgetType): string {
+  return budgetType === 'LIFETIME' ? 'Lifetime Budget' : 'Daily Budget'
+}
+
 // Convert form data to API-ready format
 export function prepareCampaignForAPI(data: FacebookCampaignData): FacebookCampaignAPIData {
-  return {
+  const apiData: FacebookCampaignAPIData = {
     name: data.name,
-    objective: getAPIObjectiveFromUIObjective(data.objective), // Convert UI to API objective
+    objective: getAPIObjectiveFromUIObjective(data.objective),
     status: data.status,
     special_ad_categories: data.special_ad_categories,
     buying_type: data.buying_type,
-    bid_strategy: data.bid_strategy,
-    lifetime_budget: data.lifetime_budget
+    bid_strategy: data.bid_strategy
   }
+
+  // Only include the budget field that corresponds to the budget type
+  if (data.budget_type === 'LIFETIME' && data.lifetime_budget) {
+    apiData.lifetime_budget = data.lifetime_budget
+  } else if (data.budget_type === 'DAILY' && data.daily_budget) {
+    apiData.daily_budget = data.daily_budget
+  }
+
+  return apiData
 }
 
 export function prepareAdSetForAPI(data: FacebookAdSetData): FacebookAdSetAPIData {
