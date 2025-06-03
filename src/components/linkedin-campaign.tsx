@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { LinkedInAdAccount } from '@/components/linkedin-ad-account'
 import { LinkedInCampaignGroups } from '@/components/linkedin-campaign-groups'
 import { LinkedInCreateAdCampaign } from '@/components/linkedin-create-ad-campaign'
+import { LinkedInCreateCampaignGroup } from '@/components/create-linkedin-campaign-group'
 import { getLinkedInAdAccounts, LinkedInAdAccount as AdAccountType } from '@/app/actions/linkedin-ad-accounts'
 import { getLinkedInCampaignGroups, LinkedInCampaignGroup } from '@/app/actions/linkedin-campaign-groups'
 import { toast } from 'sonner'
@@ -105,6 +106,27 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
     setSelectedCampaignGroup(value)
   }
 
+  // Handle when a new campaign group is created
+  const handleCampaignGroupCreated = async (newCampaignGroup: { id: string; name: string }) => {
+    console.log('New campaign group created:', newCampaignGroup)
+    
+    // Refresh campaign groups list to include the new one
+    try {
+      const result = await getLinkedInCampaignGroups(organizationId, selectedAccount)
+      
+      if (result.success && result.data) {
+        setCampaignGroups(result.data)
+        // Automatically select the newly created campaign group
+        setSelectedCampaignGroup(newCampaignGroup.id)
+      }
+    } catch (error) {
+      console.error('Error refreshing campaign groups after creation:', error)
+      toast.error('Failed to refresh campaign groups', {
+        description: 'Please refresh the page to see the new campaign group'
+      })
+    }
+  }
+
   // Handle when a new campaign is created
   const handleCampaignCreated = async (newCampaign: { id: string; name: string }) => {
     console.log('New campaign created:', newCampaign)
@@ -151,6 +173,13 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
             isLoading={isLoadingCampaignGroups}
           />
         )}
+
+        {/* Create New Campaign Group Component */}
+        <LinkedInCreateCampaignGroup
+          organizationId={organizationId}
+          selectedAccount={selectedAccount}
+          onCampaignGroupCreated={handleCampaignGroupCreated}
+        />
 
         {/* Create New Campaign Component */}
         <LinkedInCreateAdCampaign
