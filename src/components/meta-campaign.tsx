@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { MetaAdAccount } from '@/components/meta-ad-account'
-import { MetaAdCampaign } from '@/components/meta-ad-campaign'
 import { MetaCreateCampaignAdSet } from '@/components/meta-create-campaign-adset'
 import { getFacebookAdAccounts, FacebookAdAccount } from '@/app/actions/facebook-ad-accounts'
-import { getFacebookAdCampaigns, FacebookAdCampaign } from '@/app/actions/facebook-ad-campaigns'
 import { toast } from 'sonner'
 
 interface MetaCampaignProps {
@@ -19,15 +17,9 @@ interface MetaCampaignProps {
 
 export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps) {
   const [accounts, setAccounts] = useState<FacebookAdAccount[]>([])
-  const [campaigns, setCampaigns] = useState<FacebookAdCampaign[]>([])
-  
   const [selectedAccount, setSelectedAccount] = useState<string>('')
-
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
-  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false)
-  
   const [accountsError, setAccountsError] = useState<string | null>(null)
-  const [campaignsError, setCampaignsError] = useState<string | null>(null)
 
   // Fetch Facebook ad accounts when component mounts
   useEffect(() => {
@@ -57,50 +49,9 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
     fetchAdAccounts()
   }, [organizationId])
 
-  // Fetch campaigns when an ad account is selected
-  useEffect(() => {
-    async function fetchCampaigns() {
-      if (!selectedAccount) {
-        setCampaigns([])
-        return
-      }
-
-      try {
-        setIsLoadingCampaigns(true)
-        setCampaignsError(null)
-        
-        const result = await getFacebookAdCampaigns(organizationId, selectedAccount)
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch Facebook campaigns')
-        }
-        
-        setCampaigns(result.data || [])
-      } catch (error) {
-        console.error('Error fetching Facebook campaigns:', error)
-        setCampaignsError(error instanceof Error ? error.message : 'Failed to fetch campaigns')
-        toast.error('Failed to fetch Facebook campaigns', {
-          description: error instanceof Error ? error.message : 'An unexpected error occurred'
-        })
-      } finally {
-        setIsLoadingCampaigns(false)
-      }
-    }
-    
-    fetchCampaigns()
-  }, [organizationId, selectedAccount])
-
   // Handle ad account selection
   const handleAdAccountChange = (value: string) => {
     setSelectedAccount(value)
-    // Reset campaigns when account changes
-    setCampaigns([])
-  }
-
-  // Handle campaign selection
-  const handleCampaignChange = (value: string) => {
-    console.log('Selected Facebook campaign:', value)
-    // You can add additional logic here when a campaign is selected
   }
 
   // Handle successful campaign creation
@@ -111,23 +62,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
     adSetName: string 
   }) => {
     console.log('Campaign created successfully:', createdCampaign)
-    
-    // Refresh the campaigns list to include the new campaign
-    if (selectedAccount) {
-      try {
-        setIsLoadingCampaigns(true)
-        const result = await getFacebookAdCampaigns(organizationId, selectedAccount)
-        
-        if (result.success) {
-          setCampaigns(result.data || [])
-        }
-      } catch (error) {
-        console.error('Error refreshing campaigns after creation:', error)
-        // Still show success message even if refresh fails
-      } finally {
-        setIsLoadingCampaigns(false)
-      }
-    }
   }
 
   return (
@@ -155,19 +89,6 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
             accounts={accounts} 
             onChange={handleAdAccountChange}
             isLoading={isLoadingAccounts}
-          />
-        )}
-
-        {/* Campaign Selection */}
-        {campaignsError ? (
-          <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
-            <p className="text-sm">{campaignsError}</p>
-          </div>
-        ) : (
-          <MetaAdCampaign
-            campaigns={campaigns}
-            onChange={handleCampaignChange}
-            isLoading={isLoadingCampaigns}
           />
         )}
 
