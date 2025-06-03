@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Loader2 } from 'lucide-react'
 import { createLinkedInCampaignGroup, CreateLinkedInCampaignGroupData } from '@/app/actions/create-linkedin-campaign-group'
+import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
 
 interface LinkedInCreateCampaignGroupProps {
@@ -134,7 +135,13 @@ export function LinkedInCreateCampaignGroup({
   return (
     <Card className="border-t-0 rounded-t-none">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base">Create New Campaign Group</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Create New Campaign Group</CardTitle>
+          <LinkedInAutoPopulateButton 
+            onAutoPopulate={() => {}} // No logic for now
+            disabled={isCreating}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
