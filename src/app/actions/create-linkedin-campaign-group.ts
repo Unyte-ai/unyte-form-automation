@@ -7,7 +7,7 @@ export interface CreateLinkedInCampaignGroupData {
   name: string
   startDate: string // ISO date string (YYYY-MM-DD)
   endDate: string // ISO date string (YYYY-MM-DD)
-  objectiveType: 'BRAND_AWARENESS' | 'ENGAGEMENT' | 'JOB_APPLICANTS' | 'LEAD_GENERATION' | 'WEBSITE_CONVERSIONS' | 'WEBSITE_VISITS' | 'VIDEO_VIEWS'
+  objectiveType: 'BRAND_AWARENESS' | 'ENGAGEMENT' | 'JOB_APPLICANT' | 'LEAD_GENERATION' | 'WEBSITE_CONVERSION' | 'WEBSITE_VISIT' | 'VIDEO_VIEW'
 }
 
 /**

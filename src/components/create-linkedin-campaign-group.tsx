@@ -26,7 +26,7 @@ export function LinkedInCreateCampaignGroup({
   
   // Form state
   const [name, setName] = useState('')
-  const [objectiveType, setObjectiveType] = useState<'BRAND_AWARENESS' | 'ENGAGEMENT' | 'JOB_APPLICANTS' | 'LEAD_GENERATION' | 'WEBSITE_CONVERSIONS' | 'WEBSITE_VISITS' | 'VIDEO_VIEWS'>('LEAD_GENERATION')
+  const [objectiveType, setObjectiveType] = useState<'BRAND_AWARENESS' | 'ENGAGEMENT' | 'JOB_APPLICANT' | 'LEAD_GENERATION' | 'WEBSITE_CONVERSION' | 'WEBSITE_VISIT' | 'VIDEO_VIEW'>('LEAD_GENERATION')
   
   // Date state
   const [startDate, setStartDate] = useState(() => {
@@ -164,11 +164,11 @@ export function LinkedInCreateCampaignGroup({
               <SelectContent>
                 <SelectItem value="BRAND_AWARENESS">Brand Awareness</SelectItem>
                 <SelectItem value="ENGAGEMENT">Engagement</SelectItem>
-                <SelectItem value="JOB_APPLICANTS">Job Applicants</SelectItem>
+                <SelectItem value="JOB_APPLICANT">Job Applicants</SelectItem>
                 <SelectItem value="LEAD_GENERATION">Lead Generation</SelectItem>
-                <SelectItem value="WEBSITE_CONVERSIONS">Website Conversions</SelectItem>
-                <SelectItem value="WEBSITE_VISITS">Website Visits</SelectItem>
-                <SelectItem value="VIDEO_VIEWS">Video Views</SelectItem>
+                <SelectItem value="WEBSITE_CONVERSION">Website Conversions</SelectItem>
+                <SelectItem value="WEBSITE_VISIT">Website Visits</SelectItem>
+                <SelectItem value="VIDEO_VIEW">Video Views</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
