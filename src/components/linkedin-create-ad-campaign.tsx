@@ -29,6 +29,7 @@ export function LinkedInCreateAdCampaign({
   // Form state
   const [name, setName] = useState('')
   const [campaignType, setCampaignType] = useState<'SPONSORED_UPDATES' | 'TEXT_AD' | 'SPONSORED_INMAILS' | 'DYNAMIC'>('SPONSORED_UPDATES')
+  const [budgetType, setBudgetType] = useState<'daily' | 'total'>('total')
   const [budgetAmount, setBudgetAmount] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [country, setCountry] = useState('US')
@@ -80,10 +81,9 @@ export function LinkedInCreateAdCampaign({
           country,
           language
         },
-        totalBudget: {
-          amount: budgetAmount,
-          currencyCode: currency
-        },
+        budgetType: budgetType,
+        budgetAmount: budgetAmount,
+        currencyCode: currency,
         startDate: startDate,
         endDate: endDate || undefined,
         // Basic targeting criteria - can be expanded later
@@ -201,10 +201,32 @@ export function LinkedInCreateAdCampaign({
             )}
           </div>
 
-          {/* Budget */}
+          {/* Budget Type Selection */}
+          <div className="grid gap-2">
+            <Label htmlFor="budget-type">Budget Type *</Label>
+            <Select value={budgetType} onValueChange={(value) => setBudgetType(value as 'daily' | 'total')}>
+              <SelectTrigger id="budget-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily Budget</SelectItem>
+                <SelectItem value="total">Total Budget (Lifetime)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {budgetType === 'daily' 
+                ? "Amount to spend per day (resets at midnight UTC). LinkedIn may spend up to 150% on high-opportunity days."
+                : "Total amount to spend over the campaign lifetime"
+              }
+            </p>
+          </div>
+
+          {/* Budget Amount and Currency */}
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="budget-amount">Total Budget *</Label>
+              <Label htmlFor="budget-amount">
+                {budgetType === 'daily' ? 'Daily Budget *' : 'Total Budget *'}
+              </Label>
               <Input
                 id="budget-amount"
                 type="number"

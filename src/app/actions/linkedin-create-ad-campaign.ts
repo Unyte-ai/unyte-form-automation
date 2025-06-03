@@ -12,10 +12,9 @@ export interface CreateLinkedInCampaignData {
     country: string
     language: string
   }
-  totalBudget: {
-    amount: string
-    currencyCode: string
-  }
+  budgetType: 'daily' | 'total'
+  budgetAmount: string
+  currencyCode: string
   startDate: string // ISO date string (YYYY-MM-DD)
   endDate?: string // Optional ISO date string (YYYY-MM-DD)
   targetingCriteria: {
@@ -85,6 +84,10 @@ export async function createLinkedInCampaign(
       throw new Error('Start date is required')
     }
 
+    if (!campaignData.budgetAmount || parseFloat(campaignData.budgetAmount) <= 0) {
+      throw new Error('Budget amount is required and must be greater than 0')
+    }
+
     // Handle both string URNs and number IDs
     const accountUrn = typeof campaignData.account === 'string' 
       ? campaignData.account 
@@ -103,6 +106,21 @@ export async function createLinkedInCampaign(
     // SPONSORED_INMAILS (Message and Conversation Ads) cannot use OPTIMIZED
     const creativeSelection = campaignData.type === 'SPONSORED_INMAILS' ? 'ROUND_ROBIN' : 'OPTIMIZED'
     
+    // Prepare budget object based on budget type
+    const budgetConfig = campaignData.budgetType === 'daily' 
+      ? {
+          dailyBudget: {
+            amount: campaignData.budgetAmount,
+            currencyCode: campaignData.currencyCode
+          }
+        }
+      : {
+          totalBudget: {
+            amount: campaignData.budgetAmount,
+            currencyCode: campaignData.currencyCode
+          }
+        }
+    
     // Prepare the campaign payload for LinkedIn API
     const campaignPayload = {
       account: accountUrn,
@@ -111,7 +129,7 @@ export async function createLinkedInCampaign(
       name: campaignData.name,
       type: campaignData.type,
       locale: campaignData.locale,
-      totalBudget: campaignData.totalBudget,
+      ...budgetConfig, // Spread the budget configuration
       targetingCriteria: campaignData.targetingCriteria,
       status: 'DRAFT', // Create as draft
       // Add required runSchedule with user-selected dates
@@ -125,7 +143,7 @@ export async function createLinkedInCampaign(
       offsiteDeliveryEnabled: false,
       unitCost: {
         amount: '0',
-        currencyCode: campaignData.totalBudget.currencyCode
+        currencyCode: campaignData.currencyCode
       },
 
       // Add format field for campaign types that require it
