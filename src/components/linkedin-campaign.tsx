@@ -12,13 +12,25 @@ import { getLinkedInAdAccounts, LinkedInAdAccount as AdAccountType } from '@/app
 import { getLinkedInCampaignGroups, LinkedInCampaignGroup } from '@/app/actions/linkedin-campaign-groups'
 import { toast } from 'sonner'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface LinkedInCampaignProps {
   id: string
   onRemove: (id: string) => void
   organizationId: string
+  formData?: StructuredData // Add formData prop
 }
 
-export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampaignProps) {
+export function LinkedInCampaign({ id, onRemove, organizationId, formData }: LinkedInCampaignProps) {
   const [accounts, setAccounts] = useState<AdAccountType[]>([])
   const [campaignGroups, setCampaignGroups] = useState<LinkedInCampaignGroup[]>([])
   
@@ -174,11 +186,12 @@ export function LinkedInCampaign({ id, onRemove, organizationId }: LinkedInCampa
           />
         )}
 
-        {/* Create New Campaign Group Component */}
+        {/* Create New Campaign Group Component - now with formData */}
         <LinkedInCreateCampaignGroup
           organizationId={organizationId}
           selectedAccount={selectedAccount}
           onCampaignGroupCreated={handleCampaignGroupCreated}
+          formData={formData}
         />
 
         {/* Create New Campaign Component */}

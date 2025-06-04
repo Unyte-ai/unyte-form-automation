@@ -11,16 +11,29 @@ import { createLinkedInCampaignGroup, CreateLinkedInCampaignGroupData } from '@/
 import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface LinkedInCreateCampaignGroupProps {
   organizationId: string
   selectedAccount: string // Ad Account URN or ID
   onCampaignGroupCreated?: (campaignGroup: { id: string; name: string }) => void
+  formData?: StructuredData // Add formData prop
 }
 
 export function LinkedInCreateCampaignGroup({ 
   organizationId, 
   selectedAccount,
-  onCampaignGroupCreated 
+  onCampaignGroupCreated,
+  formData // Add formData prop
 }: LinkedInCreateCampaignGroupProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -42,6 +55,152 @@ export function LinkedInCreateCampaignGroup({
     futureDate.setDate(futureDate.getDate() + 31)
     return futureDate.toISOString().split('T')[0]
   })
+
+  // Auto-populate helper function
+  const findAnswerByQuestion = (searchTerms: string[]): string => {
+    if (!formData?.formData) return ''
+    
+    const found = formData.formData.find(item => 
+      searchTerms.some(term => 
+        item.question.toLowerCase().includes(term.toLowerCase())
+      )
+    )
+    return found?.answer || ''
+  }
+
+  // Parse date from form data
+  const parseDateFromForm = (dateString: string): string => {
+    if (!dateString) return ''
+    
+    try {
+      // Try to parse various date formats
+      const date = new Date(dateString)
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
+      }
+    } catch (error) {
+      console.warn('Could not parse date:', dateString, error)
+    }
+    
+    return ''
+  }
+
+  // Map objective from form data to LinkedIn objective types
+  const mapObjectiveToLinkedInType = (objectiveString: string): typeof objectiveType => {
+    if (!objectiveString) return 'LEAD_GENERATION'
+    
+    const lowerObjective = objectiveString.toLowerCase()
+    
+    if (lowerObjective.includes('awareness') || lowerObjective.includes('brand')) {
+      return 'BRAND_AWARENESS'
+    }
+    if (lowerObjective.includes('engagement') || lowerObjective.includes('engage')) {
+      return 'ENGAGEMENT'
+    }
+    if (lowerObjective.includes('job') || lowerObjective.includes('hiring') || lowerObjective.includes('recruit')) {
+      return 'JOB_APPLICANT'
+    }
+    if (lowerObjective.includes('lead') || lowerObjective.includes('generation')) {
+      return 'LEAD_GENERATION'
+    }
+    if (lowerObjective.includes('conversion') || lowerObjective.includes('convert')) {
+      return 'WEBSITE_CONVERSION'
+    }
+    if (lowerObjective.includes('traffic') || lowerObjective.includes('visit') || lowerObjective.includes('website')) {
+      return 'WEBSITE_VISIT'
+    }
+    if (lowerObjective.includes('video') || lowerObjective.includes('view')) {
+      return 'VIDEO_VIEW'
+    }
+    
+    return 'LEAD_GENERATION' // Default fallback
+  }
+
+  // Auto-populate handler
+  const handleAutoPopulate = () => {
+    if (!formData?.formData) {
+      toast.error('No form data available for auto-population')
+      return
+    }
+
+    try {
+      // Campaign Group Name
+      const campaignNameFromForm = findAnswerByQuestion([
+        'campaign name', 
+        'name of campaign',
+        'campaign title',
+        'group name'
+      ])
+      if (campaignNameFromForm) {
+        setName(campaignNameFromForm)
+      }
+
+      // Start Date
+      const startDateFromForm = findAnswerByQuestion([
+        'start date',
+        'campaign start',
+        'begin date',
+        'launch date'
+      ])
+      if (startDateFromForm) {
+        const parsedStartDate = parseDateFromForm(startDateFromForm)
+        if (parsedStartDate) {
+          setStartDate(parsedStartDate)
+        }
+      }
+
+      // End Date
+      const endDateFromForm = findAnswerByQuestion([
+        'end date',
+        'campaign end',
+        'finish date',
+        'completion date'
+      ])
+      if (endDateFromForm) {
+        const parsedEndDate = parseDateFromForm(endDateFromForm)
+        if (parsedEndDate) {
+          setEndDate(parsedEndDate)
+        }
+      }
+
+      // Objective Type
+      const objectiveFromForm = findAnswerByQuestion([
+        'objective',
+        'goal',
+        'key result',
+        'kpi',
+        'target',
+        'purpose'
+      ])
+      if (objectiveFromForm) {
+        const mappedObjective = mapObjectiveToLinkedInType(objectiveFromForm)
+        setObjectiveType(mappedObjective)
+      }
+
+      // Show success message with what was populated
+      const populatedFields = []
+      if (campaignNameFromForm) populatedFields.push('Campaign Group Name')
+      if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
+      if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
+      if (objectiveFromForm) populatedFields.push('Objective Type')
+
+      if (populatedFields.length > 0) {
+        toast.success('Auto-populated successfully!', {
+          description: `Filled: ${populatedFields.join(', ')}`
+        })
+      } else {
+        toast.info('No matching fields found in form data', {
+          description: 'Form data may not contain the expected campaign group information'
+        })
+      }
+
+    } catch (error) {
+      console.error('Error during auto-populate:', error)
+      toast.error('Auto-populate failed', {
+        description: 'An error occurred while processing the form data'
+      })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,7 +297,7 @@ export function LinkedInCreateCampaignGroup({
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Create New Campaign Group</CardTitle>
           <LinkedInAutoPopulateButton 
-            onAutoPopulate={() => {}} // No logic for now
+            onAutoPopulate={handleAutoPopulate}
             disabled={isCreating}
           />
         </div>

@@ -113,13 +113,14 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
           />
         ))}
 
-        {/* LinkedIn campaigns */}
+        {/* LinkedIn campaigns - now with form data */}
         {linkedInCampaigns.map(campaign => (
           <LinkedInCampaign 
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeLinkedInCampaign}
             organizationId={organizationId}
+            formData={formData}
           />
         ))}
 
