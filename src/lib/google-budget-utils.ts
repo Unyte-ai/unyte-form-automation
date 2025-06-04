@@ -315,13 +315,13 @@ interface FormQuestion {
     return false
   }
   
-  /**
-   * Counts total platform groups mentioned in form data
-   * Used for budget allocation when running multi-platform campaigns
-   * @param formData - The structured form submission data
-   * @returns Number of total platform groups detected
-   */
-  export function countTotalPlatformGroupsInForm(formData: StructuredData): number {
+/**
+ * Counts total platform groups mentioned in form data
+ * Used for budget allocation when running multi-platform campaigns
+ * @param formData - The structured form submission data
+ * @returns Number of total platform groups detected
+ */
+export function countTotalPlatformGroupsInForm(formData: StructuredData): number {
     if (!formData?.formData) return 0
     
     const platformFields = formData.formData.filter(item => {
@@ -376,34 +376,12 @@ interface FormQuestion {
     cleanPlatforms.forEach(platform => {
       const lowerPlatform = platform.toLowerCase()
       
-      // Google group (Search, Display, general Google)
-      if ([...GOOGLE_SEARCH_KEYWORDS, ...GOOGLE_DISPLAY_KEYWORDS, ...GOOGLE_GENERAL_KEYWORDS].some(keyword => 
-        lowerPlatform.includes(keyword))) {
-        platformGroups.add('google')
-      }
-      // LinkedIn group
-      else if (['linkedin', 'linked in', 'professional network', 'b2b'].some(keyword => 
-        lowerPlatform.includes(keyword))) {
-        platformGroups.add('linkedin')
-      }
-      // Meta group (Facebook, Instagram, etc.)
-      else if (['facebook', 'instagram', 'messenger', 'threads', 'meta'].some(keyword => 
+      // Meta group (Facebook, Instagram, etc.) - ONLY grouping we keep
+      if (['facebook', 'instagram', 'messenger', 'threads', 'meta'].some(keyword => 
         lowerPlatform.includes(keyword))) {
         platformGroups.add('meta')
       }
-      // TikTok
-      else if (lowerPlatform.includes('tiktok') || lowerPlatform.includes('tik tok')) {
-        platformGroups.add('tiktok')
-      }
-      // Twitter/X
-      else if (['twitter', 'x.com', ' x '].some(keyword => lowerPlatform.includes(keyword))) {
-        platformGroups.add('twitter')
-      }
-      // Amazon
-      else if (['amazon', 'dsp'].some(keyword => lowerPlatform.includes(keyword))) {
-        platformGroups.add('amazon')
-      }
-      // Other platforms as individual groups
+      // All other platforms as individual groups (no more grouping)
       else {
         platformGroups.add(lowerPlatform)
       }
@@ -417,7 +395,7 @@ interface FormQuestion {
     })
     
     return totalGroups
-  }
+  }  
   
   /**
    * Calculates Google's allocated budget when running multi-platform campaigns

@@ -221,108 +221,87 @@ interface FormQuestion {
     return false
   }
   
-  /**
-   * Counts total platform groups mentioned in form data
-   * Used for budget allocation when running multi-platform campaigns
-   * @param formData - The structured form submission data
-   * @returns Number of total platform groups detected
-   */
-  export function countTotalPlatformGroupsInForm(formData: StructuredData): number {
-    if (!formData?.formData) return 0
+/**
+ * Counts total platform groups mentioned in form data
+ * Used for budget allocation when running multi-platform campaigns
+ * @param formData - The structured form submission data
+ * @returns Number of total platform groups detected
+ */
+export function countTotalPlatformGroupsInForm(formData: StructuredData): number {
+  if (!formData?.formData) return 0
+  
+  const platformFields = formData.formData.filter(item => {
+    const question = item.question.toLowerCase()
+    return question.includes('channel') || 
+           question.includes('network') || 
+           question.includes('platform') ||
+           question.includes('preferred')
+  })
+  
+  console.log('🔍 Platform Count - Platform-related fields found:', platformFields)
+  
+  const allPlatforms: string[] = []
+  
+  platformFields.forEach(field => {
+    if (!field.answer) return
     
-    const platformFields = formData.formData.filter(item => {
-      const question = item.question.toLowerCase()
-      return question.includes('channel') || 
-             question.includes('network') || 
-             question.includes('platform') ||
-             question.includes('preferred')
-    })
+    const platformText = field.answer
     
-    console.log('🔍 Platform Count - Platform-related fields found:', platformFields)
-    
-    const allPlatforms: string[] = []
-    
-    platformFields.forEach(field => {
-      if (!field.answer) return
-      
-      const platformText = field.answer
-      
-      // Handle JSON array strings
-      try {
-        if (field.answer.startsWith('[') && field.answer.endsWith(']')) {
-          const parsed = JSON.parse(field.answer)
-          if (Array.isArray(parsed)) {
-            allPlatforms.push(...parsed)
-            return
-          }
+    // Handle JSON array strings
+    try {
+      if (field.answer.startsWith('[') && field.answer.endsWith(']')) {
+        const parsed = JSON.parse(field.answer)
+        if (Array.isArray(parsed)) {
+          allPlatforms.push(...parsed)
+          return
         }
-      } catch (error) {
-        console.warn('Failed to parse platform array:', error)
       }
-      
-      // Handle comma-separated strings
-      if (platformText.includes(',')) {
-        const platforms = platformText.split(',').map(p => p.trim())
-        allPlatforms.push(...platforms)
-      } else {
-        allPlatforms.push(platformText.trim())
-      }
-    })
+    } catch (error) {
+      console.warn('Failed to parse platform array:', error)
+    }
     
-    // Clean and normalize platform names
-    const cleanPlatforms = allPlatforms
-      .filter(p => p && p.length > 0)
-      .map(p => p.toLowerCase().trim())
+    // Handle comma-separated strings
+    if (platformText.includes(',')) {
+      const platforms = platformText.split(',').map(p => p.trim())
+      allPlatforms.push(...platforms)
+    } else {
+      allPlatforms.push(platformText.trim())
+    }
+  })
+  
+  // Clean and normalize platform names
+  const cleanPlatforms = allPlatforms
+    .filter(p => p && p.length > 0)
+    .map(p => p.toLowerCase().trim())
+  
+  console.log('🧹 Platform Count - All platforms found:', cleanPlatforms)
+  
+  // Group platforms by major categories
+  const platformGroups = new Set<string>()
+  
+  cleanPlatforms.forEach(platform => {
+    const lowerPlatform = platform.toLowerCase()
     
-    console.log('🧹 Platform Count - All platforms found:', cleanPlatforms)
-    
-    // Group platforms by major categories
-    const platformGroups = new Set<string>()
-    
-    cleanPlatforms.forEach(platform => {
-      const lowerPlatform = platform.toLowerCase()
-      
-      // LinkedIn group
-      if (LINKEDIN_PLATFORM_KEYWORDS.some(keyword => lowerPlatform.includes(keyword))) {
-        platformGroups.add('linkedin')
-      }
-      // Meta group (Facebook, Instagram, etc.)
-      else if (['facebook', 'instagram', 'messenger', 'threads', 'meta'].some(keyword => 
-        lowerPlatform.includes(keyword))) {
-        platformGroups.add('meta')
-      }
-      // Google group
-      else if (['google', 'youtube', 'search', 'display'].some(keyword => 
-        lowerPlatform.includes(keyword))) {
-        platformGroups.add('google')
-      }
-      // TikTok
-      else if (lowerPlatform.includes('tiktok') || lowerPlatform.includes('tik tok')) {
-        platformGroups.add('tiktok')
-      }
-      // Twitter/X
-      else if (['twitter', 'x.com', ' x '].some(keyword => lowerPlatform.includes(keyword))) {
-        platformGroups.add('twitter')
-      }
-      // Amazon
-      else if (['amazon', 'dsp'].some(keyword => lowerPlatform.includes(keyword))) {
-        platformGroups.add('amazon')
-      }
-      // Other platforms as individual groups
-      else {
-        platformGroups.add(lowerPlatform)
-      }
-    })
-    
-    const totalGroups = platformGroups.size
-    
-    console.log('🏷️ Platform Group Analysis:', {
-      platformGroups: Array.from(platformGroups),
-      totalGroups
-    })
-    
-    return totalGroups
-  }
+    // Meta group (Facebook, Instagram, etc.) - ONLY grouping we keep
+    if (['facebook', 'instagram', 'messenger', 'threads', 'meta'].some(keyword => 
+      lowerPlatform.includes(keyword))) {
+      platformGroups.add('meta')
+    }
+    // All other platforms as individual groups (no more grouping)
+    else {
+      platformGroups.add(lowerPlatform)
+    }
+  })
+  
+  const totalGroups = platformGroups.size
+  
+  console.log('🏷️ Platform Group Analysis:', {
+    platformGroups: Array.from(platformGroups),
+    totalGroups
+  })
+  
+  return totalGroups
+}
   
   /**
    * Calculates LinkedIn's allocated budget when running multi-platform campaigns
