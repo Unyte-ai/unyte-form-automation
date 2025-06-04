@@ -10,6 +10,10 @@ import { Plus, Loader2 } from 'lucide-react'
 import { createLinkedInCampaignGroup, CreateLinkedInCampaignGroupData } from '@/app/actions/create-linkedin-campaign-group'
 import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
+import { 
+  extractLinkedInBudgetFromForm,
+  getLinkedInBudgetAllocationSummary
+} from '@/lib/linkedin-budget-utils'
 
 // Define interfaces for form data
 interface FormQuestion {
@@ -124,6 +128,12 @@ export function LinkedInCreateCampaignGroup({
     }
 
     try {
+      // Use the budget utilities to get comprehensive budget info
+      const budgetInfo = extractLinkedInBudgetFromForm(formData)
+      
+      // Log the budget allocation summary for debugging
+      console.log('💰 LinkedIn Campaign Group Budget Analysis:', getLinkedInBudgetAllocationSummary(formData))
+
       // Campaign Group Name
       const campaignNameFromForm = findAnswerByQuestion([
         'campaign name', 
@@ -175,6 +185,23 @@ export function LinkedInCreateCampaignGroup({
       if (objectiveFromForm) {
         const mappedObjective = mapObjectiveToLinkedInType(objectiveFromForm)
         setObjectiveType(mappedObjective)
+      }
+
+      // Budget validation and warnings
+      if (budgetInfo.totalBudget > 0) {
+        if (!budgetInfo.isLinkedInPlatform) {
+          toast.info('LinkedIn not mentioned in form platforms', {
+            description: 'This campaign group will be created but LinkedIn may not be a target platform'
+          })
+        } else if (!budgetInfo.validation.isValid) {
+          toast.warning('Budget may be below LinkedIn minimums', {
+            description: `Allocated budget: ${budgetInfo.currency} ${budgetInfo.allocatedBudget.toFixed(2)}. ${budgetInfo.validation.message}`
+          })
+        } else {
+          toast.success('Budget allocation looks good!', {
+            description: `${budgetInfo.currency} ${budgetInfo.allocatedBudget.toFixed(2)} allocated for LinkedIn (${budgetInfo.budgetType})`
+          })
+        }
       }
 
       // Show success message with what was populated

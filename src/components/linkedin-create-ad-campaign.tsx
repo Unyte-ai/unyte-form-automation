@@ -10,6 +10,11 @@ import { Plus, Loader2 } from 'lucide-react'
 import { createLinkedInCampaign, CreateLinkedInCampaignData } from '@/app/actions/linkedin-create-ad-campaign'
 import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
+import { 
+  extractLinkedInBudgetFromForm,
+  getLinkedInBudgetAllocationSummary,
+  getLinkedInBudgetSuggestions
+} from '@/lib/linkedin-budget-utils'
 
 interface FormQuestion {
   question: string;
@@ -120,27 +125,7 @@ export function LinkedInCreateAdCampaign({
     return 'SPONSORED_UPDATES' // Default fallback
   }
 
-  // Map currency from form data
-  const mapCurrencyCode = (currencyString: string): string => {
-    if (!currencyString) return 'USD'
-    
-    const lowerCurrency = currencyString.toLowerCase()
-    
-    if (lowerCurrency.includes('gbp') || lowerCurrency.includes('pound') || lowerCurrency.includes('£')) {
-      return 'GBP'
-    }
-    if (lowerCurrency.includes('eur') || lowerCurrency.includes('euro') || lowerCurrency.includes('€')) {
-      return 'EUR'
-    }
-    if (lowerCurrency.includes('cad') || lowerCurrency.includes('canadian')) {
-      return 'CAD'
-    }
-    if (lowerCurrency.includes('usd') || lowerCurrency.includes('dollar') || lowerCurrency.includes('$')) {
-      return 'USD'
-    }
-    
-    return 'USD' // Default fallback
-  }
+
 
   // Map geography to country code
   const mapGeographyToCountry = (geographyString: string): string => {
@@ -200,6 +185,12 @@ export function LinkedInCreateAdCampaign({
     }
 
     try {
+      // Use the budget utilities to get comprehensive budget info
+      const budgetInfo = extractLinkedInBudgetFromForm(formData)
+      
+      // Log the budget allocation summary for debugging
+      console.log('💰 LinkedIn Campaign Budget Analysis:', getLinkedInBudgetAllocationSummary(formData))
+
       // Campaign Name
       const campaignNameFromForm = findAnswerByQuestion([
         'campaign name', 
@@ -226,15 +217,22 @@ export function LinkedInCreateAdCampaign({
         setCampaignType(mappedCampaignType)
       }
 
-      // Currency
-      const currencyFromForm = findAnswerByQuestion([
-        'currency',
-        'budget currency',
-        'currency code'
-      ])
-      if (currencyFromForm) {
-        const mappedCurrency = mapCurrencyCode(currencyFromForm)
-        setCurrency(mappedCurrency)
+      // Budget Type - Use the budget utilities detection
+      if (budgetInfo.totalBudget > 0) {
+        setBudgetType(budgetInfo.budgetType)
+        console.log('📊 Auto-populated budget type:', budgetInfo.budgetType)
+      }
+
+      // Budget Amount - Use the allocated budget from utilities
+      if (budgetInfo.allocatedBudget > 0) {
+        setBudgetAmount(budgetInfo.allocatedBudget.toString())
+        console.log('💰 Auto-populated budget amount:', budgetInfo.allocatedBudget)
+      }
+
+      // Currency - Use the budget utilities detection
+      if (budgetInfo.currency) {
+        setCurrency(budgetInfo.currency)
+        console.log('💱 Auto-populated currency:', budgetInfo.currency)
       }
 
       // Country
@@ -293,11 +291,41 @@ export function LinkedInCreateAdCampaign({
         }
       }
 
+      // Budget validation and feedback
+      if (budgetInfo.totalBudget > 0) {
+        if (!budgetInfo.isLinkedInPlatform) {
+          toast.warning('LinkedIn not mentioned in form platforms', {
+            description: 'Consider if LinkedIn is the right platform for this campaign'
+          })
+        } else if (!budgetInfo.validation.isValid) {
+          // Get budget suggestions for better recommendations
+          const suggestions = getLinkedInBudgetSuggestions(campaignType, budgetInfo.budgetType, budgetInfo.currency)
+          
+          toast.error('Budget below LinkedIn minimums', {
+            description: `Current: ${budgetInfo.currency} ${budgetInfo.allocatedBudget.toFixed(2)}. Minimum: ${budgetInfo.currency} ${budgetInfo.validation.minimumRequired}. Suggested: ${budgetInfo.currency} ${suggestions.suggested}`
+          })
+        } else {
+          toast.success('Budget allocation validated!', {
+            description: `${budgetInfo.currency} ${budgetInfo.allocatedBudget.toFixed(2)} allocated for LinkedIn (${budgetInfo.budgetType})`
+          })
+        }
+
+        // Show platform allocation breakdown if multiple platforms
+        if (budgetInfo.platformGroups > 1) {
+          toast.info('Multi-platform budget detected', {
+            description: `Total budget split across ${budgetInfo.platformGroups} platform groups`
+          })
+        }
+      }
+
       // Show success message with what was populated
       const populatedFields = []
       if (campaignNameFromForm) populatedFields.push('Campaign Name')
       if (objectiveFromForm) populatedFields.push('Campaign Type')
-      if (currencyFromForm) populatedFields.push('Currency')
+      if (budgetInfo.totalBudget > 0) {
+        populatedFields.push('Budget Type', 'Budget Amount')
+      }
+      if (budgetInfo.currency) populatedFields.push('Currency')
       if (geographyFromForm) populatedFields.push('Country')
       if (languageFromForm) populatedFields.push('Language')
       if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
