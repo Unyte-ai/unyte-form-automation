@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/google-create-campaign'
 import { GoogleAutoPopulateButton } from '@/components/google-autopopulate'
+import { extractGoogleBudgetFromForm, detectGoogleCampaignTypeFromForm } from '@/lib/google-budget-utils'
 import { toast } from 'sonner'
 
 // Define interfaces for form data
@@ -101,40 +102,6 @@ export function GoogleAdCampaign({
     return ''
   }
 
-  const determineCampaignTypeFromChannels = (channelsString: string): 'SEARCH' | 'DISPLAY' => {
-    if (!channelsString) return 'SEARCH'
-    
-    const lowerChannels = channelsString.toLowerCase()
-    
-    // Parse JSON array if it looks like one
-    if (channelsString.includes('[') && channelsString.includes(']')) {
-      try {
-        const channelsArray = JSON.parse(channelsString)
-        if (Array.isArray(channelsArray)) {
-          const joinedChannels = channelsArray.join(' ').toLowerCase()
-          // If contains search terms but not display, prefer search
-          if (joinedChannels.includes('search') && !joinedChannels.includes('display')) {
-            return 'SEARCH'
-          }
-          // If contains display terms, prefer display
-          if (joinedChannels.includes('display')) {
-            return 'DISPLAY'
-          }
-        }
-      } catch (e) {
-        // If JSON parsing fails, continue with string analysis
-        console.warn('Failed to parse channels as JSON:', channelsString, e)
-      }
-    }
-    
-    // Fallback to string analysis
-    if (lowerChannels.includes('display')) {
-      return 'DISPLAY'
-    }
-    
-    return 'SEARCH' // Default to search
-  }
-
   const handleAutoPopulate = () => {
     if (!formData?.formData) {
       toast.error('No form data available for auto-population')
@@ -152,16 +119,23 @@ export function GoogleAdCampaign({
         setCampaignName(campaignNameFromForm)
       }
 
-      // Campaign Type - analyze preferred channels
-      const preferredChannels = findAnswerByQuestion([
-        'preferred channels',
-        'channels',
-        'networks',
-        'preferred networks'
-      ])
-      if (preferredChannels) {
-        const detectedType = determineCampaignTypeFromChannels(preferredChannels)
-        setCampaignType(detectedType)
+      // Extract comprehensive budget information using utility functions
+      const budgetConfig = extractGoogleBudgetFromForm(formData)
+      
+      // Campaign Type - use utility function for more comprehensive detection
+      const detectedCampaignType = detectGoogleCampaignTypeFromForm(formData)
+      setCampaignType(detectedCampaignType)
+
+      // Budget Type - set from extracted config
+      if (budgetConfig.budgetType) {
+        setBudgetType(budgetConfig.budgetType)
+      }
+
+      // Budget Amount - use allocated budget if available, otherwise total budget
+      if (budgetConfig.allocatedBudget > 0) {
+        setBudgetAmount(budgetConfig.allocatedBudget.toString())
+      } else if (budgetConfig.totalBudget > 0) {
+        setBudgetAmount(budgetConfig.totalBudget.toString())
       }
 
       // Start Date
@@ -195,7 +169,9 @@ export function GoogleAdCampaign({
       // Show success message with what was populated
       const populatedFields = []
       if (campaignNameFromForm) populatedFields.push('Campaign Name')
-      if (preferredChannels) populatedFields.push('Campaign Type')
+      if (detectedCampaignType) populatedFields.push('Campaign Type')
+      if (budgetConfig.budgetType) populatedFields.push('Budget Type')
+      if (budgetConfig.allocatedBudget > 0 || budgetConfig.totalBudget > 0) populatedFields.push('Budget Amount')
       if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
       if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
 
