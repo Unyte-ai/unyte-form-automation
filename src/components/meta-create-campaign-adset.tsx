@@ -7,6 +7,7 @@ import { Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MetaCampaignFields } from '@/components/meta-campaign-fields'
 import { MetaAdSetFields } from '@/components/meta-adset-fields'
+import { MetaAutoPopulateButton } from '@/components/meta-autopopulate'
 import { createFacebookCampaignAndAdSet } from '@/app/actions/facebook-batch-campaign-adset'
 import { 
   FacebookCampaignData,
@@ -253,7 +254,13 @@ export function MetaCreateCampaignAdSet({
   return (
     <Card className="border-t-0 rounded-t-none">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
+          <MetaAutoPopulateButton 
+            onAutoPopulate={undefined}
+            disabled={isCreating}
+          />
+        </div>
         <p className="text-sm text-muted-foreground">
           This will create both a campaign and ad set together using Facebook&apos;s batch API. 
           Budget will be set at the campaign level and distributed across ad sets.
