@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Sparkles } from 'lucide-react'
+import { Wand2 } from 'lucide-react'
 
 interface MetaAutoPopulateButtonProps {
   onAutoPopulate?: () => void
@@ -18,7 +18,7 @@ export function MetaAutoPopulateButton({ onAutoPopulate, disabled = false }: Met
       disabled={disabled || !onAutoPopulate}
       className="h-8 px-3"
     >
-      <Sparkles className="mr-1 size-3" />
+      <Wand2 className="mr-1 size-3" />
       Auto-populate
     </Button>
   )
