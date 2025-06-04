@@ -15,6 +15,7 @@ import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/go
 import { GoogleAutoPopulateButton } from '@/components/google-autopopulate'
 import { extractGoogleBudgetFromForm, detectGoogleCampaignTypeFromForm } from '@/lib/google-budget-utils'
 import { toast } from 'sonner'
+import { Pencil, Lock } from 'lucide-react'
 
 // Define interfaces for form data
 interface FormQuestion {
@@ -49,6 +50,8 @@ export function GoogleAdCampaign({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
+  const [isDateLocked, setIsDateLocked] = useState(false) // Dates start unlocked
   const [createdCampaign, setCreatedCampaign] = useState<{
     campaignId: string
     campaignName: string
@@ -138,6 +141,11 @@ export function GoogleAdCampaign({
         setBudgetAmount(budgetConfig.totalBudget.toString())
       }
 
+      // Lock budget fields after auto-populate
+      if (budgetConfig.budgetType || budgetConfig.allocatedBudget > 0 || budgetConfig.totalBudget > 0) {
+        setIsBudgetLocked(true)
+      }
+
       // Start Date
       const startDateFromForm = findAnswerByQuestion([
         'start date',
@@ -166,6 +174,12 @@ export function GoogleAdCampaign({
         }
       }
 
+      // Lock date fields after auto-populate if dates were found
+      if ((startDateFromForm && parseDateFromForm(startDateFromForm)) || 
+          (endDateFromForm && parseDateFromForm(endDateFromForm))) {
+        setIsDateLocked(true)
+      }
+
       // Show success message with what was populated
       const populatedFields = []
       if (campaignNameFromForm) populatedFields.push('Campaign Name')
@@ -191,6 +205,14 @@ export function GoogleAdCampaign({
         description: 'An error occurred while processing the form data'
       })
     }
+  }
+
+  const toggleBudgetLock = () => {
+    setIsBudgetLocked(!isBudgetLocked)
+  }
+
+  const toggleDateLock = () => {
+    setIsDateLocked(!isDateLocked)
   }
 
   const handleCreateCampaign = async () => {
@@ -264,6 +286,8 @@ export function GoogleAdCampaign({
         setBudgetAmount('100.00')
         setStartDate(getTomorrowDate())
         setEndDate(getDefaultEndDate())
+        setIsBudgetLocked(false) // Reset lock state
+        setIsDateLocked(false) // Reset date lock state
       } else {
         throw new Error(result.error || 'Failed to create campaign')
       }
@@ -356,13 +380,32 @@ export function GoogleAdCampaign({
 
             {/* Budget Type Selection */}
             <div className="grid gap-2">
-              <Label htmlFor="budget-type">Budget Type</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="budget-type">Budget Type</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBudgetLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isBudgetLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
               <Select 
                 value={budgetType} 
                 onValueChange={(value: 'daily' | 'total') => setBudgetType(value)}
-                disabled={isCreating}
+                disabled={isCreating || isBudgetLocked}
               >
-                <SelectTrigger id="budget-type">
+                <SelectTrigger 
+                  id="budget-type"
+                  className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -380,9 +423,25 @@ export function GoogleAdCampaign({
 
             {/* Budget Amount */}
             <div className="grid gap-2">
-              <Label htmlFor="budget-amount">
-                {budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="budget-amount">
+                  {budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBudgetLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isBudgetLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
               <Input
                 id="budget-amount"
                 type="number"
@@ -391,7 +450,8 @@ export function GoogleAdCampaign({
                 value={budgetAmount}
                 onChange={(e) => setBudgetAmount(e.target.value)}
                 placeholder="100.00"
-                disabled={isCreating}
+                disabled={isCreating || isBudgetLocked}
+                className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
               />
               <p className="text-xs text-muted-foreground">
                 {budgetType === 'daily' 
@@ -401,16 +461,45 @@ export function GoogleAdCampaign({
               </p>
             </div>
 
+            {/* Budget Warning when unlocked */}
+            {!isBudgetLocked && (
+              <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                  ⚠️ Budget fields are unlocked for manual editing
+                </p>
+                <div className="text-amber-800 dark:text-amber-300 text-xs">
+                  <p>Budget values can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="start-date">Start Date</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleDateLock}
+                    disabled={isCreating}
+                    className="h-6 w-6 p-0"
+                  >
+                    {isDateLocked ? (
+                      <Lock className="h-3 w-3" />
+                    ) : (
+                      <Pencil className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
                 <Input
                   id="start-date"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  disabled={isCreating}
+                  disabled={isCreating || isDateLocked}
                   min={getTomorrowDate()}
+                  className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
                 />
                 <p className="text-xs text-muted-foreground">
                   Campaign start date (must be future)
@@ -418,20 +507,49 @@ export function GoogleAdCampaign({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="end-date">End Date</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleDateLock}
+                    disabled={isCreating}
+                    className="h-6 w-6 p-0"
+                  >
+                    {isDateLocked ? (
+                      <Lock className="h-3 w-3" />
+                    ) : (
+                      <Pencil className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
                 <Input
                   id="end-date"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  disabled={isCreating}
+                  disabled={isCreating || isDateLocked}
                   min={startDate || getTomorrowDate()}
+                  className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
                 />
                 <p className="text-xs text-muted-foreground">
                   Campaign end date
                 </p>
               </div>
             </div>
+
+            {/* Date Warning when unlocked */}
+            {!isDateLocked && (
+              <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                  ⚠️ Date fields are unlocked for manual editing
+                </p>
+                <div className="text-amber-800 dark:text-amber-300 text-xs">
+                  <p>Campaign start and end dates can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
+                </div>
+              </div>
+            )}
 
             <div className="pt-2">
               <Button 
