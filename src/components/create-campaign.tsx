@@ -124,13 +124,14 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
           />
         ))}
 
-        {/* Meta campaigns */}
+        {/* Meta campaigns - now with form data */}
         {metaCampaigns.map(campaign => (
           <MetaCampaign 
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeMetaCampaign}
             organizationId={organizationId}
+            formData={formData}
           />
         ))}
         

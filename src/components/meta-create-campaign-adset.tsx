@@ -9,6 +9,7 @@ import { MetaCampaignFields } from '@/components/meta-campaign-fields'
 import { MetaAdSetFields } from '@/components/meta-adset-fields'
 import { MetaAutoPopulateButton } from '@/components/meta-autopopulate'
 import { createFacebookCampaignAndAdSet } from '@/app/actions/facebook-batch-campaign-adset'
+import { populateMetaFormFromFormData } from '@/lib/meta-autopopulate-utils'
 import { 
   FacebookCampaignData,
   FacebookAdSetData,
@@ -22,16 +23,29 @@ import {
   getBudgetLabel
 } from '@/lib/facebook-campaign-utils'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface MetaCreateCampaignAdSetProps {
   organizationId: string
   selectedAdAccount: string // Facebook Ad Account ID (with act_ prefix)
   onCampaignCreated?: (campaign: { campaignId: string; campaignName: string; adSetId: string; adSetName: string }) => void
+  formData?: StructuredData // Add formData prop
 }
 
 export function MetaCreateCampaignAdSet({ 
   organizationId, 
   selectedAdAccount, 
-  onCampaignCreated 
+  onCampaignCreated,
+  formData // Add formData prop
 }: MetaCreateCampaignAdSetProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -78,6 +92,44 @@ export function MetaCreateCampaignAdSet({
     const endDate = new Date(startDate)
     endDate.setDate(endDate.getDate() + 7)
     return endDate.toISOString()
+  }
+
+  // Auto-populate handler
+  const handleAutoPopulate = () => {
+    if (!formData?.formData) {
+      toast.error('No form data available for auto-population')
+      return
+    }
+
+    try {
+      // Use the utility function to populate both campaign and ad set data
+      const result = populateMetaFormFromFormData(formData, campaignData, adSetData)
+      
+      // Update the form state with populated data
+      setCampaignData(result.campaignData)
+      setAdSetData(result.adSetData)
+      
+      // Clear any existing errors when auto-populating
+      setCampaignErrors({})
+      setAdSetErrors({})
+      
+      // Show success message with what was populated
+      if (result.populatedFields.length > 0) {
+        toast.success('Auto-populated successfully!', {
+          description: `Filled: ${result.populatedFields.join(', ')}`
+        })
+      } else {
+        toast.info('No matching fields found in form data', {
+          description: 'Form data may not contain the expected campaign information'
+        })
+      }
+
+    } catch (error) {
+      console.error('Error during auto-populate:', error)
+      toast.error('Auto-populate failed', {
+        description: 'An error occurred while processing the form data'
+      })
+    }
   }
 
   // Validate form data and convert validation errors to error objects
@@ -257,7 +309,7 @@ export function MetaCreateCampaignAdSet({
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
           <MetaAutoPopulateButton 
-            onAutoPopulate={undefined}
+            onAutoPopulate={handleAutoPopulate}
             disabled={isCreating}
           />
         </div>

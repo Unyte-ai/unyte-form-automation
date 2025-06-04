@@ -9,13 +9,25 @@ import { MetaCreateCampaignAdSet } from '@/components/meta-create-campaign-adset
 import { getFacebookAdAccounts, FacebookAdAccount } from '@/app/actions/facebook-ad-accounts'
 import { toast } from 'sonner'
 
+// Define interfaces for form data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface MetaCampaignProps {
   id: string
   onRemove: (id: string) => void
   organizationId: string
+  formData?: StructuredData // Add formData prop
 }
 
-export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps) {
+export function MetaCampaign({ id, onRemove, organizationId, formData }: MetaCampaignProps) {
   const [accounts, setAccounts] = useState<FacebookAdAccount[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('')
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
@@ -98,6 +110,7 @@ export function MetaCampaign({ id, onRemove, organizationId }: MetaCampaignProps
             organizationId={organizationId}
             selectedAdAccount={selectedAccount}
             onCampaignCreated={handleCampaignCreated}
+            formData={formData}
           />
         )}
       </CardContent>
