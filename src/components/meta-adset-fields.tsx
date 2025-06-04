@@ -314,12 +314,19 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective }: 
             </label>
           ))}
         </div>
+        {/* Show selected platforms info or hint when none selected */}
+        {selectedPlatforms.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Select at least one platform where you want your ads to appear. Use auto-populate to detect platforms from form data.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Your ads will appear on: {selectedPlatforms.map(p => PUBLISHER_PLATFORMS.find(plat => plat.value === p)?.label).join(', ')}
+          </p>
+        )}
         {errors?.publisher_platforms && (
           <p className="text-xs text-destructive">{errors.publisher_platforms}</p>
         )}
-        <p className="text-xs text-muted-foreground">
-          Select where you want your ads to appear
-        </p>
       </div>
 
       {/* Ad Set Status */}

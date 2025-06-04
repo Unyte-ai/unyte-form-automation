@@ -193,7 +193,7 @@ export const COMMON_COUNTRIES = [
   { value: 'IN', label: 'India' }
 ] as const
 
-// Default values
+// Default values - UPDATED: No publisher platforms by default
 export const DEFAULT_CAMPAIGN_VALUES: Partial<FacebookCampaignData> = {
   status: 'PAUSED',
   special_ad_categories: [],
@@ -210,7 +210,7 @@ export const DEFAULT_ADSET_VALUES: Partial<FacebookAdSetData> = {
     },
     age_min: 18,
     age_max: 65,
-    publisher_platforms: ['facebook', 'instagram']
+    publisher_platforms: [] // CHANGED: Empty array instead of ['facebook', 'instagram']
   }
 }
 
