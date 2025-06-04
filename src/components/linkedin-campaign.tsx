@@ -194,12 +194,13 @@ export function LinkedInCampaign({ id, onRemove, organizationId, formData }: Lin
           formData={formData}
         />
 
-        {/* Create New Campaign Component */}
+        {/* Create New Campaign Component - now with formData */}
         <LinkedInCreateAdCampaign
           organizationId={organizationId}
           selectedAccount={selectedAccount}
           selectedCampaignGroup={selectedCampaignGroup}
           onCampaignCreated={handleCampaignCreated}
+          formData={formData}
         />
       </CardContent>
     </Card>

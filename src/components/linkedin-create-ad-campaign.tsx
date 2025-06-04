@@ -11,18 +11,30 @@ import { createLinkedInCampaign, CreateLinkedInCampaignData } from '@/app/action
 import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
 
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
 interface LinkedInCreateAdCampaignProps {
   organizationId: string
   selectedAccount: string // Ad Account URN
   selectedCampaignGroup: string // Campaign Group URN
   onCampaignCreated?: (campaign: { id: string; name: string }) => void
+  formData?: StructuredData // Add formData prop
 }
 
 export function LinkedInCreateAdCampaign({ 
   organizationId, 
   selectedAccount, 
   selectedCampaignGroup,
-  onCampaignCreated 
+  onCampaignCreated,
+  formData // Add formData prop
 }: LinkedInCreateAdCampaignProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -44,6 +56,270 @@ export function LinkedInCreateAdCampaign({
     return tomorrow.toISOString().split('T')[0]
   })
   const [endDate, setEndDate] = useState('')
+
+  // Auto-populate helper function
+  const findAnswerByQuestion = (searchTerms: string[]): string => {
+    if (!formData?.formData) return ''
+    
+    const found = formData.formData.find(item => 
+      searchTerms.some(term => 
+        item.question.toLowerCase().includes(term.toLowerCase())
+      )
+    )
+    return found?.answer || ''
+  }
+
+  // Parse date from form data
+  const parseDateFromForm = (dateString: string): string => {
+    if (!dateString) return ''
+    
+    try {
+      // Try to parse various date formats
+      const date = new Date(dateString)
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
+      }
+    } catch (error) {
+      console.warn('Could not parse date:', dateString, error)
+    }
+    
+    return ''
+  }
+
+  // Map objective from form data to LinkedIn campaign types
+  const mapObjectiveToCampaignType = (objectiveString: string): typeof campaignType => {
+    if (!objectiveString) return 'SPONSORED_UPDATES'
+    
+    const lowerObjective = objectiveString.toLowerCase()
+    
+    if (lowerObjective.includes('awareness') || lowerObjective.includes('brand')) {
+      return 'SPONSORED_UPDATES' // Good for brand awareness
+    }
+    if (lowerObjective.includes('engagement') || lowerObjective.includes('engage')) {
+      return 'SPONSORED_UPDATES' // Good for engagement
+    }
+    if (lowerObjective.includes('job') || lowerObjective.includes('hiring') || lowerObjective.includes('recruit')) {
+      return 'DYNAMIC' // Dynamic ads good for recruitment
+    }
+    if (lowerObjective.includes('lead') || lowerObjective.includes('generation')) {
+      return 'SPONSORED_UPDATES' // Sponsored content good for lead gen
+    }
+    if (lowerObjective.includes('conversion') || lowerObjective.includes('convert')) {
+      return 'SPONSORED_UPDATES' // Good for conversions
+    }
+    if (lowerObjective.includes('traffic') || lowerObjective.includes('visit') || lowerObjective.includes('website')) {
+      return 'SPONSORED_UPDATES' // Good for traffic
+    }
+    if (lowerObjective.includes('video') || lowerObjective.includes('view')) {
+      return 'SPONSORED_UPDATES' // Good for video content
+    }
+    if (lowerObjective.includes('message') || lowerObjective.includes('inmail') || lowerObjective.includes('direct')) {
+      return 'SPONSORED_INMAILS' // For direct messaging
+    }
+    
+    return 'SPONSORED_UPDATES' // Default fallback
+  }
+
+  // Map currency from form data
+  const mapCurrencyCode = (currencyString: string): string => {
+    if (!currencyString) return 'USD'
+    
+    const lowerCurrency = currencyString.toLowerCase()
+    
+    if (lowerCurrency.includes('gbp') || lowerCurrency.includes('pound') || lowerCurrency.includes('£')) {
+      return 'GBP'
+    }
+    if (lowerCurrency.includes('eur') || lowerCurrency.includes('euro') || lowerCurrency.includes('€')) {
+      return 'EUR'
+    }
+    if (lowerCurrency.includes('cad') || lowerCurrency.includes('canadian')) {
+      return 'CAD'
+    }
+    if (lowerCurrency.includes('usd') || lowerCurrency.includes('dollar') || lowerCurrency.includes('$')) {
+      return 'USD'
+    }
+    
+    return 'USD' // Default fallback
+  }
+
+  // Map geography to country code
+  const mapGeographyToCountry = (geographyString: string): string => {
+    if (!geographyString) return 'US'
+    
+    const lowerGeo = geographyString.toLowerCase()
+    
+    if (lowerGeo.includes('uk') || lowerGeo.includes('united kingdom') || lowerGeo.includes('britain') || lowerGeo.includes('england') || lowerGeo.includes('scotland') || lowerGeo.includes('wales')) {
+      return 'GB'
+    }
+    if (lowerGeo.includes('canada') || lowerGeo.includes('canadian')) {
+      return 'CA'
+    }
+    if (lowerGeo.includes('australia') || lowerGeo.includes('australian')) {
+      return 'AU'
+    }
+    if (lowerGeo.includes('germany') || lowerGeo.includes('german') || lowerGeo.includes('deutschland')) {
+      return 'DE'
+    }
+    if (lowerGeo.includes('france') || lowerGeo.includes('french') || lowerGeo.includes('français')) {
+      return 'FR'
+    }
+    if (lowerGeo.includes('us') || lowerGeo.includes('usa') || lowerGeo.includes('united states') || lowerGeo.includes('america') || lowerGeo.includes('american')) {
+      return 'US'
+    }
+    
+    return 'US' // Default fallback
+  }
+
+  // Map language from form data
+  const mapLanguageCode = (languageString: string): string => {
+    if (!languageString) return 'en'
+    
+    const lowerLang = languageString.toLowerCase()
+    
+    if (lowerLang.includes('french') || lowerLang.includes('français') || lowerLang.includes('fr')) {
+      return 'fr'
+    }
+    if (lowerLang.includes('german') || lowerLang.includes('deutsch') || lowerLang.includes('de')) {
+      return 'de'
+    }
+    if (lowerLang.includes('spanish') || lowerLang.includes('español') || lowerLang.includes('es')) {
+      return 'es'
+    }
+    if (lowerLang.includes('english') || lowerLang.includes('en')) {
+      return 'en'
+    }
+    
+    return 'en' // Default fallback
+  }
+
+  // Auto-populate handler
+  const handleAutoPopulate = () => {
+    if (!formData?.formData) {
+      toast.error('No form data available for auto-population')
+      return
+    }
+
+    try {
+      // Campaign Name
+      const campaignNameFromForm = findAnswerByQuestion([
+        'campaign name', 
+        'name of campaign',
+        'campaign title',
+        'ad name',
+        'advertisement name'
+      ])
+      if (campaignNameFromForm) {
+        setName(campaignNameFromForm)
+      }
+
+      // Campaign Type based on objective
+      const objectiveFromForm = findAnswerByQuestion([
+        'objective',
+        'goal',
+        'key result',
+        'kpi',
+        'target',
+        'purpose'
+      ])
+      if (objectiveFromForm) {
+        const mappedCampaignType = mapObjectiveToCampaignType(objectiveFromForm)
+        setCampaignType(mappedCampaignType)
+      }
+
+      // Currency
+      const currencyFromForm = findAnswerByQuestion([
+        'currency',
+        'budget currency',
+        'currency code'
+      ])
+      if (currencyFromForm) {
+        const mappedCurrency = mapCurrencyCode(currencyFromForm)
+        setCurrency(mappedCurrency)
+      }
+
+      // Country
+      const geographyFromForm = findAnswerByQuestion([
+        'geography',
+        'target geography',
+        'target geographies',
+        'location',
+        'country',
+        'region'
+      ])
+      if (geographyFromForm) {
+        const mappedCountry = mapGeographyToCountry(geographyFromForm)
+        setCountry(mappedCountry)
+      }
+
+      // Language
+      const languageFromForm = findAnswerByQuestion([
+        'language',
+        'languages',
+        'target language',
+        'audience language'
+      ])
+      if (languageFromForm) {
+        const mappedLanguage = mapLanguageCode(languageFromForm)
+        setLanguage(mappedLanguage)
+      }
+
+      // Start Date
+      const startDateFromForm = findAnswerByQuestion([
+        'start date',
+        'campaign start',
+        'begin date',
+        'launch date',
+        'go live date'
+      ])
+      if (startDateFromForm) {
+        const parsedStartDate = parseDateFromForm(startDateFromForm)
+        if (parsedStartDate) {
+          setStartDate(parsedStartDate)
+        }
+      }
+
+      // End Date
+      const endDateFromForm = findAnswerByQuestion([
+        'end date',
+        'campaign end',
+        'finish date',
+        'completion date',
+        'close date'
+      ])
+      if (endDateFromForm) {
+        const parsedEndDate = parseDateFromForm(endDateFromForm)
+        if (parsedEndDate) {
+          setEndDate(parsedEndDate)
+        }
+      }
+
+      // Show success message with what was populated
+      const populatedFields = []
+      if (campaignNameFromForm) populatedFields.push('Campaign Name')
+      if (objectiveFromForm) populatedFields.push('Campaign Type')
+      if (currencyFromForm) populatedFields.push('Currency')
+      if (geographyFromForm) populatedFields.push('Country')
+      if (languageFromForm) populatedFields.push('Language')
+      if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
+      if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
+
+      if (populatedFields.length > 0) {
+        toast.success('Auto-populated successfully!', {
+          description: `Filled: ${populatedFields.join(', ')}`
+        })
+      } else {
+        toast.info('No matching fields found in form data', {
+          description: 'Form data may not contain the expected campaign information'
+        })
+      }
+
+    } catch (error) {
+      console.error('Error during auto-populate:', error)
+      toast.error('Auto-populate failed', {
+        description: 'An error occurred while processing the form data'
+      })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -168,7 +444,7 @@ export function LinkedInCreateAdCampaign({
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Create New Campaign</CardTitle>
           <LinkedInAutoPopulateButton 
-            onAutoPopulate={() => {}} // No logic for now
+            onAutoPopulate={handleAutoPopulate}
             disabled={isCreating}
           />
         </div>
