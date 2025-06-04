@@ -5,6 +5,7 @@ import {
   DEFAULT_ADSET_VALUES
 } from './facebook-campaign-utils'
 import { getPublisherPlatformsForAutoPopulate } from './meta-publisher-platform-utils'
+import { extractMetaBudgetFromForm } from './meta-budget-utils'
 
 // Define interfaces for form data
 interface FormQuestion {
@@ -233,7 +234,7 @@ export function populateMetaCampaignFromForm(
     populatedData.objective = mapObjectiveToMetaCampaignType(objectiveFromForm)
   }
 
-  // Note: Budget is explicitly excluded as per user request
+  // Note: Budget will be handled in the main populate function after we have platform selection
   
   return populatedData
 }
@@ -322,7 +323,7 @@ export function populateMetaAdSetFromForm(
     }
   }
 
-  // Publisher Platforms - NEW: Use the publisher platform utility
+  // Publisher Platforms - Use the publisher platform utility
   const publisherPlatforms = getPublisherPlatformsForAutoPopulate(formData)
   if (publisherPlatforms.length > 0) {
     if (populatedData.targeting) {
@@ -463,7 +464,7 @@ export function populateMetaFormFromFormData(
       (newAdSetData.targeting?.age_max !== originalAdSetData.targeting?.age_max)) {
     populatedFields.push('Age Range')
   }
-  // NEW: Track publisher platforms changes
+  // Track publisher platforms changes
   if (newAdSetData.targeting?.publisher_platforms && 
       JSON.stringify(newAdSetData.targeting.publisher_platforms) !== JSON.stringify(originalAdSetData.targeting?.publisher_platforms)) {
     populatedFields.push('Publisher Platforms')
@@ -482,6 +483,52 @@ export function populateMetaFormFromFormData(
   }
   if (newAdSetData.page_id !== originalAdSetData.page_id && newAdSetData.page_id) {
     populatedFields.push('Facebook Page ID')
+  }
+
+  // NEW: Handle budget allocation after we have platform selection
+  const selectedPlatforms = newAdSetData.targeting?.publisher_platforms || []
+  
+  console.log('🔍 Budget Debug - Selected platforms:', selectedPlatforms)
+  
+  if (selectedPlatforms.length > 0) {
+    const budgetInfo = extractMetaBudgetFromForm(formData, selectedPlatforms)
+    
+    console.log('💰 Budget Debug - Extracted budget info:', {
+      budgetType: budgetInfo.budgetType,
+      totalBudget: budgetInfo.totalBudget,
+      allocatedBudget: budgetInfo.allocatedBudget,
+      allocatedBudgetCents: budgetInfo.allocatedBudgetCents,
+      platformGroups: budgetInfo.platformGroups
+    })
+    
+    if (budgetInfo.totalBudget > 0 && budgetInfo.allocatedBudgetCents > 0) {
+      console.log('✅ Budget Debug - Setting budget in campaign data')
+      
+      // Set budget type
+      newCampaignData.budget_type = budgetInfo.budgetType
+      
+      // Set the appropriate budget field based on type
+      if (budgetInfo.budgetType === 'LIFETIME') {
+        newCampaignData.lifetime_budget = budgetInfo.allocatedBudgetCents
+        newCampaignData.daily_budget = undefined
+        console.log(`📊 Budget Debug - Set lifetime budget: ${budgetInfo.allocatedBudgetCents} cents`)
+      } else {
+        newCampaignData.daily_budget = budgetInfo.allocatedBudgetCents
+        newCampaignData.lifetime_budget = undefined
+        console.log(`📊 Budget Debug - Set daily budget: ${budgetInfo.allocatedBudgetCents} cents`)
+      }
+      
+      // Track budget field as populated
+      const budgetLabel = budgetInfo.budgetType === 'LIFETIME' ? 'Lifetime Budget' : 'Daily Budget'
+      populatedFields.push(budgetLabel)
+    } else {
+      console.log('❌ Budget Debug - Budget conditions not met:', {
+        totalBudgetCondition: budgetInfo.totalBudget > 0,
+        allocatedBudgetCondition: budgetInfo.allocatedBudgetCents > 0
+      })
+    }
+  } else {
+    console.log('❌ Budget Debug - No platforms selected, skipping budget allocation')
   }
 
   return {

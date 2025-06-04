@@ -10,6 +10,7 @@ import { MetaAdSetFields } from '@/components/meta-adset-fields'
 import { MetaAutoPopulateButton } from '@/components/meta-autopopulate'
 import { createFacebookCampaignAndAdSet } from '@/app/actions/facebook-batch-campaign-adset'
 import { populateMetaFormFromFormData } from '@/lib/meta-autopopulate-utils'
+import { getBudgetAllocationSummary } from '@/lib/meta-budget-utils'
 import { 
   FacebookCampaignData,
   FacebookAdSetData,
@@ -115,8 +116,12 @@ export function MetaCreateCampaignAdSet({
       
       // Show success message with what was populated
       if (result.populatedFields.length > 0) {
+        // Get budget allocation summary for additional information
+        const selectedPlatforms = result.adSetData.targeting?.publisher_platforms || []
+        const budgetSummary = getBudgetAllocationSummary(formData, selectedPlatforms)
+        
         toast.success('Auto-populated successfully!', {
-          description: `Filled: ${result.populatedFields.join(', ')}`
+          description: `Filled: ${result.populatedFields.join(', ')}\n${budgetSummary}`
         })
       } else {
         toast.info('No matching fields found in form data', {

@@ -19,7 +19,7 @@ export default async function HomeLayout({
   const displayName = user?.user_metadata?.full_name || user?.email || "Guest User";
   
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-neutral-100">
       {/* Header/Navigation */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

@@ -23,11 +23,28 @@ const META_PLATFORM_GROUP: FacebookPublisherPlatform[] = [
 function findAnswerByQuestion(formData: FormQuestion[], searchTerms: string[]): string {
   if (!formData) return ''
   
+  // First, try exact matches (case insensitive)
+  for (const term of searchTerms) {
+    const exactMatch = formData.find(item => 
+      item.question.toLowerCase() === term.toLowerCase()
+    )
+    if (exactMatch) {
+      console.log(`🎯 Exact match found for "${term}":`, exactMatch.question, '=', exactMatch.answer)
+      return exactMatch.answer
+    }
+  }
+  
+  // Then try partial matches
   const found = formData.find(item => 
     searchTerms.some(term => 
       item.question.toLowerCase().includes(term.toLowerCase())
     )
   )
+  
+  if (found) {
+    console.log(`🔍 Partial match found:`, found.question, '=', found.answer)
+  }
+  
   return found?.answer || ''
 }
 
@@ -49,6 +66,8 @@ export function detectBudgetTypeFromForm(formData: StructuredData): FacebookBudg
     'budget duration'
   ])
   
+  console.log('🕒 Budget Type Debug - Period answer found:', budgetPeriodAnswer)
+  
   if (!budgetPeriodAnswer) return 'LIFETIME'
   
   const lowerAnswer = budgetPeriodAnswer.toLowerCase()
@@ -57,6 +76,7 @@ export function detectBudgetTypeFromForm(formData: StructuredData): FacebookBudg
   if (lowerAnswer.includes('daily') || 
       lowerAnswer.includes('per day') || 
       lowerAnswer.includes('day')) {
+    console.log('✅ Budget Type Debug - Detected DAILY budget')
     return 'DAILY'
   }
   
@@ -65,9 +85,11 @@ export function detectBudgetTypeFromForm(formData: StructuredData): FacebookBudg
       lowerAnswer.includes('total') || 
       lowerAnswer.includes('campaign total') ||
       lowerAnswer.includes('one-time')) {
+    console.log('✅ Budget Type Debug - Detected LIFETIME budget')
     return 'LIFETIME'
   }
   
+  console.log('⚠️ Budget Type Debug - Defaulting to LIFETIME budget')
   return 'LIFETIME' // Default fallback
 }
 
@@ -80,20 +102,25 @@ export function extractBudgetAmountFromForm(formData: StructuredData): number {
   if (!formData?.formData) return 0
   
   const budgetAnswer = findAnswerByQuestion(formData.formData, [
-    'budget amount',
-    'budget',
-    'total budget',
+    'budget amount',           // Exact match first
+    'total budget',           // More specific terms
     'campaign budget',
-    'spend',
+    'budget',                 // Generic 'budget' after specific ones
+    'total spend',            // More specific than just 'spend'
+    'campaign spend',
     'investment',
     'cost'
   ])
+  
+  console.log('💵 Budget Amount Debug - Raw answer found:', budgetAnswer)
   
   if (!budgetAnswer) return 0
   
   // Remove currency symbols and extract number
   const cleanBudget = budgetAnswer.replace(/[£$€,\s]/g, '')
   const budgetNumber = parseFloat(cleanBudget)
+  
+  console.log('💵 Budget Amount Debug - Clean budget:', cleanBudget, '| Parsed number:', budgetNumber)
   
   return isNaN(budgetNumber) ? 0 : budgetNumber
 }
@@ -124,6 +151,13 @@ export function countPlatformGroups(selectedPlatforms: FacebookPublisherPlatform
   )
   groups += otherPlatforms.length
   
+  console.log('🏷️ Platform Groups Debug:', {
+    selectedPlatforms,
+    hasMetaPlatforms,
+    otherPlatforms,
+    totalGroups: groups
+  })
+  
   return groups
 }
 
@@ -152,7 +186,15 @@ export function calculateBudgetPerGroup(
   
   if (groupCount === 0) return 0
   
-  return totalBudget / groupCount
+  const budgetPerGroup = totalBudget / groupCount
+  
+  console.log('🧮 Budget Calculation Debug:', {
+    totalBudget,
+    groupCount,
+    budgetPerGroup
+  })
+  
+  return budgetPerGroup
 }
 
 /**
@@ -161,7 +203,9 @@ export function calculateBudgetPerGroup(
  * @returns Budget amount in cents
  */
 export function convertBudgetToCents(budgetAmount: number): number {
-  return Math.round(budgetAmount * 100)
+  const cents = Math.round(budgetAmount * 100)
+  console.log('💱 Currency Conversion Debug:', budgetAmount, '→', cents, 'cents')
+  return cents
 }
 
 /**
@@ -180,24 +224,153 @@ export function extractMetaBudgetFromForm(
   allocatedBudgetCents: number
   platformGroups: number
 } {
+  console.log('🚀 extractMetaBudgetFromForm called with:', {
+    formDataExists: !!formData?.formData,
+    formDataLength: formData?.formData?.length || 0,
+    selectedPlatforms
+  })
+  
+  // Show all form questions for debugging
+  if (formData?.formData) {
+    console.log('📋 All Form Questions:', formData.formData.map(item => ({
+      question: item.question,
+      answer: item.answer
+    })))
+  }
+  
   const budgetType = detectBudgetTypeFromForm(formData)
   const totalBudget = extractBudgetAmountFromForm(formData)
-  const platformGroups = countPlatformGroups(selectedPlatforms)
   
-  // Only calculate allocation if Meta platforms are selected
-  const allocatedBudget = hasMetaPlatformsSelected(selectedPlatforms) 
-    ? calculateBudgetPerGroup(totalBudget, selectedPlatforms)
+  // NEW: Extract ALL platforms mentioned in the form data first
+  const allPlatformsInForm = extractAllPlatformsFromForm(formData)
+  console.log('🌐 All platforms detected in form data:', allPlatformsInForm)
+  
+  // Count total platform groups (Meta = 1 group, all others = individual groups)
+  const totalPlatformGroups = countTotalPlatformGroups(allPlatformsInForm)
+  console.log('📊 Total platform groups in form:', totalPlatformGroups)
+  
+  // Only calculate allocation if Meta platforms are selected and we have total budget
+  const allocatedBudget = hasMetaPlatformsSelected(selectedPlatforms) && totalPlatformGroups > 0
+    ? totalBudget / totalPlatformGroups
     : 0
   
   const allocatedBudgetCents = convertBudgetToCents(allocatedBudget)
   
-  return {
+  const result = {
     budgetType,
     totalBudget,
     allocatedBudget,
     allocatedBudgetCents,
-    platformGroups
+    platformGroups: totalPlatformGroups
   }
+  
+  console.log('🎯 extractMetaBudgetFromForm result:', result)
+  
+  return result
+}
+
+/**
+ * Extract all platforms mentioned in form data
+ * @param formData - The structured form submission data
+ * @returns Array of all platform names found in the form
+ */
+function extractAllPlatformsFromForm(formData: StructuredData): string[] {
+  if (!formData?.formData) return []
+  
+  const platformFields = formData.formData.filter(item => {
+    const question = item.question.toLowerCase()
+    return question.includes('channel') || 
+           question.includes('network') || 
+           question.includes('platform') ||
+           question.includes('preferred')
+  })
+  
+  console.log('🔍 Platform-related fields found:', platformFields)
+  
+  const allPlatforms: string[] = []
+  
+  platformFields.forEach(field => {
+    if (!field.answer) return
+    
+    let platformText = field.answer
+    
+    // Handle JSON array strings
+    try {
+      if (field.answer.startsWith('[') && field.answer.endsWith(']')) {
+        const parsed = JSON.parse(field.answer)
+        if (Array.isArray(parsed)) {
+          platformText = parsed.join(',')
+          allPlatforms.push(...parsed)
+          return
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to parse platform array:', error)
+    }
+    
+    // Handle comma-separated strings
+    if (platformText.includes(',')) {
+      const platforms = platformText.split(',').map(p => p.trim())
+      allPlatforms.push(...platforms)
+    } else {
+      allPlatforms.push(platformText.trim())
+    }
+  })
+  
+  // Clean and normalize platform names
+  const cleanPlatforms = allPlatforms
+    .filter(p => p && p.length > 0)
+    .map(p => p.toLowerCase().trim())
+  
+  console.log('🧹 Cleaned platforms:', cleanPlatforms)
+  return cleanPlatforms
+}
+
+/**
+ * Count total platform groups across all detected platforms
+ * Meta platforms count as 1 group, all others count individually
+ * @param allPlatforms - Array of all platform names detected
+ * @returns Number of total platform groups
+ */
+function countTotalPlatformGroups(allPlatforms: string[]): number {
+  if (!allPlatforms.length) return 0
+  
+  const metaPlatformKeywords = [
+    'facebook', 'instagram', 'messenger', 'threads', 'meta'
+  ]
+ 
+  let hasMetaPlatforms = false
+  const otherPlatforms = new Set<string>()
+  
+  allPlatforms.forEach(platform => {
+    const lowerPlatform = platform.toLowerCase()
+    
+    // Check if it's a Meta platform
+    const isMetaPlatform = metaPlatformKeywords.some(keyword => 
+      lowerPlatform.includes(keyword)
+    )
+    
+    if (isMetaPlatform) {
+      hasMetaPlatforms = true
+    } else {
+      // Add non-Meta platforms to the set (automatically deduplicates)
+      otherPlatforms.add(lowerPlatform)
+    }
+  })
+  
+  const metaGroupCount = hasMetaPlatforms ? 1 : 0
+  const otherGroupCount = otherPlatforms.size
+  const totalGroups = metaGroupCount + otherGroupCount
+  
+  console.log('🏷️ Platform Group Analysis:', {
+    hasMetaPlatforms,
+    metaGroupCount,
+    otherPlatforms: Array.from(otherPlatforms),
+    otherGroupCount,
+    totalGroups
+  })
+  
+  return totalGroups
 }
 
 /**
@@ -218,6 +391,10 @@ export function getBudgetAllocationSummary(
   
   if (!hasMetaPlatformsSelected(selectedPlatforms)) {
     return `Total budget: £${result.totalBudget} (${result.budgetType.toLowerCase()}) - No Meta platforms selected`
+  }
+  
+  if (result.platformGroups === 0) {
+    return `Total budget: £${result.totalBudget} (${result.budgetType.toLowerCase()}) - No platforms detected in form data`
   }
   
   const metaPlatformsInSelection = selectedPlatforms.filter(p => META_PLATFORM_GROUP.includes(p))
