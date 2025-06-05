@@ -11,15 +11,22 @@ export default async function Home() {
   // Create Supabase server client
   const supabase = await createClient();
   
-  // Check if user is authenticated
-  const { data } = await supabase.auth.getUser();
-  const isAuthenticated = !!data?.user;
-  
-  if (isAuthenticated) {
-    // User is logged in, redirect to dashboard
-    redirect('/home');
-  } else {
-    // User is not logged in, redirect to sign up
+  try {
+    // Check if user is authenticated
+    const { data, error } = await supabase.auth.getUser();
+    
+    const isAuthenticated = !!data?.user && !error;
+    
+    if (isAuthenticated) {
+      // User is logged in, redirect to dashboard
+      redirect('/home');
+    } else {
+      // User is not logged in, redirect to sign up
+      redirect('/auth/sign-up');
+    }
+  } catch (authError) {
+    // If there's any error with auth check, assume not authenticated
+    console.error('Authentication error:', authError);
     redirect('/auth/sign-up');
   }
 }
