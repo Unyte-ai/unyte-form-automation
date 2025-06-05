@@ -7,7 +7,6 @@ import { Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MetaCampaignFields } from '@/components/meta-campaign-fields'
 import { MetaAdSetFields } from '@/components/meta-adset-fields'
-import { MetaAutoPopulateButton } from '@/components/meta-autopopulate'
 import { createFacebookCampaignAndAdSet } from '@/app/actions/facebook-batch-campaign-adset'
 import { populateMetaFormFromFormData } from '@/lib/meta-autopopulate-utils'
 import { getBudgetAllocationSummary } from '@/lib/meta-budget-utils'
@@ -50,6 +49,7 @@ export function MetaCreateCampaignAdSet({
 }: MetaCreateCampaignAdSetProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [hasAutoPopulated, setHasAutoPopulated] = useState(false)
   
   // Budget lock state
   const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
@@ -109,6 +109,20 @@ export function MetaCreateCampaignAdSet({
   // Toggle date lock function
   const toggleDateLock = () => {
     setIsDateLocked(!isDateLocked)
+  }
+
+  // Handle expand and auto-populate
+  const handleExpandAndAutoPopulate = () => {
+    setIsExpanded(true)
+    
+    // Auto-populate immediately if we have form data and haven't done it yet
+    if (formData?.formData && !hasAutoPopulated) {
+      // Small delay to ensure form is rendered
+      setTimeout(() => {
+        handleAutoPopulate()
+        setHasAutoPopulated(true)
+      }, 0)
+    }
   }
 
   // Auto-populate handler
@@ -301,6 +315,9 @@ export function MetaCreateCampaignAdSet({
       // Reset date lock state
       setIsDateLocked(false)
 
+      // Reset auto-populate state
+      setHasAutoPopulated(false)
+
       // Collapse form
       setIsExpanded(false)
 
@@ -329,7 +346,7 @@ export function MetaCreateCampaignAdSet({
       <div className="border-t pt-4">
         <Button 
           variant="ghost" 
-          onClick={() => setIsExpanded(true)}
+          onClick={handleExpandAndAutoPopulate}
           className="w-full justify-start text-sm"
           disabled={!selectedAdAccount}
         >
@@ -348,13 +365,7 @@ export function MetaCreateCampaignAdSet({
   return (
     <Card className="border-t-0 rounded-t-none">
       <CardHeader className="pb-4">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
-          <MetaAutoPopulateButton 
-            onAutoPopulate={handleAutoPopulate}
-            disabled={isCreating}
-          />
-        </div>
+        <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
         <p className="text-sm text-muted-foreground">
           This will create both a campaign and ad set together using Facebook&apos;s batch API. 
           Budget will be set at the campaign level and distributed across ad sets.
