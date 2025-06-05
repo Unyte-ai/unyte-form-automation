@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, Pencil, Lock } from 'lucide-react'
 import { createLinkedInCampaign, CreateLinkedInCampaignData } from '@/app/actions/linkedin-create-ad-campaign'
 import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
@@ -52,6 +52,12 @@ export function LinkedInCreateAdCampaign({
   const [currency, setCurrency] = useState('USD')
   const [country, setCountry] = useState('US')
   const [language, setLanguage] = useState('en')
+
+  // Budget lock state
+  const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
+
+  // Date lock state
+  const [isDateLocked, setIsDateLocked] = useState(false) // Dates start unlocked
   
   // Date state
   const [startDate, setStartDate] = useState(() => {
@@ -89,6 +95,16 @@ export function LinkedInCreateAdCampaign({
     }
     
     return ''
+  }
+
+  // Toggle budget lock function
+  const toggleBudgetLock = () => {
+    setIsBudgetLocked(!isBudgetLocked)
+  }
+
+  // Toggle date lock function
+  const toggleDateLock = () => {
+    setIsDateLocked(!isDateLocked)
   }
 
   // Map objective from form data to LinkedIn campaign types
@@ -331,6 +347,17 @@ export function LinkedInCreateAdCampaign({
       if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
       if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
 
+      // Lock budget fields after auto-populate if budget data was populated
+      if (budgetInfo.budgetType || budgetInfo.allocatedBudget > 0 || budgetInfo.totalBudget > 0) {
+        setIsBudgetLocked(true)
+      }
+
+      // Lock date fields after auto-populate if dates were found
+      if ((startDateFromForm && parseDateFromForm(startDateFromForm)) || 
+      (endDateFromForm && parseDateFromForm(endDateFromForm))) {
+      setIsDateLocked(true)
+      }
+
       if (populatedFields.length > 0) {
         toast.success('Auto-populated successfully!', {
           description: `Filled: ${populatedFields.join(', ')}`
@@ -429,6 +456,8 @@ export function LinkedInCreateAdCampaign({
       // Reset form
       setName('')
       setBudgetAmount('')
+      setIsBudgetLocked(false) // Reset budget lock state
+      setIsDateLocked(false) // Reset date lock state
       // Reset dates
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
@@ -514,9 +543,32 @@ export function LinkedInCreateAdCampaign({
 
           {/* Budget Type Selection */}
           <div className="grid gap-2">
-            <Label htmlFor="budget-type">Budget Type *</Label>
-            <Select value={budgetType} onValueChange={(value) => setBudgetType(value as 'daily' | 'total')}>
-              <SelectTrigger id="budget-type">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="budget-type">Budget Type *</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={toggleBudgetLock}
+                disabled={isCreating}
+                className="h-6 w-6 p-0"
+              >
+                {isBudgetLocked ? (
+                  <Lock className="h-3 w-3" />
+                ) : (
+                  <Pencil className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+            <Select 
+              value={budgetType} 
+              onValueChange={(value) => setBudgetType(value as 'daily' | 'total')}
+              disabled={isCreating || isBudgetLocked}
+            >
+              <SelectTrigger 
+                id="budget-type"
+                className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -535,9 +587,25 @@ export function LinkedInCreateAdCampaign({
           {/* Budget Amount and Currency */}
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="budget-amount">
-                {budgetType === 'daily' ? 'Daily Budget *' : 'Total Budget *'}
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="budget-amount">
+                  {budgetType === 'daily' ? 'Daily Budget *' : 'Total Budget *'}
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBudgetLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isBudgetLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
               <Input
                 id="budget-amount"
                 type="number"
@@ -546,13 +614,38 @@ export function LinkedInCreateAdCampaign({
                 value={budgetAmount}
                 onChange={(e) => setBudgetAmount(e.target.value)}
                 placeholder="0.00"
+                disabled={isCreating || isBudgetLocked}
+                className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="currency">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="currency">Currency</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBudgetLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isBudgetLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+              <Select 
+                value={currency} 
+                onValueChange={setCurrency}
+                disabled={isCreating || isBudgetLocked}
+              >
+                <SelectTrigger 
+                  id="currency"
+                  className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -564,6 +657,18 @@ export function LinkedInCreateAdCampaign({
               </Select>
             </div>
           </div>
+
+          {/* Budget Warning when unlocked */}
+          {!isBudgetLocked && (
+            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                ⚠️ Budget fields are unlocked for manual editing
+              </p>
+              <div className="text-amber-800 dark:text-amber-300 text-xs">
+                <p>Budget values can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
+              </div>
+            </div>
+          )}
 
           {/* Locale */}
           <div className="grid grid-cols-2 gap-4">
@@ -602,27 +707,75 @@ export function LinkedInCreateAdCampaign({
           {/* Campaign Schedule */}
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="start-date">Start Date *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="start-date">Start Date *</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleDateLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isDateLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
               <Input
                 id="start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]} // Can't start in the past
+                disabled={isCreating || isDateLocked}
+                className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="end-date">End Date</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="end-date">End Date</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleDateLock}
+                  disabled={isCreating}
+                  className="h-6 w-6 p-0"
+                >
+                  {isDateLocked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Pencil className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
               <Input
                 id="end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate} // End date must be after start date
+                disabled={isCreating || isDateLocked}
+                className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
               />
             </div>
           </div>
+
+          {/* Date Warning when unlocked */}
+          {!isDateLocked && (
+            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                ⚠️ Date fields are unlocked for manual editing
+              </p>
+              <div className="text-amber-800 dark:text-amber-300 text-xs">
+                <p>Campaign start and end dates can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
+              </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex gap-2 pt-2">
