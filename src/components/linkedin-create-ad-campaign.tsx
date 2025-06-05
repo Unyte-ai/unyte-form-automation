@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Loader2, Pencil, Lock } from 'lucide-react'
 import { createLinkedInCampaign, CreateLinkedInCampaignData } from '@/app/actions/linkedin-create-ad-campaign'
-import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
 import { 
   extractLinkedInBudgetFromForm,
@@ -140,8 +139,6 @@ export function LinkedInCreateAdCampaign({
     
     return 'SPONSORED_UPDATES' // Default fallback
   }
-
-
 
   // Map geography to country code
   const mapGeographyToCountry = (geographyString: string): string => {
@@ -376,6 +373,16 @@ export function LinkedInCreateAdCampaign({
     }
   }
 
+  // Handle expanding form and auto-populate
+  const handleExpandAndAutoPopulate = () => {
+    setIsExpanded(true)
+    
+    // Run auto-populate if form data is available
+    if (formData?.formData) {
+      handleAutoPopulate()
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -485,7 +492,7 @@ export function LinkedInCreateAdCampaign({
       <div className="border-t pt-4">
         <Button 
           variant="ghost" 
-          onClick={() => setIsExpanded(true)}
+          onClick={handleExpandAndAutoPopulate}
           className="w-full justify-start text-sm"
         >
           <Plus className="mr-2 size-4" />
@@ -500,10 +507,6 @@ export function LinkedInCreateAdCampaign({
       <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Create New Campaign</CardTitle>
-          <LinkedInAutoPopulateButton 
-            onAutoPopulate={handleAutoPopulate}
-            disabled={isCreating}
-          />
         </div>
       </CardHeader>
       <CardContent>

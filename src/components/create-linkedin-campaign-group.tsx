@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Loader2 } from 'lucide-react'
 import { createLinkedInCampaignGroup, CreateLinkedInCampaignGroupData } from '@/app/actions/create-linkedin-campaign-group'
-import { LinkedInAutoPopulateButton } from '@/components/linkedin-autopopulate'
 import { toast } from 'sonner'
 import { 
   extractLinkedInBudgetFromForm,
@@ -229,6 +228,16 @@ export function LinkedInCreateCampaignGroup({
     }
   }
 
+  // Handle expanding form and auto-populate
+  const handleExpandAndAutoPopulate = () => {
+    setIsExpanded(true)
+    
+    // Run auto-populate if form data is available
+    if (formData?.formData) {
+      handleAutoPopulate()
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -302,7 +311,7 @@ export function LinkedInCreateCampaignGroup({
       <div className="border-t pt-4">
         <Button 
           variant="ghost" 
-          onClick={() => setIsExpanded(true)}
+          onClick={handleExpandAndAutoPopulate}
           className="w-full justify-start text-sm"
           disabled={!selectedAccount}
         >
@@ -323,10 +332,6 @@ export function LinkedInCreateCampaignGroup({
       <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Create New Campaign Group</CardTitle>
-          <LinkedInAutoPopulateButton 
-            onAutoPopulate={handleAutoPopulate}
-            disabled={isCreating}
-          />
         </div>
       </CardHeader>
       <CardContent>
