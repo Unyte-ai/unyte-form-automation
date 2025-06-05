@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/google-create-campaign'
-import { GoogleAutoPopulateButton } from '@/components/google-autopopulate'
 import { extractGoogleBudgetFromForm, detectGoogleCampaignTypeFromForm } from '@/lib/google-budget-utils'
 import { toast } from 'sonner'
 import { Pencil, Lock } from 'lucide-react'
@@ -34,6 +33,34 @@ interface GoogleAdCampaignProps {
   organizationId: string
   managerCustomerId?: string
   formData?: StructuredData
+}
+
+// Utility functions moved outside component to avoid dependency issues
+const findAnswerByQuestion = (formData: FormQuestion[], searchTerms: string[]): string => {
+  if (!formData) return ''
+  
+  const found = formData.find(item => 
+    searchTerms.some(term => 
+      item.question.toLowerCase().includes(term.toLowerCase())
+    )
+  )
+  return found?.answer || ''
+}
+
+const parseDateFromForm = (dateString: string): string => {
+  if (!dateString) return ''
+  
+  try {
+    // Try to parse various date formats
+    const date = new Date(dateString)
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
+    }
+  } catch (error) {
+    console.warn('Could not parse date:', dateString, error)
+  }
+  
+  return ''
 }
 
 export function GoogleAdCampaign({ 
@@ -77,43 +104,15 @@ export function GoogleAdCampaign({
     if (!endDate) setEndDate(getDefaultEndDate())
   })
 
-  // Auto-populate logic
-  const findAnswerByQuestion = (searchTerms: string[]): string => {
-    if (!formData?.formData) return ''
-    
-    const found = formData.formData.find(item => 
-      searchTerms.some(term => 
-        item.question.toLowerCase().includes(term.toLowerCase())
-      )
-    )
-    return found?.answer || ''
-  }
-
-  const parseDateFromForm = (dateString: string): string => {
-    if (!dateString) return ''
-    
-    try {
-      // Try to parse various date formats
-      const date = new Date(dateString)
-      if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0] // Return YYYY-MM-DD format
-      }
-    } catch (error) {
-      console.warn('Could not parse date:', dateString, error)
-    }
-    
-    return ''
-  }
-
-  const handleAutoPopulate = () => {
+  const handleAutoPopulate = useCallback(() => {
     if (!formData?.formData) {
-      toast.error('No form data available for auto-population')
+      console.log('No form data available for auto-population')
       return
     }
 
     try {
       // Campaign Name - look for campaign name related questions
-      const campaignNameFromForm = findAnswerByQuestion([
+      const campaignNameFromForm = findAnswerByQuestion(formData.formData, [
         'campaign name', 
         'name of campaign',
         'campaign title'
@@ -147,7 +146,7 @@ export function GoogleAdCampaign({
       }
 
       // Start Date
-      const startDateFromForm = findAnswerByQuestion([
+      const startDateFromForm = findAnswerByQuestion(formData.formData, [
         'start date',
         'campaign start',
         'begin date',
@@ -161,7 +160,7 @@ export function GoogleAdCampaign({
       }
 
       // End Date
-      const endDateFromForm = findAnswerByQuestion([
+      const endDateFromForm = findAnswerByQuestion(formData.formData, [
         'end date',
         'campaign end',
         'finish date',
@@ -190,13 +189,11 @@ export function GoogleAdCampaign({
       if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
 
       if (populatedFields.length > 0) {
-        toast.success('Auto-populated successfully!', {
+        toast.success('Form auto-populated successfully!', {
           description: `Filled: ${populatedFields.join(', ')}`
         })
       } else {
-        toast.info('No matching fields found in form data', {
-          description: 'Form data may not contain the expected campaign information'
-        })
+        console.log('No matching fields found in form data for auto-population')
       }
 
     } catch (error) {
@@ -205,7 +202,15 @@ export function GoogleAdCampaign({
         description: 'An error occurred while processing the form data'
       })
     }
-  }
+  }, [formData]) // useCallback dependency on formData
+
+  // Auto-populate on component mount when formData is available
+  useEffect(() => {
+    if (formData?.formData && formData.formData.length > 0) {
+      console.log('GoogleAdCampaign mounted with form data, triggering auto-populate')
+      handleAutoPopulate()
+    }
+  }, [formData, handleAutoPopulate]) // Dependencies: formData and memoized handleAutoPopulate
 
   const toggleBudgetLock = () => {
     setIsBudgetLocked(!isBudgetLocked)
@@ -306,10 +311,6 @@ export function GoogleAdCampaign({
       <div className="p-4 border rounded-lg bg-muted/30">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium">Create Campaign</h3>
-          <GoogleAutoPopulateButton 
-            onAutoPopulate={handleAutoPopulate}
-            disabled={isCreating}
-          />
         </div>
         <p className="text-sm text-muted-foreground mb-4">
           Creating campaign for: <strong>{accountName}</strong>
