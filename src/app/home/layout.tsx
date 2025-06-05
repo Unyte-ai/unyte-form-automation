@@ -27,7 +27,7 @@ export default async function HomeLayout({
           <div>
             <Link href="/home">
               <Image
-                src="/unyte-logo.png"
+                src="/Unyte-Logo.png"
                 alt="Unyte Logo"
                 height={40}
                 width={134}
