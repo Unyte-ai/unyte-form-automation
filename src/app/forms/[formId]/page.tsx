@@ -5,6 +5,8 @@ import { FormBody } from '@/components/form-body'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { CreateCampaign } from '@/components/create-campaign'
 import { Metadata } from 'next'
+import Link from 'next/link'
+import Image from 'next/image'
 
 // Define interfaces for form data
 interface FormQuestion {
@@ -121,11 +123,24 @@ export default async function FormDetailPage({
 
   return (
     <>
-      <FormBreadcrumb 
-        organizationId={typedSubmission.organization_id}
-        organizationName={organizationName}
-        formTitle={formTitle}
-      />
+      {/* Header with breadcrumbs and logo */}
+      <div className="flex items-center justify-between mb-6">
+        <FormBreadcrumb 
+          organizationId={typedSubmission.organization_id}
+          organizationName={organizationName}
+          formTitle={formTitle}
+        />
+        <Link href={`/home/${typedSubmission.organization_id}`} className="cursor-pointer transition-all duration-200 hover:opacity-80 hover:scale-105">
+          <Image
+            src="/Unyte-Logo.png"
+            alt="Unyte Logo"
+            height={40}
+            width={134}
+            className="h-10 w-auto"
+            priority
+          />
+        </Link>
+      </div>
       
       <div className="h-[calc(100vh-8rem)]">
         <ResizablePanelGroup 
