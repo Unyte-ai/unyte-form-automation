@@ -142,14 +142,14 @@ export default async function FormDetailPage({
         </Link>
       </div>
       
-      <div className="h-[calc(100vh-8rem)]">
+      <div className="h-[calc(100vh-8rem)] bg-neutral-100">
         <ResizablePanelGroup 
           direction="horizontal"
           className="min-h-full"
         >
           {/* Left column - Form body */}
           <ResizablePanel defaultSize={50} minSize={30}>
-            <div className="p-2 h-full overflow-y-auto">
+            <div className="p-5 h-full overflow-y-auto bg-white">
               <FormBody formId={formId} />
             </div>
           </ResizablePanel>
@@ -158,7 +158,7 @@ export default async function FormDetailPage({
           
           {/* Right column - Campaign creation */}
           <ResizablePanel defaultSize={50} minSize={20}>
-            <div className="p-4 h-full overflow-y-auto bg-card/50">
+            <div className="p-5 h-full overflow-y-auto bg-white">
               <CreateCampaign 
                 organizationId={typedSubmission.organization_id}
                 formData={typedSubmission.structured_data}
