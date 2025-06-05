@@ -145,7 +145,7 @@ export default async function FormDetailPage({
       <div className="h-[calc(100vh-8rem)] bg-neutral-100">
         <ResizablePanelGroup 
           direction="horizontal"
-          className="min-h-full"
+          className="min-h-full rounded-lg border overflow-hidden"
         >
           {/* Left column - Form body */}
           <ResizablePanel defaultSize={50} minSize={30}>
