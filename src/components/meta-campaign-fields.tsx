@@ -1,7 +1,9 @@
 import * as React from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Pencil, Lock } from 'lucide-react'
 import { 
   FacebookCampaignData,
   FacebookBudgetType,
@@ -14,9 +16,17 @@ interface MetaCampaignFieldsProps {
   value: Partial<FacebookCampaignData>
   onChange: (value: Partial<FacebookCampaignData>) => void
   errors?: Record<string, string>
+  isBudgetLocked?: boolean
+  onToggleBudgetLock?: () => void
 }
 
-export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFieldsProps) {
+export function MetaCampaignFields({ 
+  value, 
+  onChange, 
+  errors,
+  isBudgetLocked = false,
+  onToggleBudgetLock
+}: MetaCampaignFieldsProps) {
   // Handle form field changes
   const handleFieldChange = (field: keyof FacebookCampaignData, fieldValue: FacebookCampaignData[keyof FacebookCampaignData]) => {
     onChange({
@@ -120,9 +130,33 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
 
       {/* Budget Type Selection */}
       <div className="grid gap-2">
-        <Label htmlFor="budget-type">Budget Type *</Label>
-        <Select value={currentBudgetType} onValueChange={handleBudgetTypeChange}>
-          <SelectTrigger id="budget-type" className={errors?.budget_type ? 'border-destructive' : ''}>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="budget-type">Budget Type *</Label>
+          {onToggleBudgetLock && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onToggleBudgetLock}
+              className="h-6 w-6 p-0"
+            >
+              {isBudgetLocked ? (
+                <Lock className="h-3 w-3" />
+              ) : (
+                <Pencil className="h-3 w-3" />
+              )}
+            </Button>
+          )}
+        </div>
+        <Select 
+          value={currentBudgetType} 
+          onValueChange={handleBudgetTypeChange}
+          disabled={isBudgetLocked}
+        >
+          <SelectTrigger 
+            id="budget-type" 
+            className={`${errors?.budget_type ? 'border-destructive' : ''} ${isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -143,9 +177,26 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
 
       {/* Budget Amount */}
       <div className="grid gap-2">
-        <Label htmlFor="campaign-budget">
-          {currentBudgetType === 'LIFETIME' ? 'Lifetime Budget (USD) *' : 'Daily Budget (USD) *'}
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="campaign-budget">
+            {currentBudgetType === 'LIFETIME' ? 'Lifetime Budget (USD) *' : 'Daily Budget (USD) *'}
+          </Label>
+          {onToggleBudgetLock && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onToggleBudgetLock}
+              className="h-6 w-6 p-0"
+            >
+              {isBudgetLocked ? (
+                <Lock className="h-3 w-3" />
+              ) : (
+                <Pencil className="h-3 w-3" />
+              )}
+            </Button>
+          )}
+        </div>
         <Input
           id="campaign-budget"
           type="number"
@@ -154,7 +205,8 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
           value={getBudgetDisplayValue()}
           onChange={(e) => handleBudgetChange(e.target.value, currentBudgetType)}
           placeholder="0.00"
-          className={errors?.lifetime_budget || errors?.daily_budget ? 'border-destructive' : ''}
+          disabled={isBudgetLocked}
+          className={`${errors?.lifetime_budget || errors?.daily_budget ? 'border-destructive' : ''} ${isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
         {(errors?.lifetime_budget || errors?.daily_budget) && (
           <p className="text-xs text-destructive">
@@ -168,6 +220,18 @@ export function MetaCampaignFields({ value, onChange, errors }: MetaCampaignFiel
           }
         </p>
       </div>
+
+      {/* Budget Warning when unlocked */}
+      {!isBudgetLocked && onToggleBudgetLock && (
+        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+            ⚠️ Budget fields are unlocked for manual editing
+          </p>
+          <div className="text-amber-800 dark:text-amber-300 text-xs">
+            <p>Budget values can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
+          </div>
+        </div>
+      )}
 
       {/* Campaign Status */}
       <div className="grid gap-2">

@@ -51,6 +51,9 @@ export function MetaCreateCampaignAdSet({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   
+  // Budget lock state
+  const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
+  
   // Campaign form state
   const [campaignData, setCampaignData] = useState<Partial<FacebookCampaignData>>({
     name: '',
@@ -95,6 +98,11 @@ export function MetaCreateCampaignAdSet({
     return endDate.toISOString()
   }
 
+  // Toggle budget lock function
+  const toggleBudgetLock = () => {
+    setIsBudgetLocked(!isBudgetLocked)
+  }
+
   // Auto-populate handler
   const handleAutoPopulate = () => {
     if (!formData?.formData) {
@@ -113,6 +121,14 @@ export function MetaCreateCampaignAdSet({
       // Clear any existing errors when auto-populating
       setCampaignErrors({})
       setAdSetErrors({})
+
+      // Lock budget fields after auto-populate if budget data was populated
+      const hasBudgetData = result.campaignData.budget_type || 
+                           result.campaignData.lifetime_budget || 
+                           result.campaignData.daily_budget
+      if (hasBudgetData) {
+        setIsBudgetLocked(true)
+      }
       
       // Show success message with what was populated
       if (result.populatedFields.length > 0) {
@@ -264,6 +280,9 @@ export function MetaCreateCampaignAdSet({
       setCampaignErrors({})
       setAdSetErrors({})
 
+      // Reset budget lock state
+      setIsBudgetLocked(false)
+
       // Collapse form
       setIsExpanded(false)
 
@@ -335,6 +354,8 @@ export function MetaCreateCampaignAdSet({
               value={campaignData}
               onChange={setCampaignData}
               errors={campaignErrors}
+              isBudgetLocked={isBudgetLocked}
+              onToggleBudgetLock={toggleBudgetLock}
             />
           </div>
 
