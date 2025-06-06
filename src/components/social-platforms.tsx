@@ -1,7 +1,7 @@
 import { GoogleLogin } from '@/components/google-login'
 import { MetaLogin } from '@/components/meta-login'
-import { TikTokLogin } from '@/components/tiktok-login'
 import { LinkedInLogin } from '@/components/linkedin-login'
+import { TikTokLogin } from '@/components/tiktok-login'
 import { ConnectionStatusProvider } from '@/contexts/connection-status-context'
 import { PlatformConnectionWarning } from '@/components/platform-connection-warning'
 
@@ -13,8 +13,8 @@ export function SocialPlatforms() {
         <div className="space-y-4">
           <GoogleLogin />
           <MetaLogin />
-          <TikTokLogin />
           <LinkedInLogin />
+          <TikTokLogin />
         </div>
         <PlatformConnectionWarning />
       </ConnectionStatusProvider>

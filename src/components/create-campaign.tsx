@@ -90,11 +90,11 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
             <DropdownMenuItem className="cursor-pointer" onClick={addMetaCampaign}>
               Meta
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
-              TikTok
-            </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addLinkedInCampaign}>
               LinkedIn
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
+              TikTok
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
