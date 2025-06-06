@@ -46,6 +46,28 @@ export function GoogleCampaignBudgetSection({
   originalFormData,
   disabled = false
 }: GoogleCampaignBudgetSectionProps) {
+  const budgetTypeWarning = !isBudgetLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ Budget type field is unlocked for manual editing
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Budget type can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
+  const budgetAmountWarning = !isBudgetLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ Budget amount field is unlocked for manual editing
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Budget amount can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
   return (
     <div className="space-y-4">
       {/* Budget Type Selection */}
@@ -56,6 +78,7 @@ export function GoogleCampaignBudgetSection({
         disabled={disabled}
         originalValue={originalFormData?.budgetType}
         fieldType="budget-type"
+        warning={budgetTypeWarning}
       >
         <Select 
           value={budgetType} 
@@ -91,6 +114,7 @@ export function GoogleCampaignBudgetSection({
         disabled={disabled}
         originalValue={originalFormData?.budgetAmount}
         fieldType="budget-amount"
+        warning={budgetAmountWarning}
       >
         <Input
           id="budget-amount"
@@ -112,18 +136,6 @@ export function GoogleCampaignBudgetSection({
           }
         </p>
       </GoogleCampaignLockableField>
-
-      {/* Budget Warning when unlocked */}
-      {!isBudgetLocked && (
-        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-            ⚠️ Budget fields are unlocked for manual editing
-          </p>
-          <div className="text-amber-800 dark:text-amber-300 text-xs">
-            <p>Budget values can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

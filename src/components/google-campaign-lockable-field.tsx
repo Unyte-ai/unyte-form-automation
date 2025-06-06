@@ -13,6 +13,7 @@ interface GoogleCampaignLockableFieldProps {
   children: React.ReactNode
   originalValue?: string | null
   fieldType?: 'budget-type' | 'budget-amount' | 'date'
+  warning?: React.ReactNode
 }
 
 export function GoogleCampaignLockableField({
@@ -22,7 +23,8 @@ export function GoogleCampaignLockableField({
   disabled = false,
   children,
   originalValue,
-  fieldType
+  fieldType,
+  warning
 }: GoogleCampaignLockableFieldProps) {
   return (
     <div className="grid gap-2">
@@ -44,6 +46,11 @@ export function GoogleCampaignLockableField({
           )}
         </Button>
       </div>
+      {warning && (
+        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          {warning}
+        </div>
+      )}
       {children}
       <OriginalValueDisplay originalValue={originalValue} fieldType={fieldType} />
     </div>
