@@ -51,6 +51,7 @@ export function GoogleAdCampaign({
     isBudgetLocked,
     isDateLocked,
     createdCampaign,
+    originalFormData,
     
     // Setters
     setCampaignName,
@@ -234,6 +235,7 @@ export function GoogleAdCampaign({
               onBudgetTypeChange={setBudgetType}
               onBudgetAmountChange={setBudgetAmount}
               onRequestBudgetUnlock={handleRequestBudgetUnlock}
+              originalFormData={originalFormData}
               disabled={isCreating}
             />
 
@@ -245,6 +247,7 @@ export function GoogleAdCampaign({
               onEndDateChange={setEndDate}
               onRequestDateUnlock={handleRequestDateUnlock}
               getTomorrowDate={getTomorrowDate}
+              originalFormData={originalFormData}
               disabled={isCreating}
             />
 

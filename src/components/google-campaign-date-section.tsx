@@ -3,6 +3,13 @@
 import { Input } from '@/components/ui/input'
 import { GoogleCampaignLockableField } from './google-campaign-lockable-field'
 
+interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
 interface GoogleCampaignDateSectionProps {
   startDate: string
   endDate: string
@@ -11,6 +18,7 @@ interface GoogleCampaignDateSectionProps {
   onEndDateChange: (value: string) => void
   onRequestDateUnlock: () => void
   getTomorrowDate: () => string
+  originalFormData?: OriginalFormData
   disabled?: boolean
 }
 
@@ -22,6 +30,7 @@ export function GoogleCampaignDateSection({
   onEndDateChange,
   onRequestDateUnlock,
   getTomorrowDate,
+  originalFormData,
   disabled = false
 }: GoogleCampaignDateSectionProps) {
   return (
@@ -32,6 +41,8 @@ export function GoogleCampaignDateSection({
           isLocked={isDateLocked}
           onRequestUnlock={onRequestDateUnlock}
           disabled={disabled}
+          originalValue={originalFormData?.startDate}
+          fieldType="date"
         >
           <Input
             id="start-date"
@@ -52,6 +63,8 @@ export function GoogleCampaignDateSection({
           isLocked={isDateLocked}
           onRequestUnlock={onRequestDateUnlock}
           disabled={disabled}
+          originalValue={originalFormData?.endDate}
+          fieldType="date"
         >
           <Input
             id="end-date"

@@ -10,6 +10,13 @@ import {
 } from '@/components/ui/select'
 import { GoogleCampaignLockableField } from './google-campaign-lockable-field'
 
+interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
 interface GoogleCampaignBudgetSectionProps {
   budgetType: 'daily' | 'total'
   budgetAmount: string
@@ -17,6 +24,7 @@ interface GoogleCampaignBudgetSectionProps {
   onBudgetTypeChange: (value: 'daily' | 'total') => void
   onBudgetAmountChange: (value: string) => void
   onRequestBudgetUnlock: () => void
+  originalFormData?: OriginalFormData
   disabled?: boolean
 }
 
@@ -27,6 +35,7 @@ export function GoogleCampaignBudgetSection({
   onBudgetTypeChange,
   onBudgetAmountChange,
   onRequestBudgetUnlock,
+  originalFormData,
   disabled = false
 }: GoogleCampaignBudgetSectionProps) {
   return (
@@ -37,6 +46,8 @@ export function GoogleCampaignBudgetSection({
         isLocked={isBudgetLocked}
         onRequestUnlock={onRequestBudgetUnlock}
         disabled={disabled}
+        originalValue={originalFormData?.budgetType}
+        fieldType="budget-type"
       >
         <Select 
           value={budgetType} 
@@ -68,6 +79,8 @@ export function GoogleCampaignBudgetSection({
         isLocked={isBudgetLocked}
         onRequestUnlock={onRequestBudgetUnlock}
         disabled={disabled}
+        originalValue={originalFormData?.budgetAmount}
+        fieldType="budget-amount"
       >
         <Input
           id="budget-amount"

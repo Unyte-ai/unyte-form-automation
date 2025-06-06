@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Pencil, Lock } from 'lucide-react'
+import { OriginalValueDisplay } from './google-original-value-display'
 
 interface GoogleCampaignLockableFieldProps {
   label: string
@@ -10,6 +11,8 @@ interface GoogleCampaignLockableFieldProps {
   onRequestUnlock: () => void
   disabled?: boolean
   children: React.ReactNode
+  originalValue?: string | null
+  fieldType?: 'budget-type' | 'budget-amount' | 'date'
 }
 
 export function GoogleCampaignLockableField({
@@ -17,7 +20,9 @@ export function GoogleCampaignLockableField({
   isLocked,
   onRequestUnlock,
   disabled = false,
-  children
+  children,
+  originalValue,
+  fieldType
 }: GoogleCampaignLockableFieldProps) {
   return (
     <div className="grid gap-2">
@@ -39,6 +44,7 @@ export function GoogleCampaignLockableField({
         </Button>
       </div>
       {children}
+      <OriginalValueDisplay originalValue={originalValue} fieldType={fieldType} />
     </div>
   )
 }
