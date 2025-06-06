@@ -4,10 +4,12 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/google-create-campaign'
 import { useGoogleCampaignForm } from '@/hooks/use-google-campaign-form'
+import { useGoogleCampaignUnlockConfirmation } from '@/hooks/use-google-campaign-unlock-confirmation'
 import { GoogleCampaignBasicFields } from './google-campaign-basic-fields'
 import { GoogleCampaignBudgetSection } from './google-campaign-budget-section'
 import { GoogleCampaignDateSection } from './google-campaign-date-section'
 import { GoogleCampaignSuccessDisplay } from './google-campaign-success-display'
+import { GoogleCampaignUnlockConfirmationDialog } from './google-campaign-unlock-confirmation-dialog'
 import { toast } from 'sonner'
 
 // Define interfaces for form data
@@ -66,8 +68,18 @@ export function GoogleAdCampaign({
     getTomorrowDate,
     handleAutoPopulate,
     resetForm,
-    initializeDefaultDates
+    initializeDefaultDates,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   } = useGoogleCampaignForm(formData)
+
+  // Use the unlock confirmation hook
+  const {
+    confirmationState,
+    requestUnlock,
+    confirmUnlock,
+    cancelUnlock
+  } = useGoogleCampaignUnlockConfirmation()
 
   // Initialize default dates on first render
   useEffect(() => {
@@ -165,12 +177,30 @@ export function GoogleAdCampaign({
     setCreatedCampaign(null)
   }
 
-  const toggleBudgetLock = () => {
-    setIsBudgetLocked(!isBudgetLocked)
+  // Handle budget unlock request
+  const handleRequestBudgetUnlock = () => {
+    if (!isBudgetLocked) {
+      // If already unlocked, lock it
+      setIsBudgetLocked(true)
+    } else {
+      // Request unlock confirmation
+      requestUnlock('budget', hasBudgetOriginalData(), () => {
+        setIsBudgetLocked(false)
+      })
+    }
   }
 
-  const toggleDateLock = () => {
-    setIsDateLocked(!isDateLocked)
+  // Handle date unlock request
+  const handleRequestDateUnlock = () => {
+    if (!isDateLocked) {
+      // If already unlocked, lock it
+      setIsDateLocked(true)
+    } else {
+      // Request unlock confirmation
+      requestUnlock('date', hasDateOriginalData(), () => {
+        setIsDateLocked(false)
+      })
+    }
   }
 
   return (
@@ -203,7 +233,7 @@ export function GoogleAdCampaign({
               isBudgetLocked={isBudgetLocked}
               onBudgetTypeChange={setBudgetType}
               onBudgetAmountChange={setBudgetAmount}
-              onToggleBudgetLock={toggleBudgetLock}
+              onRequestBudgetUnlock={handleRequestBudgetUnlock}
               disabled={isCreating}
             />
 
@@ -213,7 +243,7 @@ export function GoogleAdCampaign({
               isDateLocked={isDateLocked}
               onStartDateChange={setStartDate}
               onEndDateChange={setEndDate}
-              onToggleDateLock={toggleDateLock}
+              onRequestDateUnlock={handleRequestDateUnlock}
               getTomorrowDate={getTomorrowDate}
               disabled={isCreating}
             />
@@ -233,6 +263,15 @@ export function GoogleAdCampaign({
           </div>
         )}
       </div>
+
+      {/* Unlock Confirmation Dialog */}
+      <GoogleCampaignUnlockConfirmationDialog
+        isOpen={confirmationState.isOpen}
+        lockType={confirmationState.lockType}
+        hasOriginalData={confirmationState.hasOriginalData}
+        onConfirm={confirmUnlock}
+        onCancel={cancelUnlock}
+      />
     </div>
   )
 }

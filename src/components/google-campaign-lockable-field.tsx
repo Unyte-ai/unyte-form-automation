@@ -7,7 +7,7 @@ import { Pencil, Lock } from 'lucide-react'
 interface GoogleCampaignLockableFieldProps {
   label: string
   isLocked: boolean
-  onToggleLock: () => void
+  onRequestUnlock: () => void
   disabled?: boolean
   children: React.ReactNode
 }
@@ -15,7 +15,7 @@ interface GoogleCampaignLockableFieldProps {
 export function GoogleCampaignLockableField({
   label,
   isLocked,
-  onToggleLock,
+  onRequestUnlock,
   disabled = false,
   children
 }: GoogleCampaignLockableFieldProps) {
@@ -27,7 +27,7 @@ export function GoogleCampaignLockableField({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={onToggleLock}
+          onClick={onRequestUnlock}
           disabled={disabled}
           className="h-6 w-6 p-0"
         >

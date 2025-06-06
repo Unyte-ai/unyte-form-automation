@@ -9,7 +9,7 @@ interface GoogleCampaignDateSectionProps {
   isDateLocked: boolean
   onStartDateChange: (value: string) => void
   onEndDateChange: (value: string) => void
-  onToggleDateLock: () => void
+  onRequestDateUnlock: () => void
   getTomorrowDate: () => string
   disabled?: boolean
 }
@@ -20,7 +20,7 @@ export function GoogleCampaignDateSection({
   isDateLocked,
   onStartDateChange,
   onEndDateChange,
-  onToggleDateLock,
+  onRequestDateUnlock,
   getTomorrowDate,
   disabled = false
 }: GoogleCampaignDateSectionProps) {
@@ -30,7 +30,7 @@ export function GoogleCampaignDateSection({
         <GoogleCampaignLockableField
           label="Start Date"
           isLocked={isDateLocked}
-          onToggleLock={onToggleDateLock}
+          onRequestUnlock={onRequestDateUnlock}
           disabled={disabled}
         >
           <Input
@@ -50,7 +50,7 @@ export function GoogleCampaignDateSection({
         <GoogleCampaignLockableField
           label="End Date"
           isLocked={isDateLocked}
-          onToggleLock={onToggleDateLock}
+          onRequestUnlock={onRequestDateUnlock}
           disabled={disabled}
         >
           <Input

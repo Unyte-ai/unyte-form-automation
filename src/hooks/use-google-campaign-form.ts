@@ -18,6 +18,13 @@ export interface CreatedGoogleCampaign {
   campaignName: string
 }
 
+export interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
 export function useGoogleCampaignForm(formData?: StructuredData) {
   const [campaignName, setCampaignName] = useState('')
   const [campaignType, setCampaignType] = useState<'SEARCH' | 'DISPLAY'>('SEARCH')
@@ -29,6 +36,14 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
   const [isBudgetLocked, setIsBudgetLocked] = useState(false)
   const [isDateLocked, setIsDateLocked] = useState(false)
   const [createdCampaign, setCreatedCampaign] = useState<CreatedGoogleCampaign | null>(null)
+  
+  // Track original form data to determine if fields had auto-populated values
+  const [originalFormData, setOriginalFormData] = useState<OriginalFormData>({
+    budgetType: null,
+    budgetAmount: null,
+    startDate: null,
+    endDate: null
+  })
 
   // Utility function to find answers by question keywords
   const findAnswerByQuestion = useCallback((formData: FormQuestion[], searchTerms: string[]): string => {
@@ -97,16 +112,27 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
       const detectedCampaignType = detectGoogleCampaignTypeFromForm(formData)
       setCampaignType(detectedCampaignType)
 
+      // Initialize originalFormData tracking
+      const originalData: OriginalFormData = {
+        budgetType: null,
+        budgetAmount: null,
+        startDate: null,
+        endDate: null
+      }
+
       // Budget Type - set from extracted config
       if (budgetConfig.budgetType) {
         setBudgetType(budgetConfig.budgetType)
+        originalData.budgetType = budgetConfig.budgetType
       }
 
       // Budget Amount - use allocated budget if available, otherwise total budget
       if (budgetConfig.allocatedBudget > 0) {
         setBudgetAmount(budgetConfig.allocatedBudget.toString())
+        originalData.budgetAmount = budgetConfig.allocatedBudget.toString()
       } else if (budgetConfig.totalBudget > 0) {
         setBudgetAmount(budgetConfig.totalBudget.toString())
+        originalData.budgetAmount = budgetConfig.totalBudget.toString()
       }
 
       // Lock budget fields after auto-populate
@@ -125,6 +151,7 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
         const parsedStartDate = parseDateFromForm(startDateFromForm)
         if (parsedStartDate) {
           setStartDate(parsedStartDate)
+          originalData.startDate = parsedStartDate
         }
       }
 
@@ -139,6 +166,7 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
         const parsedEndDate = parseDateFromForm(endDateFromForm)
         if (parsedEndDate) {
           setEndDate(parsedEndDate)
+          originalData.endDate = parsedEndDate
         }
       }
 
@@ -147,6 +175,9 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
           (endDateFromForm && parseDateFromForm(endDateFromForm))) {
         setIsDateLocked(true)
       }
+
+      // Store original form data
+      setOriginalFormData(originalData)
 
       // Show success message with what was populated
       const populatedFields = []
@@ -183,6 +214,12 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     setEndDate(getDefaultEndDate())
     setIsBudgetLocked(false)
     setIsDateLocked(false)
+    setOriginalFormData({
+      budgetType: null,
+      budgetAmount: null,
+      startDate: null,
+      endDate: null
+    })
   }, [getTomorrowDate, getDefaultEndDate])
 
   // Initialize default dates
@@ -190,6 +227,16 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     if (!startDate) setStartDate(getTomorrowDate())
     if (!endDate) setEndDate(getDefaultEndDate())
   }, [startDate, endDate, getTomorrowDate, getDefaultEndDate])
+
+  // Check if budget fields have original form data
+  const hasBudgetOriginalData = useCallback(() => {
+    return originalFormData.budgetType !== null || originalFormData.budgetAmount !== null
+  }, [originalFormData])
+
+  // Check if date fields have original form data
+  const hasDateOriginalData = useCallback(() => {
+    return originalFormData.startDate !== null || originalFormData.endDate !== null
+  }, [originalFormData])
 
   return {
     // State
@@ -203,6 +250,7 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     isBudgetLocked,
     isDateLocked,
     createdCampaign,
+    originalFormData,
     
     // Setters
     setCampaignName,
@@ -221,6 +269,8 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     getDefaultEndDate,
     handleAutoPopulate,
     resetForm,
-    initializeDefaultDates
+    initializeDefaultDates,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   }
 }

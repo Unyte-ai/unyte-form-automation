@@ -16,7 +16,7 @@ interface GoogleCampaignBudgetSectionProps {
   isBudgetLocked: boolean
   onBudgetTypeChange: (value: 'daily' | 'total') => void
   onBudgetAmountChange: (value: string) => void
-  onToggleBudgetLock: () => void
+  onRequestBudgetUnlock: () => void
   disabled?: boolean
 }
 
@@ -26,7 +26,7 @@ export function GoogleCampaignBudgetSection({
   isBudgetLocked,
   onBudgetTypeChange,
   onBudgetAmountChange,
-  onToggleBudgetLock,
+  onRequestBudgetUnlock,
   disabled = false
 }: GoogleCampaignBudgetSectionProps) {
   return (
@@ -35,7 +35,7 @@ export function GoogleCampaignBudgetSection({
       <GoogleCampaignLockableField
         label="Budget Type"
         isLocked={isBudgetLocked}
-        onToggleLock={onToggleBudgetLock}
+        onRequestUnlock={onRequestBudgetUnlock}
         disabled={disabled}
       >
         <Select 
@@ -66,7 +66,7 @@ export function GoogleCampaignBudgetSection({
       <GoogleCampaignLockableField
         label={budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
         isLocked={isBudgetLocked}
-        onToggleLock={onToggleBudgetLock}
+        onRequestUnlock={onRequestBudgetUnlock}
         disabled={disabled}
       >
         <Input
