@@ -8,7 +8,7 @@ import { OriginalValueDisplay } from './google-original-value-display'
 interface GoogleCampaignLockableFieldProps {
   label: string
   isLocked: boolean
-  onRequestUnlock: () => void
+  onToggleLock: () => void
   disabled?: boolean
   children: React.ReactNode
   originalValue?: string | null
@@ -18,7 +18,7 @@ interface GoogleCampaignLockableFieldProps {
 export function GoogleCampaignLockableField({
   label,
   isLocked,
-  onRequestUnlock,
+  onToggleLock,
   disabled = false,
   children,
   originalValue,
@@ -32,9 +32,10 @@ export function GoogleCampaignLockableField({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={onRequestUnlock}
+          onClick={onToggleLock}
           disabled={disabled}
           className="h-6 w-6 p-0"
+          title={isLocked ? 'Click to unlock and edit this field' : 'Click to lock this field'}
         >
           {isLocked ? (
             <Lock className="h-3 w-3" />

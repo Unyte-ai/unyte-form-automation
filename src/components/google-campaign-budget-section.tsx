@@ -23,7 +23,11 @@ interface GoogleCampaignBudgetSectionProps {
   isBudgetLocked: boolean
   onBudgetTypeChange: (value: 'daily' | 'total') => void
   onBudgetAmountChange: (value: string) => void
-  onRequestBudgetUnlock: () => void
+  onBudgetUnlock: () => void
+  onBudgetTypeFocus: () => void
+  onBudgetTypeBlur: () => void
+  onBudgetAmountFocus: () => void
+  onBudgetAmountBlur: () => void
   originalFormData?: OriginalFormData
   disabled?: boolean
 }
@@ -34,7 +38,11 @@ export function GoogleCampaignBudgetSection({
   isBudgetLocked,
   onBudgetTypeChange,
   onBudgetAmountChange,
-  onRequestBudgetUnlock,
+  onBudgetUnlock,
+  onBudgetTypeFocus,
+  onBudgetTypeBlur,
+  onBudgetAmountFocus,
+  onBudgetAmountBlur,
   originalFormData,
   disabled = false
 }: GoogleCampaignBudgetSectionProps) {
@@ -44,7 +52,7 @@ export function GoogleCampaignBudgetSection({
       <GoogleCampaignLockableField
         label="Budget Type"
         isLocked={isBudgetLocked}
-        onRequestUnlock={onRequestBudgetUnlock}
+        onToggleLock={onBudgetUnlock}
         disabled={disabled}
         originalValue={originalFormData?.budgetType}
         fieldType="budget-type"
@@ -57,6 +65,8 @@ export function GoogleCampaignBudgetSection({
           <SelectTrigger 
             id="budget-type"
             className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            onFocus={onBudgetTypeFocus}
+            onBlur={onBudgetTypeBlur}
           >
             <SelectValue />
           </SelectTrigger>
@@ -77,7 +87,7 @@ export function GoogleCampaignBudgetSection({
       <GoogleCampaignLockableField
         label={budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
         isLocked={isBudgetLocked}
-        onRequestUnlock={onRequestBudgetUnlock}
+        onToggleLock={onBudgetUnlock}
         disabled={disabled}
         originalValue={originalFormData?.budgetAmount}
         fieldType="budget-amount"
@@ -89,6 +99,8 @@ export function GoogleCampaignBudgetSection({
           min="0.01"
           value={budgetAmount}
           onChange={(e) => onBudgetAmountChange(e.target.value)}
+          onFocus={onBudgetAmountFocus}
+          onBlur={onBudgetAmountBlur}
           placeholder="100.00"
           disabled={disabled || isBudgetLocked}
           className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}

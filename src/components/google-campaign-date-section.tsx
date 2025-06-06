@@ -16,7 +16,11 @@ interface GoogleCampaignDateSectionProps {
   isDateLocked: boolean
   onStartDateChange: (value: string) => void
   onEndDateChange: (value: string) => void
-  onRequestDateUnlock: () => void
+  onDateUnlock: () => void
+  onStartDateFocus: () => void
+  onStartDateBlur: () => void
+  onEndDateFocus: () => void
+  onEndDateBlur: () => void
   getTomorrowDate: () => string
   originalFormData?: OriginalFormData
   disabled?: boolean
@@ -28,7 +32,11 @@ export function GoogleCampaignDateSection({
   isDateLocked,
   onStartDateChange,
   onEndDateChange,
-  onRequestDateUnlock,
+  onDateUnlock,
+  onStartDateFocus,
+  onStartDateBlur,
+  onEndDateFocus,
+  onEndDateBlur,
   getTomorrowDate,
   originalFormData,
   disabled = false
@@ -39,7 +47,7 @@ export function GoogleCampaignDateSection({
         <GoogleCampaignLockableField
           label="Start Date"
           isLocked={isDateLocked}
-          onRequestUnlock={onRequestDateUnlock}
+          onToggleLock={onDateUnlock}
           disabled={disabled}
           originalValue={originalFormData?.startDate}
           fieldType="date"
@@ -49,6 +57,8 @@ export function GoogleCampaignDateSection({
             type="date"
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
+            onFocus={onStartDateFocus}
+            onBlur={onStartDateBlur}
             disabled={disabled || isDateLocked}
             min={getTomorrowDate()}
             className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
@@ -61,7 +71,7 @@ export function GoogleCampaignDateSection({
         <GoogleCampaignLockableField
           label="End Date"
           isLocked={isDateLocked}
-          onRequestUnlock={onRequestDateUnlock}
+          onToggleLock={onDateUnlock}
           disabled={disabled}
           originalValue={originalFormData?.endDate}
           fieldType="date"
@@ -71,6 +81,8 @@ export function GoogleCampaignDateSection({
             type="date"
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
+            onFocus={onEndDateFocus}
+            onBlur={onEndDateBlur}
             disabled={disabled || isDateLocked}
             min={startDate || getTomorrowDate()}
             className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}

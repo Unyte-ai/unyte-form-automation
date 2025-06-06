@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { createGoogleCampaign, CreateGoogleCampaignData } from '@/app/actions/google-create-campaign'
 import { useGoogleCampaignForm } from '@/hooks/use-google-campaign-form'
-import { useGoogleCampaignUnlockConfirmation } from '@/hooks/use-google-campaign-unlock-confirmation'
+import { useGoogleCampaignBlurConfirmation } from '@/hooks/use-google-campaign-blur-confirmation'
 import { GoogleCampaignBasicFields } from './google-campaign-basic-fields'
 import { GoogleCampaignBudgetSection } from './google-campaign-budget-section'
 import { GoogleCampaignDateSection } from './google-campaign-date-section'
 import { GoogleCampaignSuccessDisplay } from './google-campaign-success-display'
-import { GoogleCampaignUnlockConfirmationDialog } from './google-campaign-unlock-confirmation-dialog'
+import { GoogleCampaignBlurConfirmationDialog } from './google-campaign-blur-confirmation-dialog'
 import { toast } from 'sonner'
 
 // Define interfaces for form data
@@ -74,13 +74,21 @@ export function GoogleAdCampaign({
     hasDateOriginalData
   } = useGoogleCampaignForm(formData)
 
-  // Use the unlock confirmation hook
+  // Use the new blur confirmation hook
   const {
     confirmationState,
-    requestUnlock,
-    confirmUnlock,
-    cancelUnlock
-  } = useGoogleCampaignUnlockConfirmation()
+    requestConfirmation,
+    confirmChange,
+    cancelChange
+  } = useGoogleCampaignBlurConfirmation()
+
+  // Track values when focus enters fields for comparison on blur
+  const focusValues = useRef({
+    budgetType: '',
+    budgetAmount: '',
+    startDate: '',
+    endDate: ''
+  })
 
   // Initialize default dates on first render
   useEffect(() => {
@@ -178,29 +186,83 @@ export function GoogleAdCampaign({
     setCreatedCampaign(null)
   }
 
-  // Handle budget unlock request
-  const handleRequestBudgetUnlock = () => {
-    if (!isBudgetLocked) {
-      // If already unlocked, lock it
-      setIsBudgetLocked(true)
-    } else {
-      // Request unlock confirmation
-      requestUnlock('budget', hasBudgetOriginalData(), () => {
-        setIsBudgetLocked(false)
-      })
+  // Handle immediate budget unlock (no dialog)
+  const handleBudgetUnlock = () => {
+    setIsBudgetLocked(!isBudgetLocked)
+  }
+
+  // Handle immediate date unlock (no dialog)
+  const handleDateUnlock = () => {
+    setIsDateLocked(!isDateLocked)
+  }
+
+  // Focus handlers to capture current values
+  const handleBudgetTypeFocus = () => {
+    focusValues.current.budgetType = budgetType
+  }
+
+  const handleBudgetAmountFocus = () => {
+    focusValues.current.budgetAmount = budgetAmount
+  }
+
+  const handleStartDateFocus = () => {
+    focusValues.current.startDate = startDate
+  }
+
+  const handleEndDateFocus = () => {
+    focusValues.current.endDate = endDate
+  }
+
+  // Blur handlers to detect changes and show confirmation
+  const handleBudgetTypeBlur = () => {
+    if (focusValues.current.budgetType !== budgetType) {
+      const originalValue = originalFormData.budgetType || focusValues.current.budgetType
+      requestConfirmation(
+        'budget-type',
+        originalValue,
+        budgetType,
+        hasBudgetOriginalData(),
+        () => setBudgetType(originalValue as 'daily' | 'total')
+      )
     }
   }
 
-  // Handle date unlock request
-  const handleRequestDateUnlock = () => {
-    if (!isDateLocked) {
-      // If already unlocked, lock it
-      setIsDateLocked(true)
-    } else {
-      // Request unlock confirmation
-      requestUnlock('date', hasDateOriginalData(), () => {
-        setIsDateLocked(false)
-      })
+  const handleBudgetAmountBlur = () => {
+    if (focusValues.current.budgetAmount !== budgetAmount) {
+      const originalValue = originalFormData.budgetAmount || focusValues.current.budgetAmount
+      requestConfirmation(
+        'budget-amount',
+        originalValue,
+        budgetAmount,
+        hasBudgetOriginalData(),
+        () => setBudgetAmount(originalValue)
+      )
+    }
+  }
+
+  const handleStartDateBlur = () => {
+    if (focusValues.current.startDate !== startDate) {
+      const originalValue = originalFormData.startDate || focusValues.current.startDate
+      requestConfirmation(
+        'start-date',
+        originalValue,
+        startDate,
+        hasDateOriginalData(),
+        () => setStartDate(originalValue)
+      )
+    }
+  }
+
+  const handleEndDateBlur = () => {
+    if (focusValues.current.endDate !== endDate) {
+      const originalValue = originalFormData.endDate || focusValues.current.endDate
+      requestConfirmation(
+        'end-date',
+        originalValue,
+        endDate,
+        hasDateOriginalData(),
+        () => setEndDate(originalValue)
+      )
     }
   }
 
@@ -234,7 +296,11 @@ export function GoogleAdCampaign({
               isBudgetLocked={isBudgetLocked}
               onBudgetTypeChange={setBudgetType}
               onBudgetAmountChange={setBudgetAmount}
-              onRequestBudgetUnlock={handleRequestBudgetUnlock}
+              onBudgetUnlock={handleBudgetUnlock}
+              onBudgetTypeFocus={handleBudgetTypeFocus}
+              onBudgetTypeBlur={handleBudgetTypeBlur}
+              onBudgetAmountFocus={handleBudgetAmountFocus}
+              onBudgetAmountBlur={handleBudgetAmountBlur}
               originalFormData={originalFormData}
               disabled={isCreating}
             />
@@ -245,7 +311,11 @@ export function GoogleAdCampaign({
               isDateLocked={isDateLocked}
               onStartDateChange={setStartDate}
               onEndDateChange={setEndDate}
-              onRequestDateUnlock={handleRequestDateUnlock}
+              onDateUnlock={handleDateUnlock}
+              onStartDateFocus={handleStartDateFocus}
+              onStartDateBlur={handleStartDateBlur}
+              onEndDateFocus={handleEndDateFocus}
+              onEndDateBlur={handleEndDateBlur}
               getTomorrowDate={getTomorrowDate}
               originalFormData={originalFormData}
               disabled={isCreating}
@@ -267,13 +337,15 @@ export function GoogleAdCampaign({
         )}
       </div>
 
-      {/* Unlock Confirmation Dialog */}
-      <GoogleCampaignUnlockConfirmationDialog
+      {/* Blur Confirmation Dialog */}
+      <GoogleCampaignBlurConfirmationDialog
         isOpen={confirmationState.isOpen}
-        lockType={confirmationState.lockType}
+        fieldType={confirmationState.fieldType}
+        originalValue={confirmationState.originalValue}
+        newValue={confirmationState.newValue}
         hasOriginalData={confirmationState.hasOriginalData}
-        onConfirm={confirmUnlock}
-        onCancel={cancelUnlock}
+        onConfirm={confirmChange}
+        onCancel={cancelChange}
       />
     </div>
   )
