@@ -173,6 +173,8 @@ export function LinkedInCreateAdCampaign({
             setCountry={setCountry}
             language={language}
             setLanguage={setLanguage}
+            currency={currency}        // Add this
+            setCurrency={setCurrency}  // Add this
           />
 
           <LinkedInCampaignScheduleSection

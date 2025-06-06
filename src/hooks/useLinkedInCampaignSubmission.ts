@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { createLinkedInCampaign, CreateLinkedInCampaignData } from '@/app/actions/linkedin-create-ad-campaign'
+import { 
+  validateLinkedInTargeting 
+} from '@/lib/linkedin-geo-locale-utils'
 
 interface UseLinkedInCampaignSubmissionProps {
   organizationId: string
@@ -65,7 +68,36 @@ export function useLinkedInCampaignSubmission({
     try {
       setIsCreating(true)
 
-      // Prepare campaign data
+      // Validate and get correct LinkedIn targeting values
+      const validation = validateLinkedInTargeting(country, language, currency)
+      
+      // Show warnings if any
+      if (validation.warnings.length > 0) {
+        validation.warnings.forEach(warning => {
+          toast.warning('LinkedIn Targeting Adjustment', {
+            description: warning
+          })
+        })
+      }
+
+      // Get correct geo URN and locale
+      const geoUrn = validation.corrections.geoUrn
+      const supportedLocale = validation.corrections.locale
+      
+      // Parse the locale for campaign field (LinkedIn expects separate country/language)
+      const [localeLanguage, localeCountry] = supportedLocale.split('_')
+      
+      console.log('LinkedIn Targeting Validation:', {
+        requested: { country, language, currency },
+        corrected: { 
+          geoUrn, 
+          locale: supportedLocale,
+          campaignLocale: { country: localeCountry, language: localeLanguage }
+        },
+        warnings: validation.warnings
+      })
+
+      // Prepare campaign data with correct targeting
       const campaignData: CreateLinkedInCampaignData = {
         account: selectedAccount,
         campaignGroup: selectedCampaignGroup,
@@ -73,29 +105,27 @@ export function useLinkedInCampaignSubmission({
         name: name.trim(),
         type: campaignType,
         locale: {
-          country,
-          language
+          country: localeCountry, // Use the corrected locale country
+          language: localeLanguage // Use the corrected locale language
         },
         budgetType: budgetType,
         budgetAmount: budgetAmount,
         currencyCode: currency,
         startDate: startDate,
         endDate: endDate || undefined,
-        // Basic targeting criteria - can be expanded later
+        // Proper targeting criteria with matching geo and locale
         targetingCriteria: {
           include: {
             and: [
               {
                 or: {
-                  'urn:li:adTargetingFacet:locations': [
-                    `urn:li:geo:103644278` // Default to United States
-                  ]
+                  'urn:li:adTargetingFacet:locations': [geoUrn]
                 }
               },
               {
                 or: {
                   'urn:li:adTargetingFacet:interfaceLocales': [
-                    `urn:li:locale:${language}_${country}`
+                    `urn:li:locale:${supportedLocale}` // Must match campaign locale
                   ]
                 }
               }
