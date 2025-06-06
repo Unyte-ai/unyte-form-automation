@@ -33,8 +33,13 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isCreating, setIsCreating] = useState(false)
-  const [isBudgetLocked, setIsBudgetLocked] = useState(false)
-  const [isDateLocked, setIsDateLocked] = useState(false)
+  
+  // Individual lock states instead of group locks
+  const [isBudgetTypeLocked, setIsBudgetTypeLocked] = useState(false)
+  const [isBudgetAmountLocked, setIsBudgetAmountLocked] = useState(false)
+  const [isStartDateLocked, setIsStartDateLocked] = useState(false)
+  const [isEndDateLocked, setIsEndDateLocked] = useState(false)
+  
   const [createdCampaign, setCreatedCampaign] = useState<CreatedGoogleCampaign | null>(null)
   
   // Track original form data to determine if fields had auto-populated values
@@ -120,24 +125,22 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
         endDate: null
       }
 
-      // Budget Type - set from extracted config
+      // Budget Type - set from extracted config and lock individually
       if (budgetConfig.budgetType) {
         setBudgetType(budgetConfig.budgetType)
         originalData.budgetType = budgetConfig.budgetType
+        setIsBudgetTypeLocked(true)
       }
 
-      // Budget Amount - use allocated budget if available, otherwise total budget
+      // Budget Amount - use allocated budget if available, otherwise total budget and lock individually
       if (budgetConfig.allocatedBudget > 0) {
         setBudgetAmount(budgetConfig.allocatedBudget.toString())
         originalData.budgetAmount = budgetConfig.allocatedBudget.toString()
+        setIsBudgetAmountLocked(true)
       } else if (budgetConfig.totalBudget > 0) {
         setBudgetAmount(budgetConfig.totalBudget.toString())
         originalData.budgetAmount = budgetConfig.totalBudget.toString()
-      }
-
-      // Lock budget fields after auto-populate
-      if (budgetConfig.budgetType || budgetConfig.allocatedBudget > 0 || budgetConfig.totalBudget > 0) {
-        setIsBudgetLocked(true)
+        setIsBudgetAmountLocked(true)
       }
 
       // Start Date
@@ -152,6 +155,7 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
         if (parsedStartDate) {
           setStartDate(parsedStartDate)
           originalData.startDate = parsedStartDate
+          setIsStartDateLocked(true)
         }
       }
 
@@ -167,13 +171,8 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
         if (parsedEndDate) {
           setEndDate(parsedEndDate)
           originalData.endDate = parsedEndDate
+          setIsEndDateLocked(true)
         }
-      }
-
-      // Lock date fields after auto-populate if dates were found
-      if ((startDateFromForm && parseDateFromForm(startDateFromForm)) || 
-          (endDateFromForm && parseDateFromForm(endDateFromForm))) {
-        setIsDateLocked(true)
       }
 
       // Store original form data
@@ -212,8 +211,13 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     setBudgetAmount('100.00')
     setStartDate(getTomorrowDate())
     setEndDate(getDefaultEndDate())
-    setIsBudgetLocked(false)
-    setIsDateLocked(false)
+    
+    // Reset individual locks
+    setIsBudgetTypeLocked(false)
+    setIsBudgetAmountLocked(false)
+    setIsStartDateLocked(false)
+    setIsEndDateLocked(false)
+    
     setOriginalFormData({
       budgetType: null,
       budgetAmount: null,
@@ -247,8 +251,13 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     startDate,
     endDate,
     isCreating,
-    isBudgetLocked,
-    isDateLocked,
+    
+    // Individual lock states
+    isBudgetTypeLocked,
+    isBudgetAmountLocked,
+    isStartDateLocked,
+    isEndDateLocked,
+    
     createdCampaign,
     originalFormData,
     
@@ -260,8 +269,13 @@ export function useGoogleCampaignForm(formData?: StructuredData) {
     setStartDate,
     setEndDate,
     setIsCreating,
-    setIsBudgetLocked,
-    setIsDateLocked,
+    
+    // Individual lock setters
+    setIsBudgetTypeLocked,
+    setIsBudgetAmountLocked,
+    setIsStartDateLocked,
+    setIsEndDateLocked,
+    
     setCreatedCampaign,
     
     // Utilities

@@ -16,10 +16,18 @@ interface OriginalFormData {
 interface GoogleCampaignDateSectionProps {
   startDate: string
   endDate: string
-  isDateLocked: boolean
+  
+  // Individual lock states
+  isStartDateLocked: boolean
+  isEndDateLocked: boolean
+  
   onStartDateChange: (value: string) => void
   onEndDateChange: (value: string) => void
-  onDateUnlock: () => void
+  
+  // Individual unlock handlers
+  onStartDateUnlock: () => void
+  onEndDateUnlock: () => void
+  
   onStartDateFocus: () => void
   onStartDateBlur: () => void
   onEndDateFocus: () => void
@@ -32,10 +40,12 @@ interface GoogleCampaignDateSectionProps {
 export function GoogleCampaignDateSection({
   startDate,
   endDate,
-  isDateLocked,
+  isStartDateLocked,
+  isEndDateLocked,
   onStartDateChange,
   onEndDateChange,
-  onDateUnlock,
+  onStartDateUnlock,
+  onEndDateUnlock,
   onStartDateFocus,
   onStartDateBlur,
   onEndDateFocus,
@@ -54,12 +64,12 @@ export function GoogleCampaignDateSection({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onDateUnlock}
+            onClick={onStartDateUnlock}
             disabled={disabled}
             className="h-6 w-6 p-0"
-            title={isDateLocked ? 'Click to unlock and edit this field' : 'Click to lock this field'}
+            title={isStartDateLocked ? 'Click to unlock and edit this field' : 'Click to lock this field'}
           >
-            {isDateLocked ? (
+            {isStartDateLocked ? (
               <Lock className="h-3 w-3" />
             ) : (
               <Pencil className="h-3 w-3" />
@@ -72,12 +82,12 @@ export function GoogleCampaignDateSection({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onDateUnlock}
+            onClick={onEndDateUnlock}
             disabled={disabled}
             className="h-6 w-6 p-0"
-            title={isDateLocked ? 'Click to unlock and edit this field' : 'Click to lock this field'}
+            title={isEndDateLocked ? 'Click to unlock and edit this field' : 'Click to lock this field'}
           >
-            {isDateLocked ? (
+            {isEndDateLocked ? (
               <Lock className="h-3 w-3" />
             ) : (
               <Pencil className="h-3 w-3" />
@@ -86,21 +96,21 @@ export function GoogleCampaignDateSection({
         </div>
       </div>
 
-      {/* Shared Date Warning when unlocked */}
-      {!isDateLocked && (
-        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-            ⚠️ Date fields are unlocked for manual editing
-          </p>
-          <div className="text-amber-800 dark:text-amber-300 text-xs">
-            <p>Campaign start and end dates can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
-          </div>
-        </div>
-      )}
-
       {/* Date Input Fields */}
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
+          {/* Warning for start date field - positioned above the input, below the label */}
+          {!isStartDateLocked && (
+            <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+                ⚠️ Start date field is unlocked
+              </p>
+              <p className="text-amber-800 dark:text-amber-300 text-xs">
+                Click the lock icon to secure this field and prevent accidental changes.
+              </p>
+            </div>
+          )}
+          
           <Input
             id="start-date"
             type="date"
@@ -108,9 +118,9 @@ export function GoogleCampaignDateSection({
             onChange={(e) => onStartDateChange(e.target.value)}
             onFocus={onStartDateFocus}
             onBlur={onStartDateBlur}
-            disabled={disabled || isDateLocked}
+            disabled={disabled || isStartDateLocked}
             min={getTomorrowDate()}
-            className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            className={isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
           />
           <p className="text-xs text-muted-foreground">
             Campaign start date (must be future)
@@ -119,6 +129,18 @@ export function GoogleCampaignDateSection({
         </div>
 
         <div className="grid gap-2">
+          {/* Warning for end date field - positioned above the input, below the label */}
+          {!isEndDateLocked && (
+            <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+                ⚠️ End date field is unlocked
+              </p>
+              <p className="text-amber-800 dark:text-amber-300 text-xs">
+                Click the lock icon to secure this field and prevent accidental changes.
+              </p>
+            </div>
+          )}
+          
           <Input
             id="end-date"
             type="date"
@@ -126,9 +148,9 @@ export function GoogleCampaignDateSection({
             onChange={(e) => onEndDateChange(e.target.value)}
             onFocus={onEndDateFocus}
             onBlur={onEndDateBlur}
-            disabled={disabled || isDateLocked}
+            disabled={disabled || isEndDateLocked}
             min={startDate || getTomorrowDate()}
-            className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            className={isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
           />
           <p className="text-xs text-muted-foreground">
             Campaign end date

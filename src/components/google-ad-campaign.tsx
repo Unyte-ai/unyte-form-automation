@@ -48,8 +48,13 @@ export function GoogleAdCampaign({
     startDate,
     endDate,
     isCreating,
-    isBudgetLocked,
-    isDateLocked,
+    
+    // Individual lock states
+    isBudgetTypeLocked,
+    isBudgetAmountLocked,
+    isStartDateLocked,
+    isEndDateLocked,
+    
     createdCampaign,
     originalFormData,
     
@@ -62,8 +67,12 @@ export function GoogleAdCampaign({
     setEndDate,
     setIsCreating,
     setCreatedCampaign,
-    setIsBudgetLocked,
-    setIsDateLocked,
+    
+    // Individual lock setters
+    setIsBudgetTypeLocked,
+    setIsBudgetAmountLocked,
+    setIsStartDateLocked,
+    setIsEndDateLocked,
     
     // Utilities
     getTomorrowDate,
@@ -186,14 +195,21 @@ export function GoogleAdCampaign({
     setCreatedCampaign(null)
   }
 
-  // Handle immediate budget unlock (no dialog)
-  const handleBudgetUnlock = () => {
-    setIsBudgetLocked(!isBudgetLocked)
+  // Individual unlock handlers
+  const handleBudgetTypeUnlock = () => {
+    setIsBudgetTypeLocked(!isBudgetTypeLocked)
   }
 
-  // Handle immediate date unlock (no dialog)
-  const handleDateUnlock = () => {
-    setIsDateLocked(!isDateLocked)
+  const handleBudgetAmountUnlock = () => {
+    setIsBudgetAmountLocked(!isBudgetAmountLocked)
+  }
+
+  const handleStartDateUnlock = () => {
+    setIsStartDateLocked(!isStartDateLocked)
+  }
+
+  const handleEndDateUnlock = () => {
+    setIsEndDateLocked(!isEndDateLocked)
   }
 
   // Focus handlers to capture current values
@@ -293,10 +309,18 @@ export function GoogleAdCampaign({
             <GoogleCampaignBudgetSection
               budgetType={budgetType}
               budgetAmount={budgetAmount}
-              isBudgetLocked={isBudgetLocked}
+              
+              // Individual lock states
+              isBudgetTypeLocked={isBudgetTypeLocked}
+              isBudgetAmountLocked={isBudgetAmountLocked}
+              
               onBudgetTypeChange={setBudgetType}
               onBudgetAmountChange={setBudgetAmount}
-              onBudgetUnlock={handleBudgetUnlock}
+              
+              // Individual unlock handlers
+              onBudgetTypeUnlock={handleBudgetTypeUnlock}
+              onBudgetAmountUnlock={handleBudgetAmountUnlock}
+              
               onBudgetTypeFocus={handleBudgetTypeFocus}
               onBudgetTypeBlur={handleBudgetTypeBlur}
               onBudgetAmountFocus={handleBudgetAmountFocus}
@@ -308,10 +332,18 @@ export function GoogleAdCampaign({
             <GoogleCampaignDateSection
               startDate={startDate}
               endDate={endDate}
-              isDateLocked={isDateLocked}
+              
+              // Individual lock states
+              isStartDateLocked={isStartDateLocked}
+              isEndDateLocked={isEndDateLocked}
+              
               onStartDateChange={setStartDate}
               onEndDateChange={setEndDate}
-              onDateUnlock={handleDateUnlock}
+              
+              // Individual unlock handlers
+              onStartDateUnlock={handleStartDateUnlock}
+              onEndDateUnlock={handleEndDateUnlock}
+              
               onStartDateFocus={handleStartDateFocus}
               onStartDateBlur={handleStartDateBlur}
               onEndDateFocus={handleEndDateFocus}

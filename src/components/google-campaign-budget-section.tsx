@@ -20,10 +20,18 @@ interface OriginalFormData {
 interface GoogleCampaignBudgetSectionProps {
   budgetType: 'daily' | 'total'
   budgetAmount: string
-  isBudgetLocked: boolean
+  
+  // Individual lock states
+  isBudgetTypeLocked: boolean
+  isBudgetAmountLocked: boolean
+  
   onBudgetTypeChange: (value: 'daily' | 'total') => void
   onBudgetAmountChange: (value: string) => void
-  onBudgetUnlock: () => void
+  
+  // Individual unlock handlers
+  onBudgetTypeUnlock: () => void
+  onBudgetAmountUnlock: () => void
+  
   onBudgetTypeFocus: () => void
   onBudgetTypeBlur: () => void
   onBudgetAmountFocus: () => void
@@ -35,10 +43,12 @@ interface GoogleCampaignBudgetSectionProps {
 export function GoogleCampaignBudgetSection({
   budgetType,
   budgetAmount,
-  isBudgetLocked,
+  isBudgetTypeLocked,
+  isBudgetAmountLocked,
   onBudgetTypeChange,
   onBudgetAmountChange,
-  onBudgetUnlock,
+  onBudgetTypeUnlock,
+  onBudgetAmountUnlock,
   onBudgetTypeFocus,
   onBudgetTypeBlur,
   onBudgetAmountFocus,
@@ -46,7 +56,9 @@ export function GoogleCampaignBudgetSection({
   originalFormData,
   disabled = false
 }: GoogleCampaignBudgetSectionProps) {
-  const budgetTypeWarning = !isBudgetLocked ? (
+  
+  // Individual warnings for each field
+  const budgetTypeWarning = !isBudgetTypeLocked ? (
     <>
       <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
         ⚠️ Budget type field is unlocked for manual editing
@@ -57,7 +69,7 @@ export function GoogleCampaignBudgetSection({
     </>
   ) : null
 
-  const budgetAmountWarning = !isBudgetLocked ? (
+  const budgetAmountWarning = !isBudgetAmountLocked ? (
     <>
       <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
         ⚠️ Budget amount field is unlocked for manual editing
@@ -73,8 +85,8 @@ export function GoogleCampaignBudgetSection({
       {/* Budget Type Selection */}
       <GoogleCampaignLockableField
         label="Budget Type"
-        isLocked={isBudgetLocked}
-        onToggleLock={onBudgetUnlock}
+        isLocked={isBudgetTypeLocked}
+        onToggleLock={onBudgetTypeUnlock}
         disabled={disabled}
         originalValue={originalFormData?.budgetType}
         fieldType="budget-type"
@@ -83,11 +95,11 @@ export function GoogleCampaignBudgetSection({
         <Select 
           value={budgetType} 
           onValueChange={onBudgetTypeChange}
-          disabled={disabled || isBudgetLocked}
+          disabled={disabled || isBudgetTypeLocked}
         >
           <SelectTrigger 
             id="budget-type"
-            className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            className={isBudgetTypeLocked ? 'opacity-50 cursor-not-allowed' : ''}
             onFocus={onBudgetTypeFocus}
             onBlur={onBudgetTypeBlur}
           >
@@ -109,8 +121,8 @@ export function GoogleCampaignBudgetSection({
       {/* Budget Amount */}
       <GoogleCampaignLockableField
         label={budgetType === 'daily' ? 'Daily Budget (USD)' : 'Total Budget (USD)'}
-        isLocked={isBudgetLocked}
-        onToggleLock={onBudgetUnlock}
+        isLocked={isBudgetAmountLocked}
+        onToggleLock={onBudgetAmountUnlock}
         disabled={disabled}
         originalValue={originalFormData?.budgetAmount}
         fieldType="budget-amount"
@@ -126,8 +138,8 @@ export function GoogleCampaignBudgetSection({
           onFocus={onBudgetAmountFocus}
           onBlur={onBudgetAmountBlur}
           placeholder="100.00"
-          disabled={disabled || isBudgetLocked}
-          className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+          disabled={disabled || isBudgetAmountLocked}
+          className={isBudgetAmountLocked ? 'opacity-50 cursor-not-allowed' : ''}
         />
         <p className="text-xs text-muted-foreground">
           {budgetType === 'daily' 
