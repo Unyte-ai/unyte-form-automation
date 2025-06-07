@@ -1,5 +1,12 @@
 import { useState } from 'react'
 
+export interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
 export function useLinkedInCampaignForm() {
   // Form state
   const [name, setName] = useState('')
@@ -24,6 +31,14 @@ export function useLinkedInCampaignForm() {
     return tomorrow.toISOString().split('T')[0]
   })
   const [endDate, setEndDate] = useState('')
+
+  // Track original form data to determine if fields had auto-populated values
+  const [originalFormData, setOriginalFormData] = useState<OriginalFormData>({
+    budgetType: null,
+    budgetAmount: null,
+    startDate: null,
+    endDate: null
+  })
 
   // Individual toggle functions (changed from group toggles)
   const toggleBudgetTypeLock = () => {
@@ -56,6 +71,23 @@ export function useLinkedInCampaignForm() {
     tomorrow.setDate(tomorrow.getDate() + 1)
     setStartDate(tomorrow.toISOString().split('T')[0])
     setEndDate('')
+    // Reset original form data
+    setOriginalFormData({
+      budgetType: null,
+      budgetAmount: null,
+      startDate: null,
+      endDate: null
+    })
+  }
+
+  // Check if budget fields have original form data
+  const hasBudgetOriginalData = () => {
+    return originalFormData.budgetType !== null || originalFormData.budgetAmount !== null
+  }
+
+  // Check if date fields have original form data
+  const hasDateOriginalData = () => {
+    return originalFormData.startDate !== null || originalFormData.endDate !== null
   }
 
   return {
@@ -94,6 +126,12 @@ export function useLinkedInCampaignForm() {
     toggleBudgetAmountLock,
     toggleStartDateLock,
     toggleEndDateLock,
-    resetForm
+    resetForm,
+
+    // Original form data tracking
+    originalFormData,
+    setOriginalFormData,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   }
 }

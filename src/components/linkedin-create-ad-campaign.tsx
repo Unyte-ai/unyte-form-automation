@@ -1,17 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus } from 'lucide-react'
 import { useLinkedInCampaignForm } from '@/hooks/useLinkedInCampaignForm'
 import { useLinkedInAutoPopulate } from '@/hooks/useLinkedInAutoPopulate'
 import { useLinkedInCampaignSubmission } from '@/hooks/useLinkedInCampaignSubmission'
+import { useLinkedInCampaignBlurConfirmation } from '@/hooks/use-linkedin-campaign-blur-confirmation'
 import { LinkedInCampaignBasicInfo } from '@/components/linkedin-campaign-basic-info'
 import { LinkedInCampaignBudgetSection } from '@/components/linkedin-campaign-budget-section'
 import { LinkedInCampaignScheduleSection } from '@/components/linkedin-campaign-schedule-section'
 import { LinkedInCampaignLocaleSection } from '@/components/linkedin-campaign-locale-section'
 import { LinkedInCampaignFormActions } from '@/components/linkedin-campaign-form-actions'
+import { LinkedInCampaignBlurConfirmationDialog } from '@/components/linkedin-campaign-blur-confirmation-dialog'
 
 interface FormQuestion {
   question: string;
@@ -77,8 +79,30 @@ export function LinkedInCreateAdCampaign({
     toggleBudgetAmountLock,
     toggleStartDateLock,
     toggleEndDateLock,
-    resetForm
+    resetForm,
+
+    // Original form data tracking
+    originalFormData,
+    setOriginalFormData,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   } = useLinkedInCampaignForm()
+
+  // Use the blur confirmation hook
+  const {
+    confirmationState,
+    requestConfirmation,
+    confirmChange,
+    cancelChange
+  } = useLinkedInCampaignBlurConfirmation()
+
+  // Track values when focus enters fields for comparison on blur
+  const focusValues = useRef({
+    budgetType: '',
+    budgetAmount: '',
+    startDate: '',
+    endDate: ''
+  })
 
   // Auto-populate hook
   const { handleAutoPopulate } = useLinkedInAutoPopulate({
@@ -96,6 +120,7 @@ export function LinkedInCreateAdCampaign({
     setIsBudgetAmountLocked,
     setIsStartDateLocked,
     setIsEndDateLocked,
+    setOriginalFormData,
     campaignType
   })
 
@@ -117,6 +142,76 @@ export function LinkedInCreateAdCampaign({
     setIsExpanded,
     onCampaignCreated
   })
+
+  // Focus handlers to capture current values
+  const handleBudgetTypeFocus = () => {
+    focusValues.current.budgetType = budgetType
+  }
+
+  const handleBudgetAmountFocus = () => {
+    focusValues.current.budgetAmount = budgetAmount
+  }
+
+  const handleStartDateFocus = () => {
+    focusValues.current.startDate = startDate
+  }
+
+  const handleEndDateFocus = () => {
+    focusValues.current.endDate = endDate
+  }
+
+  // Blur handlers to detect changes and show confirmation
+  const handleBudgetTypeBlur = () => {
+    if (focusValues.current.budgetType !== budgetType) {
+      const originalValue = originalFormData.budgetType || focusValues.current.budgetType
+      requestConfirmation(
+        'budget-type',
+        originalValue,
+        budgetType,
+        hasBudgetOriginalData(),
+        () => setBudgetType(originalValue as 'daily' | 'total')
+      )
+    }
+  }
+
+  const handleBudgetAmountBlur = () => {
+    if (focusValues.current.budgetAmount !== budgetAmount) {
+      const originalValue = originalFormData.budgetAmount || focusValues.current.budgetAmount
+      requestConfirmation(
+        'budget-amount',
+        originalValue,
+        budgetAmount,
+        hasBudgetOriginalData(),
+        () => setBudgetAmount(originalValue)
+      )
+    }
+  }
+
+  const handleStartDateBlur = () => {
+    if (focusValues.current.startDate !== startDate) {
+      const originalValue = originalFormData.startDate || focusValues.current.startDate
+      requestConfirmation(
+        'start-date',
+        originalValue,
+        startDate,
+        hasDateOriginalData(),
+        () => setStartDate(originalValue)
+      )
+    }
+  }
+
+  const handleEndDateBlur = () => {
+    if (focusValues.current.endDate !== endDate) {
+      const originalValue = originalFormData.endDate || focusValues.current.endDate
+      requestConfirmation(
+        'end-date',
+        originalValue,
+        endDate,
+        hasDateOriginalData(),
+        () => setEndDate(originalValue)
+      )
+    }
+  }
 
   // Handle expanding form and auto-populate
   const handleExpandAndAutoPopulate = () => {
@@ -175,6 +270,10 @@ export function LinkedInCreateAdCampaign({
             isBudgetAmountLocked={isBudgetAmountLocked}
             toggleBudgetTypeLock={toggleBudgetTypeLock}
             toggleBudgetAmountLock={toggleBudgetAmountLock}
+            onBudgetTypeFocus={handleBudgetTypeFocus}
+            onBudgetTypeBlur={handleBudgetTypeBlur}
+            onBudgetAmountFocus={handleBudgetAmountFocus}
+            onBudgetAmountBlur={handleBudgetAmountBlur}
             isCreating={isCreating}
           />
 
@@ -196,6 +295,10 @@ export function LinkedInCreateAdCampaign({
             isEndDateLocked={isEndDateLocked}
             toggleStartDateLock={toggleStartDateLock}
             toggleEndDateLock={toggleEndDateLock}
+            onStartDateFocus={handleStartDateFocus}
+            onStartDateBlur={handleStartDateBlur}
+            onEndDateFocus={handleEndDateFocus}
+            onEndDateBlur={handleEndDateBlur}
             isCreating={isCreating}
           />
 
@@ -205,6 +308,17 @@ export function LinkedInCreateAdCampaign({
           />
         </form>
       </CardContent>
+
+      {/* Blur Confirmation Dialog */}
+      <LinkedInCampaignBlurConfirmationDialog
+        isOpen={confirmationState.isOpen}
+        fieldType={confirmationState.fieldType}
+        originalValue={confirmationState.originalValue}
+        newValue={confirmationState.newValue}
+        hasOriginalData={confirmationState.hasOriginalData}
+        onConfirm={confirmChange}
+        onCancel={cancelChange}
+      />
     </Card>
   )
 }

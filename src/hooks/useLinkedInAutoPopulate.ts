@@ -12,6 +12,7 @@ import {
   mapGeographyToCountry,
   mapLanguageCode
 } from '@/lib/linkedin-campaign-utils'
+import { OriginalFormData } from './useLinkedInCampaignForm'
 
 interface FormQuestion {
   question: string;
@@ -39,6 +40,8 @@ interface UseLinkedInAutoPopulateProps {
   setIsBudgetAmountLocked: (locked: boolean) => void
   setIsStartDateLocked: (locked: boolean) => void
   setIsEndDateLocked: (locked: boolean) => void
+  // Original form data setter
+  setOriginalFormData: (data: OriginalFormData) => void
   campaignType: 'SPONSORED_UPDATES' | 'TEXT_AD' | 'SPONSORED_INMAILS' | 'DYNAMIC'
 }
 
@@ -57,6 +60,7 @@ export function useLinkedInAutoPopulate({
   setIsBudgetAmountLocked,
   setIsStartDateLocked,
   setIsEndDateLocked,
+  setOriginalFormData,
   campaignType
 }: UseLinkedInAutoPopulateProps) {
   
@@ -72,6 +76,14 @@ export function useLinkedInAutoPopulate({
       
       // Log the budget allocation summary for debugging
       console.log('💰 LinkedIn Campaign Budget Analysis:', getLinkedInBudgetAllocationSummary(formData))
+
+      // Initialize original form data tracking
+      const originalData: OriginalFormData = {
+        budgetType: null,
+        budgetAmount: null,
+        startDate: null,
+        endDate: null
+      }
 
       // Campaign Name
       const campaignNameFromForm = findAnswerByQuestion(formData, [
@@ -102,6 +114,7 @@ export function useLinkedInAutoPopulate({
       // Budget Type - Use the budget utilities detection
       if (budgetInfo.totalBudget > 0) {
         setBudgetType(budgetInfo.budgetType)
+        originalData.budgetType = budgetInfo.budgetType
         setIsBudgetTypeLocked(true) // Lock individual field
         console.log('📊 Auto-populated budget type:', budgetInfo.budgetType)
       }
@@ -109,6 +122,7 @@ export function useLinkedInAutoPopulate({
       // Budget Amount - Use the allocated budget from utilities
       if (budgetInfo.allocatedBudget > 0) {
         setBudgetAmount(budgetInfo.allocatedBudget.toString())
+        originalData.budgetAmount = budgetInfo.allocatedBudget.toString()
         setIsBudgetAmountLocked(true) // Lock individual field
         console.log('💰 Auto-populated budget amount:', budgetInfo.allocatedBudget)
       }
@@ -157,6 +171,7 @@ export function useLinkedInAutoPopulate({
         const parsedStartDate = parseDateFromForm(startDateFromForm)
         if (parsedStartDate) {
           setStartDate(parsedStartDate)
+          originalData.startDate = parsedStartDate
           setIsStartDateLocked(true) // Lock individual field
         }
       }
@@ -173,9 +188,13 @@ export function useLinkedInAutoPopulate({
         const parsedEndDate = parseDateFromForm(endDateFromForm)
         if (parsedEndDate) {
           setEndDate(parsedEndDate)
+          originalData.endDate = parsedEndDate
           setIsEndDateLocked(true) // Lock individual field
         }
       }
+
+      // Store original form data for blur confirmation
+      setOriginalFormData(originalData)
 
       // Budget validation and feedback
       if (budgetInfo.totalBudget > 0) {
@@ -248,6 +267,7 @@ export function useLinkedInAutoPopulate({
     setIsBudgetAmountLocked,
     setIsStartDateLocked,
     setIsEndDateLocked,
+    setOriginalFormData,
     campaignType
   ])
 

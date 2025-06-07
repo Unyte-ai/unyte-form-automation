@@ -13,6 +13,11 @@ interface LinkedInCampaignScheduleSectionProps {
   isEndDateLocked: boolean
   toggleStartDateLock: () => void
   toggleEndDateLock: () => void
+  // Focus/blur handlers
+  onStartDateFocus: () => void
+  onStartDateBlur: () => void
+  onEndDateFocus: () => void
+  onEndDateBlur: () => void
   isCreating: boolean
 }
 
@@ -25,6 +30,10 @@ export function LinkedInCampaignScheduleSection({
   isEndDateLocked,
   toggleStartDateLock,
   toggleEndDateLock,
+  onStartDateFocus,
+  onStartDateBlur,
+  onEndDateFocus,
+  onEndDateBlur,
   isCreating
 }: LinkedInCampaignScheduleSectionProps) {
   return (
@@ -65,6 +74,8 @@ export function LinkedInCampaignScheduleSection({
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            onFocus={onStartDateFocus}
+            onBlur={onStartDateBlur}
             min={new Date().toISOString().split('T')[0]} // Can't start in the past
             disabled={isCreating || isStartDateLocked}
             className={isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
@@ -105,6 +116,8 @@ export function LinkedInCampaignScheduleSection({
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
+            onFocus={onEndDateFocus}
+            onBlur={onEndDateBlur}
             min={startDate} // End date must be after start date
             disabled={isCreating || isEndDateLocked}
             className={isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}

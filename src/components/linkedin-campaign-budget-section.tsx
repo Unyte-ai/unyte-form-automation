@@ -16,6 +16,11 @@ interface LinkedInCampaignBudgetSectionProps {
   isBudgetAmountLocked: boolean
   toggleBudgetTypeLock: () => void
   toggleBudgetAmountLock: () => void
+  // Focus/blur handlers
+  onBudgetTypeFocus: () => void
+  onBudgetTypeBlur: () => void
+  onBudgetAmountFocus: () => void
+  onBudgetAmountBlur: () => void
   isCreating: boolean
 }
 
@@ -30,6 +35,10 @@ export function LinkedInCampaignBudgetSection({
   isBudgetAmountLocked,
   toggleBudgetTypeLock,
   toggleBudgetAmountLock,
+  onBudgetTypeFocus,
+  onBudgetTypeBlur,
+  onBudgetAmountFocus,
+  onBudgetAmountBlur,
   isCreating
 }: LinkedInCampaignBudgetSectionProps) {
   return (
@@ -72,6 +81,8 @@ export function LinkedInCampaignBudgetSection({
           <SelectTrigger 
             id="budget-type"
             className={isBudgetTypeLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            onFocus={onBudgetTypeFocus}
+            onBlur={onBudgetTypeBlur}
           >
             <SelectValue />
           </SelectTrigger>
@@ -128,6 +139,8 @@ export function LinkedInCampaignBudgetSection({
             min="0"
             value={budgetAmount}
             onChange={(e) => setBudgetAmount(e.target.value)}
+            onFocus={onBudgetAmountFocus}
+            onBlur={onBudgetAmountBlur}
             placeholder="0.00"
             disabled={isCreating || isBudgetAmountLocked}
             className={isBudgetAmountLocked ? 'opacity-50 cursor-not-allowed' : ''}
