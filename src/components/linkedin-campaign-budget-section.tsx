@@ -1,8 +1,14 @@
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Pencil, Lock } from 'lucide-react'
+import { LinkedInCampaignLockableField } from './linkedin-campaign-lockable-field'
+
+interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
 
 interface LinkedInCampaignBudgetSectionProps {
   budgetType: 'daily' | 'total'
@@ -21,6 +27,7 @@ interface LinkedInCampaignBudgetSectionProps {
   onBudgetTypeBlur: () => void
   onBudgetAmountFocus: () => void
   onBudgetAmountBlur: () => void
+  originalFormData?: OriginalFormData
   isCreating: boolean
 }
 
@@ -39,40 +46,45 @@ export function LinkedInCampaignBudgetSection({
   onBudgetTypeBlur,
   onBudgetAmountFocus,
   onBudgetAmountBlur,
+  originalFormData,
   isCreating
 }: LinkedInCampaignBudgetSectionProps) {
+  
+  // Individual warnings for each field
+  const budgetTypeWarning = !isBudgetTypeLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ Budget type field is unlocked for manual editing
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Budget type can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
+  const budgetAmountWarning = !isBudgetAmountLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ Budget amount field is unlocked for manual editing
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Budget amount can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
   return (
     <>
       {/* Budget Type Selection */}
-      <div className="grid gap-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="budget-type">Budget Type *</Label>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={toggleBudgetTypeLock}
-            disabled={isCreating}
-            className="h-6 w-6 p-0"
-          >
-            {isBudgetTypeLocked ? (
-              <Lock className="h-3 w-3" />
-            ) : (
-              <Pencil className="h-3 w-3" />
-            )}
-          </Button>
-        </div>
-        {/* Individual warning for budget type - positioned between label and field */}
-        {!isBudgetTypeLocked && (
-          <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-            <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-              ⚠️ Budget type field is unlocked for manual editing
-            </p>
-            <div className="text-amber-800 dark:text-amber-300 text-xs">
-              <p>Budget type can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
-            </div>
-          </div>
-        )}
+      <LinkedInCampaignLockableField
+        label="Budget Type *"
+        isLocked={isBudgetTypeLocked}
+        onToggleLock={toggleBudgetTypeLock}
+        disabled={isCreating}
+        originalValue={originalFormData?.budgetType}
+        fieldType="budget-type"
+        warning={budgetTypeWarning}
+      >
         <Select 
           value={budgetType} 
           onValueChange={(value) => setBudgetType(value as 'daily' | 'total')}
@@ -97,41 +109,19 @@ export function LinkedInCampaignBudgetSection({
             : "Total amount to spend over the campaign lifetime"
           }
         </p>
-      </div>
+      </LinkedInCampaignLockableField>
 
       {/* Budget Amount and Currency */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="budget-amount">
-              {budgetType === 'daily' ? 'Daily Budget *' : 'Total Budget *'}
-            </Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleBudgetAmountLock}
-              disabled={isCreating}
-              className="h-6 w-6 p-0"
-            >
-              {isBudgetAmountLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Pencil className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
-          {/* Individual warning for budget amount - positioned between label and field */}
-          {!isBudgetAmountLocked && (
-            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-                ⚠️ Budget amount field is unlocked for manual editing
-              </p>
-              <div className="text-amber-800 dark:text-amber-300 text-xs">
-                <p>Budget amount can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
-              </div>
-            </div>
-          )}
+        <LinkedInCampaignLockableField
+          label={budgetType === 'daily' ? 'Daily Budget *' : 'Total Budget *'}
+          isLocked={isBudgetAmountLocked}
+          onToggleLock={toggleBudgetAmountLock}
+          disabled={isCreating}
+          originalValue={originalFormData?.budgetAmount}
+          fieldType="budget-amount"
+          warning={budgetAmountWarning}
+        >
           <Input
             id="budget-amount"
             type="number"
@@ -146,7 +136,8 @@ export function LinkedInCampaignBudgetSection({
             className={isBudgetAmountLocked ? 'opacity-50 cursor-not-allowed' : ''}
             required
           />
-        </div>
+        </LinkedInCampaignLockableField>
+        
         <div className="grid gap-2">
           <Label htmlFor="currency">Currency</Label>
           <Select 

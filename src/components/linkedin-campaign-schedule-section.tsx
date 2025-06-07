@@ -1,7 +1,12 @@
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Pencil, Lock } from 'lucide-react'
+import { LinkedInCampaignLockableField } from './linkedin-campaign-lockable-field'
+
+interface OriginalFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
 
 interface LinkedInCampaignScheduleSectionProps {
   startDate: string
@@ -18,6 +23,7 @@ interface LinkedInCampaignScheduleSectionProps {
   onStartDateBlur: () => void
   onEndDateFocus: () => void
   onEndDateBlur: () => void
+  originalFormData?: OriginalFormData
   isCreating: boolean
 }
 
@@ -34,41 +40,46 @@ export function LinkedInCampaignScheduleSection({
   onStartDateBlur,
   onEndDateFocus,
   onEndDateBlur,
+  originalFormData,
   isCreating
 }: LinkedInCampaignScheduleSectionProps) {
+  
+  // Individual warnings for each field
+  const startDateWarning = !isStartDateLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ Start date field is unlocked
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
+  const endDateWarning = !isEndDateLocked ? (
+    <>
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+        ⚠️ End date field is unlocked
+      </p>
+      <div className="text-amber-800 dark:text-amber-300 text-xs">
+        <p>Click the lock icon to secure this field and prevent accidental changes.</p>
+      </div>
+    </>
+  ) : null
+
   return (
     <>
       {/* Campaign Schedule */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="start-date">Start Date *</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleStartDateLock}
-              disabled={isCreating}
-              className="h-6 w-6 p-0"
-            >
-              {isStartDateLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Pencil className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
-          {/* Individual warning for start date - positioned between label and field */}
-          {!isStartDateLocked && (
-            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-                ⚠️ Start date field is unlocked
-              </p>
-              <div className="text-amber-800 dark:text-amber-300 text-xs">
-                <p>Click the lock icon to secure this field and prevent accidental changes.</p>
-              </div>
-            </div>
-          )}
+        <LinkedInCampaignLockableField
+          label="Start Date *"
+          isLocked={isStartDateLocked}
+          onToggleLock={toggleStartDateLock}
+          disabled={isCreating}
+          originalValue={originalFormData?.startDate}
+          fieldType="date"
+          warning={startDateWarning}
+        >
           <Input
             id="start-date"
             type="date"
@@ -81,36 +92,20 @@ export function LinkedInCampaignScheduleSection({
             className={isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
             required
           />
-        </div>
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="end-date">End Date</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleEndDateLock}
-              disabled={isCreating}
-              className="h-6 w-6 p-0"
-            >
-              {isEndDateLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Pencil className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
-          {/* Individual warning for end date - positioned between label and field */}
-          {!isEndDateLocked && (
-            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-                ⚠️ End date field is unlocked
-              </p>
-              <div className="text-amber-800 dark:text-amber-300 text-xs">
-                <p>Click the lock icon to secure this field and prevent accidental changes.</p>
-              </div>
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Campaign start date (must be future)
+          </p>
+        </LinkedInCampaignLockableField>
+
+        <LinkedInCampaignLockableField
+          label="End Date"
+          isLocked={isEndDateLocked}
+          onToggleLock={toggleEndDateLock}
+          disabled={isCreating}
+          originalValue={originalFormData?.endDate}
+          fieldType="date"
+          warning={endDateWarning}
+        >
           <Input
             id="end-date"
             type="date"
@@ -122,7 +117,10 @@ export function LinkedInCampaignScheduleSection({
             disabled={isCreating || isEndDateLocked}
             className={isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
           />
-        </div>
+          <p className="text-xs text-muted-foreground">
+            Campaign end date (optional)
+          </p>
+        </LinkedInCampaignLockableField>
       </div>
     </>
   )

@@ -274,6 +274,7 @@ export function LinkedInCreateAdCampaign({
             onBudgetTypeBlur={handleBudgetTypeBlur}
             onBudgetAmountFocus={handleBudgetAmountFocus}
             onBudgetAmountBlur={handleBudgetAmountBlur}
+            originalFormData={originalFormData}
             isCreating={isCreating}
           />
 
@@ -299,6 +300,7 @@ export function LinkedInCreateAdCampaign({
             onStartDateBlur={handleStartDateBlur}
             onEndDateFocus={handleEndDateFocus}
             onEndDateBlur={handleEndDateBlur}
+            originalFormData={originalFormData}
             isCreating={isCreating}
           />
 
