@@ -11,8 +11,11 @@ interface LinkedInCampaignBudgetSectionProps {
   setBudgetAmount: (amount: string) => void
   currency: string
   setCurrency: (currency: string) => void
-  isBudgetLocked: boolean
-  toggleBudgetLock: () => void
+  // Individual lock states
+  isBudgetTypeLocked: boolean
+  isBudgetAmountLocked: boolean
+  toggleBudgetTypeLock: () => void
+  toggleBudgetAmountLock: () => void
   isCreating: boolean
 }
 
@@ -23,8 +26,10 @@ export function LinkedInCampaignBudgetSection({
   setBudgetAmount,
   currency,
   setCurrency,
-  isBudgetLocked,
-  toggleBudgetLock,
+  isBudgetTypeLocked,
+  isBudgetAmountLocked,
+  toggleBudgetTypeLock,
+  toggleBudgetAmountLock,
   isCreating
 }: LinkedInCampaignBudgetSectionProps) {
   return (
@@ -37,25 +42,36 @@ export function LinkedInCampaignBudgetSection({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={toggleBudgetLock}
+            onClick={toggleBudgetTypeLock}
             disabled={isCreating}
             className="h-6 w-6 p-0"
           >
-            {isBudgetLocked ? (
+            {isBudgetTypeLocked ? (
               <Lock className="h-3 w-3" />
             ) : (
               <Pencil className="h-3 w-3" />
             )}
           </Button>
         </div>
+        {/* Individual warning for budget type - positioned between label and field */}
+        {!isBudgetTypeLocked && (
+          <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+            <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+              ⚠️ Budget type field is unlocked for manual editing
+            </p>
+            <div className="text-amber-800 dark:text-amber-300 text-xs">
+              <p>Budget type can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+            </div>
+          </div>
+        )}
         <Select 
           value={budgetType} 
           onValueChange={(value) => setBudgetType(value as 'daily' | 'total')}
-          disabled={isCreating || isBudgetLocked}
+          disabled={isCreating || isBudgetTypeLocked}
         >
           <SelectTrigger 
             id="budget-type"
-            className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            className={isBudgetTypeLocked ? 'opacity-50 cursor-not-allowed' : ''}
           >
             <SelectValue />
           </SelectTrigger>
@@ -83,17 +99,28 @@ export function LinkedInCampaignBudgetSection({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleBudgetLock}
+              onClick={toggleBudgetAmountLock}
               disabled={isCreating}
               className="h-6 w-6 p-0"
             >
-              {isBudgetLocked ? (
+              {isBudgetAmountLocked ? (
                 <Lock className="h-3 w-3" />
               ) : (
                 <Pencil className="h-3 w-3" />
               )}
             </Button>
           </div>
+          {/* Individual warning for budget amount - positioned between label and field */}
+          {!isBudgetAmountLocked && (
+            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                ⚠️ Budget amount field is unlocked for manual editing
+              </p>
+              <div className="text-amber-800 dark:text-amber-300 text-xs">
+                <p>Budget amount can be manually adjusted. Click the lock icon to secure this field and prevent accidental changes.</p>
+              </div>
+            </div>
+          )}
           <Input
             id="budget-amount"
             type="number"
@@ -102,38 +129,19 @@ export function LinkedInCampaignBudgetSection({
             value={budgetAmount}
             onChange={(e) => setBudgetAmount(e.target.value)}
             placeholder="0.00"
-            disabled={isCreating || isBudgetLocked}
-            className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            disabled={isCreating || isBudgetAmountLocked}
+            className={isBudgetAmountLocked ? 'opacity-50 cursor-not-allowed' : ''}
             required
           />
         </div>
         <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="currency">Currency</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleBudgetLock}
-              disabled={isCreating}
-              className="h-6 w-6 p-0"
-            >
-              {isBudgetLocked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Pencil className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
+          <Label htmlFor="currency">Currency</Label>
           <Select 
             value={currency} 
             onValueChange={setCurrency}
-            disabled={isCreating || isBudgetLocked}
+            disabled={isCreating}
           >
-            <SelectTrigger 
-              id="currency"
-              className={isBudgetLocked ? 'opacity-50 cursor-not-allowed' : ''}
-            >
+            <SelectTrigger id="currency">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -145,18 +153,6 @@ export function LinkedInCampaignBudgetSection({
           </Select>
         </div>
       </div>
-
-      {/* Budget Warning when unlocked */}
-      {!isBudgetLocked && (
-        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-            ⚠️ Budget fields are unlocked for manual editing
-          </p>
-          <div className="text-amber-800 dark:text-amber-300 text-xs">
-            <p>Budget values can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
-          </div>
-        </div>
-      )}
     </>
   )
 }

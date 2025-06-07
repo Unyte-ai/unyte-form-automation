@@ -34,8 +34,11 @@ interface UseLinkedInAutoPopulateProps {
   setLanguage: (language: string) => void
   setStartDate: (date: string) => void
   setEndDate: (date: string) => void
-  setIsBudgetLocked: (locked: boolean) => void
-  setIsDateLocked: (locked: boolean) => void
+  // Individual lock setters
+  setIsBudgetTypeLocked: (locked: boolean) => void
+  setIsBudgetAmountLocked: (locked: boolean) => void
+  setIsStartDateLocked: (locked: boolean) => void
+  setIsEndDateLocked: (locked: boolean) => void
   campaignType: 'SPONSORED_UPDATES' | 'TEXT_AD' | 'SPONSORED_INMAILS' | 'DYNAMIC'
 }
 
@@ -50,8 +53,10 @@ export function useLinkedInAutoPopulate({
   setLanguage,
   setStartDate,
   setEndDate,
-  setIsBudgetLocked,
-  setIsDateLocked,
+  setIsBudgetTypeLocked,
+  setIsBudgetAmountLocked,
+  setIsStartDateLocked,
+  setIsEndDateLocked,
   campaignType
 }: UseLinkedInAutoPopulateProps) {
   
@@ -97,12 +102,14 @@ export function useLinkedInAutoPopulate({
       // Budget Type - Use the budget utilities detection
       if (budgetInfo.totalBudget > 0) {
         setBudgetType(budgetInfo.budgetType)
+        setIsBudgetTypeLocked(true) // Lock individual field
         console.log('📊 Auto-populated budget type:', budgetInfo.budgetType)
       }
 
       // Budget Amount - Use the allocated budget from utilities
       if (budgetInfo.allocatedBudget > 0) {
         setBudgetAmount(budgetInfo.allocatedBudget.toString())
+        setIsBudgetAmountLocked(true) // Lock individual field
         console.log('💰 Auto-populated budget amount:', budgetInfo.allocatedBudget)
       }
 
@@ -150,6 +157,7 @@ export function useLinkedInAutoPopulate({
         const parsedStartDate = parseDateFromForm(startDateFromForm)
         if (parsedStartDate) {
           setStartDate(parsedStartDate)
+          setIsStartDateLocked(true) // Lock individual field
         }
       }
 
@@ -165,6 +173,7 @@ export function useLinkedInAutoPopulate({
         const parsedEndDate = parseDateFromForm(endDateFromForm)
         if (parsedEndDate) {
           setEndDate(parsedEndDate)
+          setIsEndDateLocked(true) // Lock individual field
         }
       }
 
@@ -208,17 +217,6 @@ export function useLinkedInAutoPopulate({
       if (startDateFromForm && parseDateFromForm(startDateFromForm)) populatedFields.push('Start Date')
       if (endDateFromForm && parseDateFromForm(endDateFromForm)) populatedFields.push('End Date')
 
-      // Lock budget fields after auto-populate if budget data was populated
-      if (budgetInfo.budgetType || budgetInfo.allocatedBudget > 0 || budgetInfo.totalBudget > 0) {
-        setIsBudgetLocked(true)
-      }
-
-      // Lock date fields after auto-populate if dates were found
-      if ((startDateFromForm && parseDateFromForm(startDateFromForm)) || 
-      (endDateFromForm && parseDateFromForm(endDateFromForm))) {
-      setIsDateLocked(true)
-      }
-
       if (populatedFields.length > 0) {
         toast.success('Auto-populated successfully!', {
           description: `Filled: ${populatedFields.join(', ')}`
@@ -246,8 +244,10 @@ export function useLinkedInAutoPopulate({
     setLanguage,
     setStartDate,
     setEndDate,
-    setIsBudgetLocked,
-    setIsDateLocked,
+    setIsBudgetTypeLocked,
+    setIsBudgetAmountLocked,
+    setIsStartDateLocked,
+    setIsEndDateLocked,
     campaignType
   ])
 

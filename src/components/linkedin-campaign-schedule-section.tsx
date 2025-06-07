@@ -8,8 +8,11 @@ interface LinkedInCampaignScheduleSectionProps {
   setStartDate: (date: string) => void
   endDate: string
   setEndDate: (date: string) => void
-  isDateLocked: boolean
-  toggleDateLock: () => void
+  // Individual lock states
+  isStartDateLocked: boolean
+  isEndDateLocked: boolean
+  toggleStartDateLock: () => void
+  toggleEndDateLock: () => void
   isCreating: boolean
 }
 
@@ -18,8 +21,10 @@ export function LinkedInCampaignScheduleSection({
   setStartDate,
   endDate,
   setEndDate,
-  isDateLocked,
-  toggleDateLock,
+  isStartDateLocked,
+  isEndDateLocked,
+  toggleStartDateLock,
+  toggleEndDateLock,
   isCreating
 }: LinkedInCampaignScheduleSectionProps) {
   return (
@@ -33,25 +38,36 @@ export function LinkedInCampaignScheduleSection({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleDateLock}
+              onClick={toggleStartDateLock}
               disabled={isCreating}
               className="h-6 w-6 p-0"
             >
-              {isDateLocked ? (
+              {isStartDateLocked ? (
                 <Lock className="h-3 w-3" />
               ) : (
                 <Pencil className="h-3 w-3" />
               )}
             </Button>
           </div>
+          {/* Individual warning for start date - positioned between label and field */}
+          {!isStartDateLocked && (
+            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                ⚠️ Start date field is unlocked
+              </p>
+              <div className="text-amber-800 dark:text-amber-300 text-xs">
+                <p>Click the lock icon to secure this field and prevent accidental changes.</p>
+              </div>
+            </div>
+          )}
           <Input
             id="start-date"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             min={new Date().toISOString().split('T')[0]} // Can't start in the past
-            disabled={isCreating || isDateLocked}
-            className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            disabled={isCreating || isStartDateLocked}
+            className={isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
             required
           />
         </div>
@@ -62,40 +78,39 @@ export function LinkedInCampaignScheduleSection({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleDateLock}
+              onClick={toggleEndDateLock}
               disabled={isCreating}
               className="h-6 w-6 p-0"
             >
-              {isDateLocked ? (
+              {isEndDateLocked ? (
                 <Lock className="h-3 w-3" />
               ) : (
                 <Pencil className="h-3 w-3" />
               )}
             </Button>
           </div>
+          {/* Individual warning for end date - positioned between label and field */}
+          {!isEndDateLocked && (
+            <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
+                ⚠️ End date field is unlocked
+              </p>
+              <div className="text-amber-800 dark:text-amber-300 text-xs">
+                <p>Click the lock icon to secure this field and prevent accidental changes.</p>
+              </div>
+            </div>
+          )}
           <Input
             id="end-date"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             min={startDate} // End date must be after start date
-            disabled={isCreating || isDateLocked}
-            className={isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
+            disabled={isCreating || isEndDateLocked}
+            className={isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}
           />
         </div>
       </div>
-
-      {/* Date Warning when unlocked */}
-      {!isDateLocked && (
-        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-            ⚠️ Date fields are unlocked for manual editing
-          </p>
-          <div className="text-amber-800 dark:text-amber-300 text-xs">
-            <p>Campaign start and end dates can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
-          </div>
-        </div>
-      )}
     </>
   )
 }

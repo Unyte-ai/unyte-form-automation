@@ -62,15 +62,21 @@ export function LinkedInCreateAdCampaign({
     endDate,
     setEndDate,
     
-    // Lock states
-    isBudgetLocked,
-    setIsBudgetLocked,
-    isDateLocked,
-    setIsDateLocked,
+    // Individual lock states
+    isBudgetTypeLocked,
+    setIsBudgetTypeLocked,
+    isBudgetAmountLocked,
+    setIsBudgetAmountLocked,
+    isStartDateLocked,
+    setIsStartDateLocked,
+    isEndDateLocked,
+    setIsEndDateLocked,
     
-    // Functions
-    toggleBudgetLock,
-    toggleDateLock,
+    // Individual toggle functions
+    toggleBudgetTypeLock,
+    toggleBudgetAmountLock,
+    toggleStartDateLock,
+    toggleEndDateLock,
     resetForm
   } = useLinkedInCampaignForm()
 
@@ -86,8 +92,10 @@ export function LinkedInCreateAdCampaign({
     setLanguage,
     setStartDate,
     setEndDate,
-    setIsBudgetLocked,
-    setIsDateLocked,
+    setIsBudgetTypeLocked,
+    setIsBudgetAmountLocked,
+    setIsStartDateLocked,
+    setIsEndDateLocked,
     campaignType
   })
 
@@ -163,8 +171,10 @@ export function LinkedInCreateAdCampaign({
             setBudgetAmount={setBudgetAmount}
             currency={currency}
             setCurrency={setCurrency}
-            isBudgetLocked={isBudgetLocked}
-            toggleBudgetLock={toggleBudgetLock}
+            isBudgetTypeLocked={isBudgetTypeLocked}
+            isBudgetAmountLocked={isBudgetAmountLocked}
+            toggleBudgetTypeLock={toggleBudgetTypeLock}
+            toggleBudgetAmountLock={toggleBudgetAmountLock}
             isCreating={isCreating}
           />
 
@@ -182,8 +192,10 @@ export function LinkedInCreateAdCampaign({
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
-            isDateLocked={isDateLocked}
-            toggleDateLock={toggleDateLock}
+            isStartDateLocked={isStartDateLocked}
+            isEndDateLocked={isEndDateLocked}
+            toggleStartDateLock={toggleStartDateLock}
+            toggleEndDateLock={toggleEndDateLock}
             isCreating={isCreating}
           />
 

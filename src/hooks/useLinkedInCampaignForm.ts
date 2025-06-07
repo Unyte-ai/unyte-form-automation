@@ -10,11 +10,11 @@ export function useLinkedInCampaignForm() {
   const [country, setCountry] = useState('US')
   const [language, setLanguage] = useState('en')
 
-  // Budget lock state
-  const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
-
-  // Date lock state
-  const [isDateLocked, setIsDateLocked] = useState(false) // Dates start unlocked
+  // Individual lock states (changed from group locking)
+  const [isBudgetTypeLocked, setIsBudgetTypeLocked] = useState(false)
+  const [isBudgetAmountLocked, setIsBudgetAmountLocked] = useState(false)
+  const [isStartDateLocked, setIsStartDateLocked] = useState(false)
+  const [isEndDateLocked, setIsEndDateLocked] = useState(false)
   
   // Date state
   const [startDate, setStartDate] = useState(() => {
@@ -25,22 +25,32 @@ export function useLinkedInCampaignForm() {
   })
   const [endDate, setEndDate] = useState('')
 
-  // Toggle budget lock function
-  const toggleBudgetLock = () => {
-    setIsBudgetLocked(!isBudgetLocked)
+  // Individual toggle functions (changed from group toggles)
+  const toggleBudgetTypeLock = () => {
+    setIsBudgetTypeLocked(!isBudgetTypeLocked)
   }
 
-  // Toggle date lock function
-  const toggleDateLock = () => {
-    setIsDateLocked(!isDateLocked)
+  const toggleBudgetAmountLock = () => {
+    setIsBudgetAmountLocked(!isBudgetAmountLocked)
+  }
+
+  const toggleStartDateLock = () => {
+    setIsStartDateLocked(!isStartDateLocked)
+  }
+
+  const toggleEndDateLock = () => {
+    setIsEndDateLocked(!isEndDateLocked)
   }
 
   // Reset form function
   const resetForm = () => {
     setName('')
     setBudgetAmount('')
-    setIsBudgetLocked(false) // Reset budget lock state
-    setIsDateLocked(false) // Reset date lock state
+    // Reset individual lock states
+    setIsBudgetTypeLocked(false)
+    setIsBudgetAmountLocked(false)
+    setIsStartDateLocked(false)
+    setIsEndDateLocked(false)
     // Reset dates
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
@@ -69,15 +79,21 @@ export function useLinkedInCampaignForm() {
     endDate,
     setEndDate,
     
-    // Lock states
-    isBudgetLocked,
-    setIsBudgetLocked,
-    isDateLocked,
-    setIsDateLocked,
+    // Individual lock states
+    isBudgetTypeLocked,
+    setIsBudgetTypeLocked,
+    isBudgetAmountLocked,
+    setIsBudgetAmountLocked,
+    isStartDateLocked,
+    setIsStartDateLocked,
+    isEndDateLocked,
+    setIsEndDateLocked,
     
-    // Functions
-    toggleBudgetLock,
-    toggleDateLock,
+    // Individual toggle functions
+    toggleBudgetTypeLock,
+    toggleBudgetAmountLock,
+    toggleStartDateLock,
+    toggleEndDateLock,
     resetForm
   }
 }
