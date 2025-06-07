@@ -94,7 +94,12 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
               LinkedIn
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
-              TikTok
+              <div className="flex items-center justify-between w-full">
+                TikTok
+                <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full ml-2 dark:bg-amber-900/30 dark:text-amber-400">
+                  Soon
+                </span>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
