@@ -1,14 +1,20 @@
 import * as React from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Pencil, Lock } from 'lucide-react'
 import { MetaAdSetTargeting } from '@/components/meta-adset-targeting'
+import { MetaCampaignLockableField } from '@/components/meta-campaign-lockable-field'
 import { 
   FacebookAdSetData,
   FacebookCampaignObjective,
   DEFAULT_ADSET_VALUES
 } from '@/lib/facebook-campaign-utils'
+
+interface OriginalMetaFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
 
 interface MetaAdSetFieldsProps {
   value: Partial<Omit<FacebookAdSetData, 'campaign_id'>>
@@ -23,6 +29,16 @@ interface MetaAdSetFieldsProps {
   // Individual lock toggle handlers (following Google pattern)
   onToggleStartDateLock?: () => void
   onToggleEndDateLock?: () => void
+  
+  // Focus/blur handlers for blur confirmation
+  onStartDateFocus?: () => void
+  onStartDateBlur?: () => void
+  onEndDateFocus?: () => void
+  onEndDateBlur?: () => void
+  
+  // Original form data for display
+  originalFormData?: OriginalMetaFormData
+  disabled?: boolean
 }
 
 export function MetaAdSetFields({ 
@@ -35,7 +51,17 @@ export function MetaAdSetFields({
   isStartDateLocked = false,
   isEndDateLocked = false,
   onToggleStartDateLock,
-  onToggleEndDateLock
+  onToggleEndDateLock,
+  
+  // Focus/blur handlers for blur confirmation
+  onStartDateFocus,
+  onStartDateBlur,
+  onEndDateFocus,
+  onEndDateBlur,
+  
+  // Original form data for display
+  originalFormData,
+  disabled = false
 }: MetaAdSetFieldsProps) {
   // Handle form field changes  
   const handleFieldChange = (field: keyof Omit<FacebookAdSetData, 'campaign_id'>, fieldValue: Omit<FacebookAdSetData, 'campaign_id'>[keyof Omit<FacebookAdSetData, 'campaign_id'>]) => {
@@ -53,22 +79,23 @@ export function MetaAdSetFields({
     })
   }
 
-  // Get formatted date for input (YYYY-MM-DD)
+  // Get formatted date for input (YYYY-MM-DD) - avoid timezone issues
   const formatDateForInput = (isoString?: string): string => {
     if (!isoString) return ''
-    return new Date(isoString).toISOString().split('T')[0]
+    // Extract just the date part from ISO string to avoid timezone conversion
+    return isoString.split('T')[0]
   }
 
-  // Handle date change
+  // Handle date change - avoid timezone issues by parsing in UTC
   const handleDateChange = (field: 'start_time' | 'end_time', dateString: string) => {
     if (!dateString) {
       handleFieldChange(field, '')
       return
     }
     
-    // Convert to ISO string for storage
-    const date = new Date(dateString)
-    date.setHours(0, 0, 0, 0) // Set to start of day
+    // Parse date in UTC to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10))
+    const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
     handleFieldChange(field, date.toISOString())
   }
 
@@ -77,29 +104,6 @@ export function MetaAdSetFields({
   
   // Show lead generation fields when campaign objective is LEAD_GENERATION
   const showLeadGenerationFields = campaignObjective === 'LEAD_GENERATION'
-
-  // Individual warnings (following Google pattern - positioned between title and field)
-  const startDateWarning = !isStartDateLocked && onToggleStartDateLock ? (
-    <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
-        ⚠️ Start date field is unlocked
-      </p>
-      <p className="text-amber-800 dark:text-amber-300 text-xs">
-        Click the lock icon to secure this field and prevent accidental changes.
-      </p>
-    </div>
-  ) : null
-
-  const endDateWarning = !isEndDateLocked && onToggleEndDateLock ? (
-    <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
-        ⚠️ End date field is unlocked
-      </p>
-      <p className="text-amber-800 dark:text-amber-300 text-xs">
-        Click the lock icon to secure this field and prevent accidental changes.
-      </p>
-    </div>
-  ) : null
 
   return (
     <div className="space-y-4">
@@ -111,6 +115,7 @@ export function MetaAdSetFields({
           value={value.name || ''}
           onChange={(e) => handleFieldChange('name', e.target.value)}
           placeholder="Enter ad set name"
+          disabled={disabled}
           className={errors?.name ? 'border-destructive' : ''}
         />
         {errors?.name && (
@@ -141,6 +146,7 @@ export function MetaAdSetFields({
               value={value.application_id || ''}
               onChange={(e) => handleFieldChange('application_id', e.target.value)}
               placeholder="Enter your app's Facebook application ID"
+              disabled={disabled}
               className={errors?.application_id ? 'border-destructive' : ''}
             />
             {errors?.application_id && (
@@ -160,6 +166,7 @@ export function MetaAdSetFields({
               value={value.object_store_url || ''}
               onChange={(e) => handleFieldChange('object_store_url', e.target.value)}
               placeholder="https://apps.apple.com/... or https://play.google.com/..."
+              disabled={disabled}
               className={errors?.object_store_url ? 'border-destructive' : ''}
             />
             {errors?.object_store_url && (
@@ -187,6 +194,7 @@ export function MetaAdSetFields({
               value={value.page_id || ''}
               onChange={(e) => handleFieldChange('page_id', e.target.value)}
               placeholder="Enter your Facebook Page ID"
+              disabled={disabled}
               className={errors?.page_id ? 'border-destructive' : ''}
             />
             {errors?.page_id && (
@@ -224,74 +232,73 @@ export function MetaAdSetFields({
 
       {/* Schedule (following Google pattern with individual locks and warnings) */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="start-date">Start Date *</Label>
-            {onToggleStartDateLock && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onToggleStartDateLock}
-                className="h-6 w-6 p-0"
-              >
-                {isStartDateLocked ? (
-                  <Lock className="h-3 w-3" />
-                ) : (
-                  <Pencil className="h-3 w-3" />
-                )}
-              </Button>
-            )}
-          </div>
-          {/* Warning positioned between title and field (following Google pattern) */}
-          {startDateWarning}
+        <MetaCampaignLockableField
+          label="Start Date *"
+          isLocked={isStartDateLocked}
+          onToggleLock={onToggleStartDateLock || (() => {})}
+          disabled={disabled}
+          originalValue={originalFormData?.startDate}
+          fieldType="date"
+          warning={!isStartDateLocked && onToggleStartDateLock ? (
+            <>
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+                ⚠️ Start date field is unlocked
+              </p>
+              <p className="text-amber-800 dark:text-amber-300 text-xs">
+                Click the lock icon to secure this field and prevent accidental changes.
+              </p>
+            </>
+          ) : undefined}
+        >
           <Input
             id="start-date"
             type="date"
             value={formatDateForInput(value.start_time)}
             onChange={(e) => handleDateChange('start_time', e.target.value)}
+            onFocus={onStartDateFocus}
+            onBlur={onStartDateBlur}
             min={new Date().toISOString().split('T')[0]} // Can't start in the past
-            disabled={isStartDateLocked}
+            disabled={disabled || isStartDateLocked}
             className={`${errors?.start_time ? 'border-destructive' : ''} ${isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors?.start_time && (
             <p className="text-xs text-destructive">{errors.start_time}</p>
           )}
-        </div>
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="end-date">End Date *</Label>
-            {onToggleEndDateLock && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onToggleEndDateLock}
-                className="h-6 w-6 p-0"
-              >
-                {isEndDateLocked ? (
-                  <Lock className="h-3 w-3" />
-                ) : (
-                  <Pencil className="h-3 w-3" />
-                )}
-              </Button>
-            )}
-          </div>
-          {/* Warning positioned between title and field (following Google pattern) */}
-          {endDateWarning}
+        </MetaCampaignLockableField>
+
+        <MetaCampaignLockableField
+          label="End Date *"
+          isLocked={isEndDateLocked}
+          onToggleLock={onToggleEndDateLock || (() => {})}
+          disabled={disabled}
+          originalValue={originalFormData?.endDate}
+          fieldType="date"
+          warning={!isEndDateLocked && onToggleEndDateLock ? (
+            <>
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+                ⚠️ End date field is unlocked
+              </p>
+              <p className="text-amber-800 dark:text-amber-300 text-xs">
+                Click the lock icon to secure this field and prevent accidental changes.
+              </p>
+            </>
+          ) : undefined}
+        >
           <Input
             id="end-date"
             type="date"
             value={formatDateForInput(value.end_time)}
             onChange={(e) => handleDateChange('end_time', e.target.value)}
+            onFocus={onEndDateFocus}
+            onBlur={onEndDateBlur}
             min={formatDateForInput(value.start_time) || new Date().toISOString().split('T')[0]}
-            disabled={isEndDateLocked}
+            disabled={disabled || isEndDateLocked}
             className={`${errors?.end_time ? 'border-destructive' : ''} ${isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors?.end_time && (
             <p className="text-xs text-destructive">{errors.end_time}</p>
           )}
-        </div>
+        </MetaCampaignLockableField>
       </div>
     </div>
   )

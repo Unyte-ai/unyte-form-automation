@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MetaCampaignFields } from '@/components/meta-campaign-fields'
 import { MetaAdSetFields } from '@/components/meta-adset-fields'
+import { MetaCampaignBlurConfirmationDialog } from '@/components/meta-campaign-blur-confirmation-dialog'
 import { useMetaCampaignForm } from '@/hooks/use-meta-campaign-form'
+import { useMetaCampaignBlurConfirmation } from '@/hooks/use-meta-campaign-blur-confirmation'
 import { createFacebookCampaignAndAdSet } from '@/app/actions/facebook-batch-campaign-adset'
 import { 
   FacebookCampaignData,
@@ -15,7 +17,8 @@ import {
   FacebookBatchCampaignAdSetData,
   getBillingEventForUIObjective,
   getOptimizationGoalForUIObjective,
-  getBudgetLabel
+  getBudgetLabel,
+  formatBudgetCents
 } from '@/lib/facebook-campaign-utils'
 
 // Define interfaces for form data
@@ -62,6 +65,7 @@ export function MetaCreateCampaignAdSet({
     
     hasAutoPopulated,
     setHasAutoPopulated,
+    originalFormData,
     
     // Individual toggle actions (following Google pattern)
     toggleBudgetTypeLock,
@@ -71,8 +75,112 @@ export function MetaCreateCampaignAdSet({
     
     handleAutoPopulate,
     validateFormData,
-    resetForm
+    resetForm,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   } = useMetaCampaignForm(formData)
+
+  // Use the blur confirmation hook
+  const {
+    confirmationState,
+    requestConfirmation,
+    confirmChange,
+    cancelChange
+  } = useMetaCampaignBlurConfirmation()
+
+  // Track values when focus enters fields for comparison on blur
+  const focusValues = useRef({
+    budgetType: '',
+    budgetAmount: '',
+    startDate: '',
+    endDate: ''
+  })
+
+  // Focus handlers to capture current values
+  const handleBudgetTypeFocus = () => {
+    focusValues.current.budgetType = campaignData.budget_type || 'LIFETIME'
+  }
+
+  const handleBudgetAmountFocus = () => {
+    const currentBudgetType = campaignData.budget_type || 'LIFETIME'
+    const budgetAmount = currentBudgetType === 'LIFETIME' ? campaignData.lifetime_budget : campaignData.daily_budget
+    focusValues.current.budgetAmount = budgetAmount ? formatBudgetCents(budgetAmount) : ''
+  }
+
+  const handleStartDateFocus = () => {
+    focusValues.current.startDate = adSetData.start_time || ''
+  }
+
+  const handleEndDateFocus = () => {
+    focusValues.current.endDate = adSetData.end_time || ''
+  }
+
+  // Blur handlers to detect changes and show confirmation
+  const handleBudgetTypeBlur = () => {
+    const currentBudgetType = campaignData.budget_type || 'LIFETIME'
+    if (focusValues.current.budgetType !== currentBudgetType) {
+      const originalValue = originalFormData.budgetType || focusValues.current.budgetType
+      requestConfirmation(
+        'budget-type',
+        originalValue,
+        currentBudgetType,
+        hasBudgetOriginalData(),
+        () => setCampaignData({ ...campaignData, budget_type: originalValue as 'LIFETIME' | 'DAILY' })
+      )
+    }
+  }
+
+  const handleBudgetAmountBlur = () => {
+    const currentBudgetType = campaignData.budget_type || 'LIFETIME'
+    const budgetAmount = currentBudgetType === 'LIFETIME' ? campaignData.lifetime_budget : campaignData.daily_budget
+    const currentBudgetDisplay = budgetAmount ? formatBudgetCents(budgetAmount) : ''
+    
+    if (focusValues.current.budgetAmount !== currentBudgetDisplay) {
+      const originalValue = originalFormData.budgetAmount || focusValues.current.budgetAmount
+      requestConfirmation(
+        'budget-amount',
+        originalValue,
+        currentBudgetDisplay,
+        hasBudgetOriginalData(),
+        () => {
+          const originalBudgetCents = originalValue ? Math.round(parseFloat(originalValue) * 100) : 0
+          if (currentBudgetType === 'LIFETIME') {
+            setCampaignData({ ...campaignData, lifetime_budget: originalBudgetCents, daily_budget: undefined })
+          } else {
+            setCampaignData({ ...campaignData, daily_budget: originalBudgetCents, lifetime_budget: undefined })
+          }
+        }
+      )
+    }
+  }
+
+  const handleStartDateBlur = () => {
+    const currentStartDate = adSetData.start_time || ''
+    if (focusValues.current.startDate !== currentStartDate) {
+      const originalValue = originalFormData.startDate || focusValues.current.startDate
+      requestConfirmation(
+        'start-date',
+        originalValue,
+        currentStartDate,
+        hasDateOriginalData(),
+        () => setAdSetData({ ...adSetData, start_time: originalValue })
+      )
+    }
+  }
+
+  const handleEndDateBlur = () => {
+    const currentEndDate = adSetData.end_time || ''
+    if (focusValues.current.endDate !== currentEndDate) {
+      const originalValue = originalFormData.endDate || focusValues.current.endDate
+      requestConfirmation(
+        'end-date',
+        originalValue,
+        currentEndDate,
+        hasDateOriginalData(),
+        () => setAdSetData({ ...adSetData, end_time: originalValue })
+      )
+    }
+  }
 
   // Handle expand and auto-populate
   const handleExpandAndAutoPopulate = () => {
@@ -159,124 +267,155 @@ export function MetaCreateCampaignAdSet({
     }
   }
 
-  if (!isExpanded) {
-    return (
-      <div className="border-t pt-4">
-        <Button 
-          variant="ghost" 
-          onClick={handleExpandAndAutoPopulate}
-          className="w-full justify-start text-sm"
-          disabled={!selectedAdAccount}
-        >
-          <Plus className="mr-2 size-4" />
-          Create New Campaign & Ad Set
-        </Button>
-        {!selectedAdAccount && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Select an ad account to create a new campaign
-          </p>
-        )}
-      </div>
-    )
-  }
-
   return (
-    <Card className="border-t-0 rounded-t-none">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          This will create both a campaign and ad set together using Facebook&apos;s batch API. 
-          Budget will be set at the campaign level and distributed across ad sets.
-        </p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Campaign Fields Section */}
-          <div className="space-y-4">
-            <div className="border-b pb-2">
-              <h3 className="font-medium text-sm">Campaign Settings</h3>
-              <p className="text-xs text-muted-foreground">Configure your campaign objective and budget</p>
-            </div>
-            <MetaCampaignFields
-              value={campaignData}
-              onChange={setCampaignData}
-              errors={campaignErrors}
-              
-              // Individual lock states and handlers (following Google pattern)
-              isBudgetTypeLocked={isBudgetTypeLocked}
-              isBudgetAmountLocked={isBudgetAmountLocked}
-              onToggleBudgetTypeLock={toggleBudgetTypeLock}
-              onToggleBudgetAmountLock={toggleBudgetAmountLock}
-            />
-          </div>
-
-          {/* Ad Set Fields Section */}
-          <div className="space-y-4">
-            <div className="border-b pb-2">
-              <h3 className="font-medium text-sm">Ad Set Settings</h3>
-              <p className="text-xs text-muted-foreground">
-                Configure targeting and schedule (budget comes from campaign)
-              </p>
-            </div>
-            <MetaAdSetFields
-              value={adSetData}
-              onChange={setAdSetData}
-              errors={adSetErrors}
-              campaignObjective={campaignData.objective}
-              
-              // Individual lock states and handlers (following Google pattern)
-              isStartDateLocked={isStartDateLocked}
-              isEndDateLocked={isEndDateLocked}
-              onToggleStartDateLock={toggleStartDateLock}
-              onToggleEndDateLock={toggleEndDateLock}
-            />
-          </div>
-
-          {/* Billing Event and Optimization Goal Info */}
-          {campaignData.objective && (
-            <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
-              <p className="text-blue-800 dark:text-blue-300 text-sm">
-                <strong>Billing Event:</strong> {getBillingEventForUIObjective(campaignData.objective)}
-                {getOptimizationGoalForUIObjective(campaignData.objective) && (
-                  <>
-                    <br />
-                    <strong>Optimization Goal:</strong> {getOptimizationGoalForUIObjective(campaignData.objective)}
-                  </>
-                )}
-                <br />
-                <strong>Budget Type:</strong> {getBudgetLabel(campaignData.budget_type || 'LIFETIME')}
-                <br />
-                <span className="text-xs">
-                  These settings are automatically configured based on your selected campaign objective.
-                  Budget is managed at the campaign level.
-                </span>
-              </p>
-            </div>
+    <>
+      {!isExpanded ? (
+        <div className="border-t pt-4">
+          <Button 
+            variant="ghost" 
+            onClick={handleExpandAndAutoPopulate}
+            className="w-full justify-start text-sm"
+            disabled={!selectedAdAccount}
+          >
+            <Plus className="mr-2 size-4" />
+            Create New Campaign & Ad Set
+          </Button>
+          {!selectedAdAccount && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Select an ad account to create a new campaign
+            </p>
           )}
+        </div>
+      ) : (
+        <Card className="border-t-0 rounded-t-none">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">Create New Campaign & Ad Set</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              This will create both a campaign and ad set together using Facebook&apos;s batch API. 
+              Budget will be set at the campaign level and distributed across ad sets.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Campaign Fields Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-medium text-sm">Campaign Settings</h3>
+                  <p className="text-xs text-muted-foreground">Configure your campaign objective and budget</p>
+                </div>
+                <MetaCampaignFields
+                  value={campaignData}
+                  onChange={setCampaignData}
+                  errors={campaignErrors}
+                  
+                  // Individual lock states and handlers (following Google pattern)
+                  isBudgetTypeLocked={isBudgetTypeLocked}
+                  isBudgetAmountLocked={isBudgetAmountLocked}
+                  onToggleBudgetTypeLock={toggleBudgetTypeLock}
+                  onToggleBudgetAmountLock={toggleBudgetAmountLock}
+                  
+                  // Focus/blur handlers for blur confirmation
+                  onBudgetTypeFocus={handleBudgetTypeFocus}
+                  onBudgetTypeBlur={handleBudgetTypeBlur}
+                  onBudgetAmountFocus={handleBudgetAmountFocus}
+                  onBudgetAmountBlur={handleBudgetAmountBlur}
+                  
+                  // Original form data for display
+                  originalFormData={originalFormData}
+                  disabled={isCreating}
+                />
+              </div>
 
-          {/* Form Actions */}
-          <div className="flex gap-2 pt-2">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => setIsExpanded(false)}
-              disabled={isCreating}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Campaign & Ad Set'
+              {/* Ad Set Fields Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-medium text-sm">Ad Set Settings</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure targeting and schedule (budget comes from campaign)
+                  </p>
+                </div>
+                <MetaAdSetFields
+                  value={adSetData}
+                  onChange={setAdSetData}
+                  errors={adSetErrors}
+                  campaignObjective={campaignData.objective}
+                  
+                  // Individual lock states and handlers (following Google pattern)
+                  isStartDateLocked={isStartDateLocked}
+                  isEndDateLocked={isEndDateLocked}
+                  onToggleStartDateLock={toggleStartDateLock}
+                  onToggleEndDateLock={toggleEndDateLock}
+                  
+                  // Focus/blur handlers for blur confirmation
+                  onStartDateFocus={handleStartDateFocus}
+                  onStartDateBlur={handleStartDateBlur}
+                  onEndDateFocus={handleEndDateFocus}
+                  onEndDateBlur={handleEndDateBlur}
+                  
+                  // Original form data for display
+                  originalFormData={originalFormData}
+                  disabled={isCreating}
+                />
+              </div>
+
+              {/* Billing Event and Optimization Goal Info */}
+              {campaignData.objective && (
+                <div className="p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
+                  <p className="text-blue-800 dark:text-blue-300 text-sm">
+                    <strong>Billing Event:</strong> {getBillingEventForUIObjective(campaignData.objective)}
+                    {getOptimizationGoalForUIObjective(campaignData.objective) && (
+                      <>
+                        <br />
+                        <strong>Optimization Goal:</strong> {getOptimizationGoalForUIObjective(campaignData.objective)}
+                      </>
+                    )}
+                    <br />
+                    <strong>Budget Type:</strong> {getBudgetLabel(campaignData.budget_type || 'LIFETIME')}
+                    <br />
+                    <span className="text-xs">
+                      These settings are automatically configured based on your selected campaign objective.
+                      Budget is managed at the campaign level.
+                    </span>
+                  </p>
+                </div>
               )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+
+              {/* Form Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setIsExpanded(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Campaign & Ad Set'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Blur Confirmation Dialog */}
+      <MetaCampaignBlurConfirmationDialog
+        isOpen={confirmationState.isOpen}
+        fieldType={confirmationState.fieldType}
+        originalValue={confirmationState.originalValue}
+        newValue={confirmationState.newValue}
+        hasOriginalData={confirmationState.hasOriginalData}
+        onConfirm={confirmChange}
+        onCancel={cancelChange}
+      />
+    </>
   )
 }

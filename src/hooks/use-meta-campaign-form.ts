@@ -24,6 +24,13 @@ interface StructuredData {
   formData: FormQuestion[];
 }
 
+export interface OriginalMetaFormData {
+  budgetType: string | null
+  budgetAmount: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
 export function useMetaCampaignForm(formData?: StructuredData) {
   // Get default start date (tomorrow)
   function getDefaultStartDate(): string {
@@ -43,6 +50,14 @@ export function useMetaCampaignForm(formData?: StructuredData) {
 
   // State management
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false)
+  
+  // Track original form data to determine if fields had auto-populated values
+  const [originalFormData, setOriginalFormData] = useState<OriginalMetaFormData>({
+    budgetType: null,
+    budgetAmount: null,
+    startDate: null,
+    endDate: null
+  })
   
   // Individual lock states (following Google pattern)
   const [isBudgetTypeLocked, setIsBudgetTypeLocked] = useState(false)
@@ -95,6 +110,16 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     setIsEndDateLocked(!isEndDateLocked)
   }
 
+  // Check if budget fields have original form data
+  const hasBudgetOriginalData = () => {
+    return originalFormData.budgetType !== null || originalFormData.budgetAmount !== null
+  }
+
+  // Check if date fields have original form data
+  const hasDateOriginalData = () => {
+    return originalFormData.startDate !== null || originalFormData.endDate !== null
+  }
+
   // Auto-populate handler
   const handleAutoPopulate = () => {
     if (!formData?.formData) {
@@ -114,21 +139,41 @@ export function useMetaCampaignForm(formData?: StructuredData) {
       setCampaignErrors({})
       setAdSetErrors({})
 
-      // Lock individual budget fields after auto-populate if budget data was populated
+      // Track original form data for blur confirmation
+      const originalData: OriginalMetaFormData = {
+        budgetType: null,
+        budgetAmount: null,
+        startDate: null,
+        endDate: null
+      }
+
+      // Track budget data if populated
       if (result.campaignData.budget_type) {
+        originalData.budgetType = result.campaignData.budget_type
         setIsBudgetTypeLocked(true)
       }
       if (result.campaignData.lifetime_budget || result.campaignData.daily_budget) {
+        const budgetAmount = result.campaignData.budget_type === 'LIFETIME' 
+          ? result.campaignData.lifetime_budget 
+          : result.campaignData.daily_budget
+        if (budgetAmount) {
+          originalData.budgetAmount = (budgetAmount / 100).toString() // Convert from cents to dollars
+        }
         setIsBudgetAmountLocked(true)
       }
 
-      // Lock individual date fields after auto-populate if date data was populated
-      if (result.adSetData.start_time !== getDefaultStartDate()) {
+      // Track date data if populated
+      if (result.adSetData.start_time && result.adSetData.start_time !== getDefaultStartDate()) {
+        originalData.startDate = result.adSetData.start_time
         setIsStartDateLocked(true)
       }
-      if (result.adSetData.end_time !== getDefaultEndDate()) {
+      if (result.adSetData.end_time && result.adSetData.end_time !== getDefaultEndDate()) {
+        originalData.endDate = result.adSetData.end_time
         setIsEndDateLocked(true)
       }
+
+      // Store original form data
+      setOriginalFormData(originalData)
       
       // Show success message with what was populated
       if (result.populatedFields.length > 0) {
@@ -244,6 +289,14 @@ export function useMetaCampaignForm(formData?: StructuredData) {
 
     // Reset auto-populate state
     setHasAutoPopulated(false)
+
+    // Reset original form data tracking
+    setOriginalFormData({
+      budgetType: null,
+      budgetAmount: null,
+      startDate: null,
+      endDate: null
+    })
   }
 
   return {
@@ -263,6 +316,7 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     
     hasAutoPopulated,
     setHasAutoPopulated,
+    originalFormData,
     
     // Individual toggle actions (following Google pattern)
     toggleBudgetTypeLock,
@@ -277,6 +331,8 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     
     // Utilities
     getDefaultStartDate,
-    getDefaultEndDate
+    getDefaultEndDate,
+    hasBudgetOriginalData,
+    hasDateOriginalData
   }
 }
