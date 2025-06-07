@@ -53,12 +53,22 @@ export function MetaCreateCampaignAdSet({
     setAdSetData,
     campaignErrors,
     adSetErrors,
-    isBudgetLocked,
-    isDateLocked,
+    
+    // Individual lock states (following Google pattern)
+    isBudgetTypeLocked,
+    isBudgetAmountLocked,
+    isStartDateLocked,
+    isEndDateLocked,
+    
     hasAutoPopulated,
     setHasAutoPopulated,
-    toggleBudgetLock,
-    toggleDateLock,
+    
+    // Individual toggle actions (following Google pattern)
+    toggleBudgetTypeLock,
+    toggleBudgetAmountLock,
+    toggleStartDateLock,
+    toggleEndDateLock,
+    
     handleAutoPopulate,
     validateFormData,
     resetForm
@@ -191,8 +201,12 @@ export function MetaCreateCampaignAdSet({
               value={campaignData}
               onChange={setCampaignData}
               errors={campaignErrors}
-              isBudgetLocked={isBudgetLocked}
-              onToggleBudgetLock={toggleBudgetLock}
+              
+              // Individual lock states and handlers (following Google pattern)
+              isBudgetTypeLocked={isBudgetTypeLocked}
+              isBudgetAmountLocked={isBudgetAmountLocked}
+              onToggleBudgetTypeLock={toggleBudgetTypeLock}
+              onToggleBudgetAmountLock={toggleBudgetAmountLock}
             />
           </div>
 
@@ -209,8 +223,12 @@ export function MetaCreateCampaignAdSet({
               onChange={setAdSetData}
               errors={adSetErrors}
               campaignObjective={campaignData.objective}
-              isDateLocked={isDateLocked}
-              onToggleDateLock={toggleDateLock}
+              
+              // Individual lock states and handlers (following Google pattern)
+              isStartDateLocked={isStartDateLocked}
+              isEndDateLocked={isEndDateLocked}
+              onToggleStartDateLock={toggleStartDateLock}
+              onToggleEndDateLock={toggleEndDateLock}
             />
           </div>
 

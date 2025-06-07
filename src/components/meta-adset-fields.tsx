@@ -14,12 +14,29 @@ interface MetaAdSetFieldsProps {
   value: Partial<Omit<FacebookAdSetData, 'campaign_id'>>
   onChange: (value: Partial<Omit<FacebookAdSetData, 'campaign_id'>>) => void
   errors?: Record<string, string>
-  campaignObjective?: FacebookCampaignObjective // Add campaign objective prop
-  isDateLocked?: boolean
-  onToggleDateLock?: () => void
+  campaignObjective?: FacebookCampaignObjective
+  
+  // Individual lock states (following Google pattern)
+  isStartDateLocked?: boolean
+  isEndDateLocked?: boolean
+  
+  // Individual lock toggle handlers (following Google pattern)
+  onToggleStartDateLock?: () => void
+  onToggleEndDateLock?: () => void
 }
 
-export function MetaAdSetFields({ value, onChange, errors, campaignObjective, isDateLocked = false, onToggleDateLock }: MetaAdSetFieldsProps) {
+export function MetaAdSetFields({ 
+  value, 
+  onChange, 
+  errors, 
+  campaignObjective,
+  
+  // Individual lock props (following Google pattern)
+  isStartDateLocked = false,
+  isEndDateLocked = false,
+  onToggleStartDateLock,
+  onToggleEndDateLock
+}: MetaAdSetFieldsProps) {
   // Handle form field changes  
   const handleFieldChange = (field: keyof Omit<FacebookAdSetData, 'campaign_id'>, fieldValue: Omit<FacebookAdSetData, 'campaign_id'>[keyof Omit<FacebookAdSetData, 'campaign_id'>]) => {
     onChange({
@@ -60,6 +77,29 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective, is
   
   // Show lead generation fields when campaign objective is LEAD_GENERATION
   const showLeadGenerationFields = campaignObjective === 'LEAD_GENERATION'
+
+  // Individual warnings (following Google pattern - positioned between title and field)
+  const startDateWarning = !isStartDateLocked && onToggleStartDateLock ? (
+    <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+        ⚠️ Start date field is unlocked
+      </p>
+      <p className="text-amber-800 dark:text-amber-300 text-xs">
+        Click the lock icon to secure this field and prevent accidental changes.
+      </p>
+    </div>
+  ) : null
+
+  const endDateWarning = !isEndDateLocked && onToggleEndDateLock ? (
+    <div className="p-3 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+      <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-1">
+        ⚠️ End date field is unlocked
+      </p>
+      <p className="text-amber-800 dark:text-amber-300 text-xs">
+        Click the lock icon to secure this field and prevent accidental changes.
+      </p>
+    </div>
+  ) : null
 
   return (
     <div className="space-y-4">
@@ -182,20 +222,20 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective, is
         </p>
       </div>
 
-      {/* Schedule */}
+      {/* Schedule (following Google pattern with individual locks and warnings) */}
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="start-date">Start Date *</Label>
-            {onToggleDateLock && (
+            {onToggleStartDateLock && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={onToggleDateLock}
+                onClick={onToggleStartDateLock}
                 className="h-6 w-6 p-0"
               >
-                {isDateLocked ? (
+                {isStartDateLocked ? (
                   <Lock className="h-3 w-3" />
                 ) : (
                   <Pencil className="h-3 w-3" />
@@ -203,14 +243,16 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective, is
               </Button>
             )}
           </div>
+          {/* Warning positioned between title and field (following Google pattern) */}
+          {startDateWarning}
           <Input
             id="start-date"
             type="date"
             value={formatDateForInput(value.start_time)}
             onChange={(e) => handleDateChange('start_time', e.target.value)}
             min={new Date().toISOString().split('T')[0]} // Can't start in the past
-            disabled={isDateLocked}
-            className={`${errors?.start_time ? 'border-destructive' : ''} ${isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isStartDateLocked}
+            className={`${errors?.start_time ? 'border-destructive' : ''} ${isStartDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors?.start_time && (
             <p className="text-xs text-destructive">{errors.start_time}</p>
@@ -219,15 +261,15 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective, is
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="end-date">End Date *</Label>
-            {onToggleDateLock && (
+            {onToggleEndDateLock && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={onToggleDateLock}
+                onClick={onToggleEndDateLock}
                 className="h-6 w-6 p-0"
               >
-                {isDateLocked ? (
+                {isEndDateLocked ? (
                   <Lock className="h-3 w-3" />
                 ) : (
                   <Pencil className="h-3 w-3" />
@@ -235,32 +277,22 @@ export function MetaAdSetFields({ value, onChange, errors, campaignObjective, is
               </Button>
             )}
           </div>
+          {/* Warning positioned between title and field (following Google pattern) */}
+          {endDateWarning}
           <Input
             id="end-date"
             type="date"
             value={formatDateForInput(value.end_time)}
             onChange={(e) => handleDateChange('end_time', e.target.value)}
             min={formatDateForInput(value.start_time) || new Date().toISOString().split('T')[0]}
-            disabled={isDateLocked}
-            className={`${errors?.end_time ? 'border-destructive' : ''} ${isDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isEndDateLocked}
+            className={`${errors?.end_time ? 'border-destructive' : ''} ${isEndDateLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           {errors?.end_time && (
             <p className="text-xs text-destructive">{errors.end_time}</p>
           )}
         </div>
       </div>
-
-      {/* Date Warning when unlocked */}
-      {!isDateLocked && onToggleDateLock && (
-        <div className="p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-300 text-sm font-medium mb-2">
-            ⚠️ Date fields are unlocked for manual editing
-          </p>
-          <div className="text-amber-800 dark:text-amber-300 text-xs">
-            <p>Campaign start and end dates can be manually adjusted. Click the lock icon to secure these fields and prevent accidental changes.</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -44,11 +44,11 @@ export function useMetaCampaignForm(formData?: StructuredData) {
   // State management
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false)
   
-  // Budget lock state
-  const [isBudgetLocked, setIsBudgetLocked] = useState(false) // Budget starts unlocked
-  
-  // Date lock state
-  const [isDateLocked, setIsDateLocked] = useState(false) // Dates start unlocked
+  // Individual lock states (following Google pattern)
+  const [isBudgetTypeLocked, setIsBudgetTypeLocked] = useState(false)
+  const [isBudgetAmountLocked, setIsBudgetAmountLocked] = useState(false)
+  const [isStartDateLocked, setIsStartDateLocked] = useState(false)
+  const [isEndDateLocked, setIsEndDateLocked] = useState(false)
   
   // Campaign form state
   const [campaignData, setCampaignData] = useState<Partial<FacebookCampaignData>>({
@@ -78,14 +78,21 @@ export function useMetaCampaignForm(formData?: StructuredData) {
   const [campaignErrors, setCampaignErrors] = useState<Record<string, string>>({})
   const [adSetErrors, setAdSetErrors] = useState<Record<string, string>>({})
 
-  // Toggle budget lock function
-  const toggleBudgetLock = () => {
-    setIsBudgetLocked(!isBudgetLocked)
+  // Individual toggle functions (following Google pattern)
+  const toggleBudgetTypeLock = () => {
+    setIsBudgetTypeLocked(!isBudgetTypeLocked)
   }
 
-  // Toggle date lock function
-  const toggleDateLock = () => {
-    setIsDateLocked(!isDateLocked)
+  const toggleBudgetAmountLock = () => {
+    setIsBudgetAmountLocked(!isBudgetAmountLocked)
+  }
+
+  const toggleStartDateLock = () => {
+    setIsStartDateLocked(!isStartDateLocked)
+  }
+
+  const toggleEndDateLock = () => {
+    setIsEndDateLocked(!isEndDateLocked)
   }
 
   // Auto-populate handler
@@ -107,19 +114,20 @@ export function useMetaCampaignForm(formData?: StructuredData) {
       setCampaignErrors({})
       setAdSetErrors({})
 
-      // Lock budget fields after auto-populate if budget data was populated
-      const hasBudgetData = result.campaignData.budget_type || 
-                           result.campaignData.lifetime_budget || 
-                           result.campaignData.daily_budget
-      if (hasBudgetData) {
-        setIsBudgetLocked(true)
+      // Lock individual budget fields after auto-populate if budget data was populated
+      if (result.campaignData.budget_type) {
+        setIsBudgetTypeLocked(true)
+      }
+      if (result.campaignData.lifetime_budget || result.campaignData.daily_budget) {
+        setIsBudgetAmountLocked(true)
       }
 
-      // Lock date fields after auto-populate if date data was populated
-      const hasDateData = result.adSetData.start_time !== getDefaultStartDate() || 
-                          result.adSetData.end_time !== getDefaultEndDate()
-      if (hasDateData) {
-        setIsDateLocked(true)
+      // Lock individual date fields after auto-populate if date data was populated
+      if (result.adSetData.start_time !== getDefaultStartDate()) {
+        setIsStartDateLocked(true)
+      }
+      if (result.adSetData.end_time !== getDefaultEndDate()) {
+        setIsEndDateLocked(true)
       }
       
       // Show success message with what was populated
@@ -228,9 +236,11 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     setCampaignErrors({})
     setAdSetErrors({})
 
-    // Reset lock states
-    setIsBudgetLocked(false)
-    setIsDateLocked(false)
+    // Reset individual lock states
+    setIsBudgetTypeLocked(false)
+    setIsBudgetAmountLocked(false)
+    setIsStartDateLocked(false)
+    setIsEndDateLocked(false)
 
     // Reset auto-populate state
     setHasAutoPopulated(false)
@@ -244,14 +254,23 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     setAdSetData,
     campaignErrors,
     adSetErrors,
-    isBudgetLocked,
-    isDateLocked,
+    
+    // Individual lock states (following Google pattern)
+    isBudgetTypeLocked,
+    isBudgetAmountLocked,
+    isStartDateLocked,
+    isEndDateLocked,
+    
     hasAutoPopulated,
     setHasAutoPopulated,
     
-    // Actions
-    toggleBudgetLock,
-    toggleDateLock,
+    // Individual toggle actions (following Google pattern)
+    toggleBudgetTypeLock,
+    toggleBudgetAmountLock,
+    toggleStartDateLock,
+    toggleEndDateLock,
+    
+    // Other actions
     handleAutoPopulate,
     validateFormData,
     resetForm,
