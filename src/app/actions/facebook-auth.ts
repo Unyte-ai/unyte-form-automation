@@ -18,7 +18,7 @@ export async function initFacebookOAuth(organizationId?: string): Promise<string
 
   // Set the redirect URI based on environment
   const redirectUri = process.env.NODE_ENV === 'production'
-    ? 'https://unyte-form-automation.vercel.app/auth/facebook/callback'
+    ? 'https://app.unyte.ai/auth/facebook/callback'
     : 'http://localhost:3000/auth/facebook/callback'
 
   // Build the authorization URL

@@ -39,7 +39,7 @@ export async function exchangeTikTokToken(code: string, organizationId: string):
     
     // Prepare token exchange request
     // IMPORTANT: Always use the production redirect URI, even in development
-    const redirectUri = 'https://unyte-form-automation.vercel.app/auth/tiktok/callback'
+    const redirectUri = 'https://app.unyte.ai/auth/tiktok/callback'
     
     // Prepare request body
     const params = new URLSearchParams({

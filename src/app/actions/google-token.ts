@@ -30,7 +30,7 @@ export async function exchangeGoogleToken(code: string): Promise<{
     
     // Set the redirect URI based on environment
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://unyte-form-automation.vercel.app/auth/google/callback'
+      ? 'https://app.unyte.ai/auth/google/callback'
       : 'http://localhost:3000/auth/google/callback'
     
     // Prepare token exchange request following Google's OAuth2 documentation

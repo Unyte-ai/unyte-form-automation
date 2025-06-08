@@ -14,7 +14,7 @@ export async function initGoogleOAuth(organizationId?: string): Promise<string> 
 
   // Set the redirect URI based on environment
   const redirectUri = process.env.NODE_ENV === 'production'
-    ? 'https://unyte-form-automation.vercel.app/auth/google/callback'
+    ? 'https://app.unyte.ai/auth/google/callback'
     : 'http://localhost:3000/auth/google/callback'
 
   // Build the authorization URL following Google OAuth2 web server flow

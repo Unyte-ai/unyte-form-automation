@@ -49,7 +49,7 @@ export async function exchangeFacebookToken(code: string, organizationId: string
     
     // Set the redirect URI based on environment (must match what was used in auth flow)
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://unyte-form-automation.vercel.app/auth/facebook/callback'
+      ? 'https://app.unyte.ai/auth/facebook/callback'
       : 'http://localhost:3000/auth/facebook/callback'
     
     // Prepare token exchange request

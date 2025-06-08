@@ -29,7 +29,7 @@ export async function exchangeLinkedInToken(code: string): Promise<{
     
     // Set the redirect URI based on environment
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://unyte-form-automation.vercel.app/auth/linkedin/callback'
+      ? 'https://app.unyte.ai/auth/linkedin/callback'
       : 'http://localhost:3000/auth/linkedin/callback'
     
     // Prepare token exchange request

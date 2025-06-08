@@ -92,7 +92,10 @@ export async function inviteUserToOrganization(organizationId: string, email: st
       }
       
       // Create the redirect URL for the magic link
-      const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
+      const siteUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://app.unyte.ai' 
+        : 'http://localhost:3000'
+      const redirectUrl = `${siteUrl}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
       
       // Send the magic link using signInWithOtp
       const { error: otpError } = await supabase.auth.signInWithOtp({
@@ -115,8 +118,11 @@ export async function inviteUserToOrganization(organizationId: string, email: st
     } else {
       // User doesn't exist - try to create a new user with proper error handling
       try {
+        const siteUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://app.unyte.ai' 
+          : 'http://localhost:3000'
         const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/invite?next=/home`
+          redirectTo: `${siteUrl}/auth/invite?next=/home`
         })
         
         if (inviteError) {
@@ -167,7 +173,10 @@ export async function inviteUserToOrganization(organizationId: string, email: st
               }
               
               // Create the redirect URL for the magic link
-              const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
+              const siteUrl = process.env.NODE_ENV === 'production' 
+                ? 'https://app.unyte.ai' 
+                : 'http://localhost:3000'
+              const redirectUrl = `${siteUrl}/auth/accept-invitation?organization=${organizationId}&member=${member.id}`
               
               // Send the magic link using signInWithOtp
               const { error: otpError } = await supabase.auth.signInWithOtp({

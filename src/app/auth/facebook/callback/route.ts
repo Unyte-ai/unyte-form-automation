@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   
   // Get base URL for redirects
   const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://unyte-form-automation.vercel.app' 
+    ? 'https://app.unyte.ai' 
     : 'http://localhost:3000'
 
   // For debugging

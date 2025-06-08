@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     
     // Production URL - always use this instead of localhost
     const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://unyte-form-automation.vercel.app' 
+      ? 'https://app.unyte.ai' 
       : 'http://localhost:3000'
     
     // If there's an error, redirect to the error page
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error in TikTok callback handler:', error)
     const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://unyte-form-automation.vercel.app' 
+      ? 'https://app.unyte.ai' 
       : 'http://localhost:3000'
       
     return NextResponse.redirect(
