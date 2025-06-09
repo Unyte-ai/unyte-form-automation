@@ -109,13 +109,15 @@ export default function AuthLayout({
             </div>
 
             {/* Bottom CTA */}
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 text-teal-100">
-                <div className="flex -space-x-1">
-                  <div className="w-5 h-5 bg-[#3FBA9C] rounded-full"></div>
-                  <div className="w-5 h-5 bg-[#F37032] rounded-full"></div>
-                  <div className="w-5 h-5 bg-[#A3011B] rounded-full"></div>
-                </div>
+            <div className="text-center bg-gray-100 rounded-2xl p-2">
+              <div className="flex items-center justify-center gap-2 text-[#007486]">
+                <Image
+                  src="/favicon.png"
+                  alt="Logo"
+                  width={60}
+                  height={20}
+                  className="h-5 w-auto"
+                />
                 <span className="text-sm font-medium">Join the smart marketing revolution</span>
               </div>
             </div>
