@@ -87,6 +87,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  className="shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                 />
               </div>
               <div className="grid gap-2">
@@ -110,7 +111,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10"
+                    className="pr-10 shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                     autoComplete="new-password"
                   />
                   <button
@@ -124,7 +125,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-orange-auth hover:bg-orange-auth/90 text-white" disabled={isLoading}>
                 {isLoading ? 'Setting up...' : 'Finish Sign Up'}
               </Button>
             </div>

@@ -58,10 +58,11 @@ export function UpdatePasswordForm({ className, ...props }: React.ComponentProps
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-orange-auth hover:bg-orange-auth/90 text-white" disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save new password'}
               </Button>
             </div>

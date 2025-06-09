@@ -71,6 +71,7 @@ const handleLogin = async (e: React.FormEvent) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="username email"
+                  className="shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                 />
               </div>
               <div className="grid gap-2">
@@ -90,7 +91,7 @@ const handleLogin = async (e: React.FormEvent) => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10" // Add padding to accommodate the icon
+                    className="pr-10 shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                     autoComplete="current-password"
                   />
                   <button
@@ -105,7 +106,7 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-orange-auth hover:bg-orange-auth/90 text-white" disabled={isLoading}>
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
