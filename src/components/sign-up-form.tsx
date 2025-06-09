@@ -71,6 +71,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  className="shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                 />
               </div>
               <div className="grid gap-2">
@@ -83,6 +84,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
+                  className="shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                 />
               </div>
               <div className="grid gap-2">
@@ -94,7 +96,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10" // Add padding to accommodate the icon
+                    className="pr-10 shadow-none border border-gray-300 focus:border-orange-auth focus:ring-1 focus:ring-orange-auth"
                     autoComplete="new-password"
                   />
                   <button
@@ -109,7 +111,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                 </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-orange-auth hover:bg-orange-auth/90 text-white" disabled={isLoading}>
                 {isLoading ? 'Creating an account...' : 'Sign up'}
               </Button>
             </div>
