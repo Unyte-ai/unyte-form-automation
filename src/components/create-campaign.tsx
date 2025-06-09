@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LinkedInCampaign } from '@/components/linkedin-campaign'
-import { TikTokCampaign } from '@/components/tiktok-campaign'
+// import { TikTokCampaign } from '@/components/tiktok-campaign'
 import { MetaCampaign } from '@/components/meta-campaign'
 import { GoogleCampaign } from '@/components/google-campaign'
 import { v4 as uuidv4 } from 'uuid'
@@ -33,7 +33,7 @@ interface CreateCampaignProps {
 
 export function CreateCampaign({ organizationId, formData }: CreateCampaignProps) {
   const [linkedInCampaigns, setLinkedInCampaigns] = useState<{id: string}[]>([])
-  const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
+  // const [tikTokCampaigns, setTikTokCampaigns] = useState<{id: string}[]>([])
   const [metaCampaigns, setMetaCampaigns] = useState<{id: string}[]>([])
   const [googleCampaigns, setGoogleCampaigns] = useState<{id: string}[]>([])
 
@@ -46,14 +46,14 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
     setLinkedInCampaigns(prev => prev.filter(campaign => campaign.id !== id))
   }
 
-  const addTikTokCampaign = () => {
-    const newCampaign = { id: uuidv4() }
-    setTikTokCampaigns(prev => [...prev, newCampaign])
-  }
+  // const addTikTokCampaign = () => {
+  //   const newCampaign = { id: uuidv4() }
+  //   setTikTokCampaigns(prev => [...prev, newCampaign])
+  // }
 
-  const removeTikTokCampaign = (id: string) => {
-    setTikTokCampaigns(prev => prev.filter(campaign => campaign.id !== id))
-  }
+  // const removeTikTokCampaign = (id: string) => {
+  //   setTikTokCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+  // }
 
   const addMetaCampaign = () => {
     const newCampaign = { id: uuidv4() }
@@ -93,14 +93,14 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
             <DropdownMenuItem className="cursor-pointer" onClick={addLinkedInCampaign}>
               LinkedIn
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
+            {/* <DropdownMenuItem className="cursor-pointer" onClick={addTikTokCampaign}>
               <div className="flex items-center justify-between w-full">
                 TikTok
                 <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full ml-2 dark:bg-amber-900/30 dark:text-amber-400">
                   Soon
                 </span>
               </div>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -141,14 +141,14 @@ export function CreateCampaign({ organizationId, formData }: CreateCampaignProps
         ))}
         
         {/* TikTok campaigns */}
-        {tikTokCampaigns.map(campaign => (
+        {/* {tikTokCampaigns.map(campaign => (
           <TikTokCampaign 
             key={campaign.id} 
             id={campaign.id} 
             onRemove={removeTikTokCampaign}
             organizationId={organizationId}
           />
-        ))}
+        ))} */}
       </div>
     </div>
   )
