@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-svh flex">
+    <div className="h-svh flex">
       {/* Left Half - Teal Background with Logo */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#007187] relative">
         {/* Logo in top right of left side */}

@@ -70,7 +70,7 @@ export function InviteSetupForm({ className, ...props }: React.ComponentPropsWit
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
+      <Card className="bg-transparent border-0 shadow-none">
         <CardHeader>
           <CardTitle className="text-2xl">Complete Your Account</CardTitle>
           <CardDescription>You&apos;re almost there! Just a few details to get started.</CardDescription>
