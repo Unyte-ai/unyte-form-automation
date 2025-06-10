@@ -54,13 +54,13 @@ export default function AuthLayout({
               </div>
               
               <h2 className="text-4xl font-bold mb-6 leading-tight">
-                Multi-Platform Marketing
+                Precise Campaign Management
                 <br />
-                <span className="text-[#7ED321] opacity-70">Made Easy</span>
+                <span className="text-[#7ED321] opacity-70">Made Simple</span>
               </h2>
               
               <p className="text-lg text-white/80 leading-relaxed mb-6">
-                Turn hours of campaign setup into minutes. We automate the creation and deployment of campaigns across all major advertising platforms.
+                Streamline your campaign creation process with automated budget controls. From client brief to live campaigns, ensure accurate spending and consistent delivery across all platforms.
               </p>
             </div>
 
@@ -72,8 +72,8 @@ export default function AuthLayout({
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1 text-lg">Campaign Creation</h3>
-                <p className="text-sm text-white/70">Automated setup</p>
+                <h3 className="font-semibold mb-1 text-lg">Budget Control</h3>
+                <p className="text-sm text-white/70">Automated spend limits</p>
               </div>
               
               <div className="bg-white/10 rounded-2xl p-4 lg:p-6 backdrop-blur-sm flex flex-col justify-between min-h-0">
@@ -93,8 +93,8 @@ export default function AuthLayout({
                     <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1 text-lg">Unified Dashboard</h3>
-                <p className="text-sm text-white/70">All platforms, one view</p>
+                <h3 className="font-semibold mb-1 text-lg">Form Integration</h3>
+                <p className="text-sm text-white/70">Brief to campaign, automated</p>
               </div>
               
               <div className="bg-white/10 rounded-2xl p-4 lg:p-6 backdrop-blur-sm flex flex-col justify-between min-h-0">
@@ -103,8 +103,8 @@ export default function AuthLayout({
                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1 text-lg">Time Saving</h3>
-                <p className="text-sm text-white/70">Hours reduced to minutes</p>
+                <h3 className="font-semibold mb-1 text-lg">Error Reduction</h3>
+                <p className="text-sm text-white/70">Consistent, accurate setup</p>
               </div>
             </div>
           </div>
