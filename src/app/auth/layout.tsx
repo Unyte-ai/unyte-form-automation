@@ -60,7 +60,7 @@ export default function AuthLayout({
               </h2>
               
               <p className="text-lg text-white/80 leading-relaxed mb-6">
-                Streamline your campaign creation process with automated budget controls. From client brief to live campaigns, ensure accurate spending and consistent delivery across all platforms.
+                Streamline your campaign creation process with automated budget controls. From project brief to live campaigns, ensure accurate spending and consistent delivery across all platforms.
               </p>
             </div>
 
@@ -83,7 +83,7 @@ export default function AuthLayout({
                   </svg>
                 </div>
                 <h3 className="font-semibold mb-1 text-lg">Multi-Platform</h3>
-                <p className="text-sm text-white/70">Google, Meta, LinkedIn</p>
+                <p className="text-sm text-white/70">Google, Meta, LinkedIn & more</p>
               </div>
               
               <div className="bg-white/10 rounded-2xl p-4 lg:p-6 backdrop-blur-sm flex flex-col justify-between min-h-0">
