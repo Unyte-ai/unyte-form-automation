@@ -7,6 +7,8 @@ import { initFacebookOAuth } from '@/app/actions/facebook-auth'
 import { MetaDialog } from '@/components/meta-dialog'
 import { useConnectionStatus } from '@/contexts/connection-status-context'
 import { useParams } from 'next/navigation'
+import { HelpCircle } from 'lucide-react'
+import Link from 'next/link'
 
 export function MetaLogin() {
   const [isConnecting, setIsConnecting] = useState(false)
@@ -59,7 +61,18 @@ export function MetaLogin() {
   return (
     <>
       <div className="flex justify-between items-center">
-        <span className="font-medium">Meta</span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">Meta</span>
+          <Link 
+            href="/facebook-data-deletion"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            title="Facebook data deletion instructions"
+          >
+            <HelpCircle size={16} />
+          </Link>
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
