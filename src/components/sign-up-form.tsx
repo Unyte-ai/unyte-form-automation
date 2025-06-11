@@ -121,6 +121,27 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                 Login
               </Link>
             </div>
+            <div className="mt-4 text-center text-xs text-muted-foreground">
+              By signing up, you agree to our{' '}
+              <Link 
+                href="https://unyte.ai/privacy-policy/" 
+                className="underline underline-offset-4 hover:text-foreground"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Privacy Policy
+              </Link>
+              {' '}and{' '}
+              <Link 
+                href="https://unyte.ai/terms-of-service/" 
+                className="underline underline-offset-4 hover:text-foreground"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Terms of Service
+              </Link>
+              .
+            </div>
           </form>
         </CardContent>
       </Card>
