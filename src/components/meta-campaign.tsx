@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { MetaAdAccount } from '@/components/meta-ad-account'
 import { MetaCreateCampaignAdSet } from '@/components/meta-create-campaign-adset'
-import { getFacebookAdAccounts, FacebookAdAccount } from '@/app/actions/facebook-ad-accounts'
+import { getFacebookAdAccountsAndPages, FacebookAdAccount, FacebookPage } from '@/app/actions/facebook-ad-accounts'
 import { toast } from 'sonner'
 
 // Define interfaces for form data
@@ -29,28 +29,30 @@ interface MetaCampaignProps {
 
 export function MetaCampaign({ id, onRemove, organizationId, formData }: MetaCampaignProps) {
   const [accounts, setAccounts] = useState<FacebookAdAccount[]>([])
+  const [pages, setPages] = useState<FacebookPage[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string>('')
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
   const [accountsError, setAccountsError] = useState<string | null>(null)
 
-  // Fetch Facebook ad accounts when component mounts
+  // Fetch Facebook ad accounts and pages when component mounts
   useEffect(() => {
-    async function fetchAdAccounts() {
+    async function fetchAdAccountsAndPages() {
       try {
         setIsLoadingAccounts(true)
         setAccountsError(null)
 
-        const result = await getFacebookAdAccounts(organizationId)
+        const result = await getFacebookAdAccountsAndPages(organizationId)
 
         if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch Facebook ad accounts')
+          throw new Error(result.error || 'Failed to fetch Facebook ad accounts and pages')
         }
 
-        setAccounts(result.data || [])
+        setAccounts(result.data?.adAccounts || [])
+        setPages(result.data?.pages || [])
       } catch (error) {
-        console.error('Error fetching Facebook ad accounts:', error)
-        setAccountsError(error instanceof Error ? error.message : 'Failed to fetch ad accounts')
-        toast.error('Failed to fetch Facebook ad accounts', {
+        console.error('Error fetching Facebook ad accounts and pages:', error)
+        setAccountsError(error instanceof Error ? error.message : 'Failed to fetch ad accounts and pages')
+        toast.error('Failed to fetch Facebook ad accounts and pages', {
           description: error instanceof Error ? error.message : 'An unexpected error occurred'
         })
       } finally {
@@ -58,7 +60,7 @@ export function MetaCampaign({ id, onRemove, organizationId, formData }: MetaCam
       }
     }
 
-    fetchAdAccounts()
+    fetchAdAccountsAndPages()
   }, [organizationId])
 
   // Handle ad account selection
@@ -99,8 +101,10 @@ export function MetaCampaign({ id, onRemove, organizationId, formData }: MetaCam
         ) : (
           <MetaAdAccount 
             accounts={accounts} 
+            pages={pages}
             onChange={handleAdAccountChange}
             isLoading={isLoadingAccounts}
+            organizationId={organizationId}
           />
         )}
 

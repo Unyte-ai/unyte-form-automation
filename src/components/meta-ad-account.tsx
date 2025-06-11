@@ -10,21 +10,49 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { FacebookAdAccount, FacebookPage } from '@/app/actions/facebook-ad-accounts'
+import { getFacebookPageFollowers, PageFollowers } from '@/app/actions/facebook-page-followers'
 
 interface MetaAdAccountProps {
   accounts?: FacebookAdAccount[]
   pages?: FacebookPage[]
   onChange?: (value: string) => void
   isLoading?: boolean
+  organizationId?: string
 }
 
-export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading = false }: MetaAdAccountProps) {
+export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading = false, organizationId }: MetaAdAccountProps) {
   const [value, setValue] = React.useState('')
+  const [pageFollowers, setPageFollowers] = React.useState<PageFollowers[]>([])
+  const [loadingFollowers, setLoadingFollowers] = React.useState(false)
 
   const handleValueChange = (newValue: string) => {
     setValue(newValue)
     if (onChange) {
       onChange(newValue)
+    }
+    
+    // Fetch followers when account is selected
+    if (newValue && pages.length > 0 && organizationId) {
+      fetchFollowers()
+    }
+  }
+
+  const fetchFollowers = async () => {
+    if (!organizationId || pages.length === 0) return
+    
+    setLoadingFollowers(true)
+    try {
+      const result = await getFacebookPageFollowers(
+        organizationId,
+        pages.map(page => page.id)
+      )
+      if (result.success) {
+        setPageFollowers(result.data || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch followers:', error)
+    } finally {
+      setLoadingFollowers(false)
     }
   }
 
@@ -79,21 +107,24 @@ export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading =
       {value && pages.length > 0 && (
         <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
           <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
-            Available Facebook Pages ({pages.length})
+            Connected Facebook Pages ({pages.length})
           </h4>
-          <div className="space-y-1">
-            {pages.map(page => (
-              <div key={page.id} className="text-xs text-blue-700 dark:text-blue-400">
-                <span className="font-medium">{page.name}</span>
-                {page.category && (
-                  <span className="text-blue-600 dark:text-blue-500 ml-2">• {page.category}</span>
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-blue-600 dark:text-blue-500 mt-2">
-            These pages can be used for lead generation campaigns or other page-based features.
-          </p>
+          {loadingFollowers ? (
+            <div className="text-xs text-blue-700 dark:text-blue-400">
+              Loading follower counts...
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {pageFollowers.map(page => (
+                <div key={page.pageId} className="text-xs text-blue-700 dark:text-blue-400">
+                  <span className="font-medium">{page.pageName}</span>
+                  <span className="text-blue-600 dark:text-blue-500 ml-2">
+                    • {page.followers !== null ? `${page.followers.toLocaleString()} followers` : 'Followers: N/A'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
       
