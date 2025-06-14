@@ -104,7 +104,7 @@ export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading =
         </SelectContent>
       </Select>
       
-      {value && pages.length > 0 && (
+      {value && (
         <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
           <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
             Connected Facebook Pages ({pages.length})
