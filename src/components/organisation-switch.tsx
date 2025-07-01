@@ -82,6 +82,14 @@ export function OrganisationSwitch() {
     }
   }
 
+  const getCurrentOrgName = () => {
+    if (isLoading) return "Loading organizations..."
+    if (currentOrgId) {
+      return organizations.find((org) => org.id === currentOrgId)?.name || 'Select Organisation'
+    }
+    return 'Select Organisation'
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -91,15 +99,12 @@ export function OrganisationSwitch() {
           aria-expanded={open}
           className="w-[200px] justify-between"
           disabled={isLoading}
+          title={getCurrentOrgName()} // Tooltip for full name
         >
-          {isLoading ? (
-            "Loading organizations..."
-          ) : currentOrgId ? (
-            organizations.find((org) => org.id === currentOrgId)?.name || 'Select Organisation'
-          ) : (
-            'Select Organisation'
-          )}
-          <ChevronsUpDown className="size-4 opacity-50" />
+          <span className="truncate text-left flex-1 min-w-0">
+            {getCurrentOrgName()}
+          </span>
+          <ChevronsUpDown className="size-4 opacity-50 ml-2 flex-shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -113,11 +118,14 @@ export function OrganisationSwitch() {
                   key={org.id}
                   value={org.id}
                   onSelect={() => handleOrgSelect(org.id)}
+                  title={org.name} // Tooltip for full name in dropdown too
                 >
-                  {org.name}
+                  <span className="truncate flex-1 min-w-0">
+                    {org.name}
+                  </span>
                   <Check
                     className={cn(
-                      "ml-auto size-4",
+                      "ml-auto size-4 flex-shrink-0",
                       currentOrgId === org.id ? "opacity-100" : "opacity-0"
                     )}
                   />
