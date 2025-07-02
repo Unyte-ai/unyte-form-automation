@@ -249,9 +249,10 @@ export function extractMetaBudgetFromForm(
   const totalPlatformGroups = countTotalPlatformGroups(allPlatformsInForm)
   console.log('📊 Total platform groups in form:', totalPlatformGroups)
   
-  // Only calculate allocation if Meta platforms are selected and we have total budget
+  // Calculate allocation based on whether Meta is the only platform group
+  const isMetaOnlyScenario = totalPlatformGroups === 1 && hasMetaPlatformsSelected(selectedPlatforms)
   const allocatedBudget = hasMetaPlatformsSelected(selectedPlatforms) && totalPlatformGroups > 0
-    ? totalBudget / totalPlatformGroups
+    ? (isMetaOnlyScenario ? totalBudget : totalBudget / totalPlatformGroups)
     : 0
   
   const allocatedBudgetCents = convertBudgetToCents(allocatedBudget)
@@ -264,8 +265,11 @@ export function extractMetaBudgetFromForm(
     platformGroups: totalPlatformGroups
   }
   
-  console.log('🎯 extractMetaBudgetFromForm result:', result)
-  
+  console.log('🎯 extractMetaBudgetFromForm result:', {
+    ...result,
+    isMetaOnlyScenario,
+    allocationLogic: isMetaOnlyScenario ? 'Full budget (Meta only)' : `Divided by ${totalPlatformGroups} groups`
+  })  
   return result
 }
 
@@ -279,10 +283,11 @@ function extractAllPlatformsFromForm(formData: StructuredData): string[] {
   
   const platformFields = formData.formData.filter(item => {
     const question = item.question.toLowerCase()
-    return question.includes('channel') || 
-           question.includes('network') || 
-           question.includes('platform') ||
-           question.includes('preferred')
+    // More specific patterns for advertising platform questions
+    return (question.includes('preferred') && (question.includes('channel') || question.includes('network'))) ||
+           question.includes('advertising') && (question.includes('channel') || question.includes('platform')) ||
+           question.includes('marketing') && (question.includes('channel') || question.includes('platform')) ||
+           (question.includes('channel') && question.includes('network')) // "Channels / Networks"
   })
   
   console.log('🔍 Platform-related fields found:', platformFields)
@@ -398,9 +403,11 @@ export function getBudgetAllocationSummary(
   }
   
   const metaPlatformsInSelection = selectedPlatforms.filter(p => META_PLATFORM_GROUP.includes(p))
+  const isMetaOnlyScenario = result.platformGroups === 1 && hasMetaPlatformsSelected(selectedPlatforms)
   
-  return `Total budget: £${result.totalBudget} (${result.budgetType.toLowerCase()}) → ` +
-         `${result.platformGroups} platform groups → ` +
-         `£${result.allocatedBudget.toFixed(2)} allocated to Meta platforms ` +
-         `(${metaPlatformsInSelection.join(', ')})`
+  const allocationDescription = isMetaOnlyScenario 
+    ? `Full budget allocated to Meta platforms (${metaPlatformsInSelection.join(', ')})`
+    : `${result.platformGroups} platform groups → £${result.allocatedBudget.toFixed(2)} allocated to Meta platforms (${metaPlatformsInSelection.join(', ')})`
+
+  return `Total budget: £${result.totalBudget} (${result.budgetType.toLowerCase()}) → ${allocationDescription}`
 }
