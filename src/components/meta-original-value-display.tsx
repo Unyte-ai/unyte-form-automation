@@ -13,7 +13,12 @@ export function MetaOriginalValueDisplay({ originalValue, fieldType }: MetaOrigi
       case 'budget-type':
         return value === 'DAILY' ? 'Daily Budget' : 'Lifetime Budget'
       case 'budget-amount':
-        return `$${value}`
+        // Clean numeric display without currency symbol
+        const numericValue = parseFloat(value)
+        if (isNaN(numericValue)) {
+          return value // Return as-is if not a number
+        }
+        return numericValue.toFixed(2) // Just the number, properly formatted
       case 'date':
         try {
           return new Date(value).toLocaleDateString('en-US', {

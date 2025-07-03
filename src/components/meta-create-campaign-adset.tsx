@@ -67,6 +67,9 @@ export function MetaCreateCampaignAdSet({
     setHasAutoPopulated,
     originalFormData,
     
+    // NEW: Add detected currency
+    detectedCurrency,
+    
     // Individual toggle actions (following Google pattern)
     toggleBudgetTypeLock,
     toggleBudgetAmountLock,
@@ -322,6 +325,10 @@ export function MetaCreateCampaignAdSet({
                   
                   // Original form data for display
                   originalFormData={originalFormData}
+                  
+                  // NEW: Pass detected currency
+                  detectedCurrency={detectedCurrency}
+                  
                   disabled={isCreating}
                 />
               </div>

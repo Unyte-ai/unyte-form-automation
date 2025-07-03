@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MetaCampaignLockableField } from '@/components/meta-campaign-lockable-field'
+import { getCurrencyLabel, SupportedCurrency } from '@/lib/meta-currency-utils'
 import { 
   FacebookCampaignData,
   FacebookBudgetType,
@@ -39,6 +40,10 @@ interface MetaCampaignFieldsProps {
   
   // Original form data for display
   originalFormData?: OriginalMetaFormData
+  
+  // NEW: Currency support (with fallback to USD for backwards compatibility)
+  detectedCurrency?: SupportedCurrency
+  
   disabled?: boolean
 }
 
@@ -61,6 +66,10 @@ export function MetaCampaignFields({
   
   // Original form data for display
   originalFormData,
+  
+  // NEW: Currency prop with fallback for backwards compatibility
+  detectedCurrency = 'USD',
+  
   disabled = false
 }: MetaCampaignFieldsProps) {
   // Handle form field changes
@@ -125,6 +134,9 @@ export function MetaCampaignFields({
 
   // Get the current budget type (default to LIFETIME)
   const currentBudgetType = value.budget_type || 'LIFETIME'
+
+  // NEW: Generate dynamic currency labels
+  const budgetCurrencyLabel = getCurrencyLabel(detectedCurrency)
 
   return (
     <div className="space-y-4">
@@ -219,9 +231,9 @@ export function MetaCampaignFields({
         )}
       </MetaCampaignLockableField>
 
-      {/* Budget Amount (following Google pattern with individual lock) */}
+      {/* Budget Amount (following Google pattern with individual lock) - NOW WITH DYNAMIC CURRENCY */}
       <MetaCampaignLockableField
-        label={currentBudgetType === 'LIFETIME' ? 'Lifetime Budget (USD) *' : 'Daily Budget (USD) *'}
+        label={`${currentBudgetType === 'LIFETIME' ? 'Lifetime Budget' : 'Daily Budget'} ${budgetCurrencyLabel} *`}
         isLocked={isBudgetAmountLocked}
         onToggleLock={onToggleBudgetAmountLock || (() => {})}
         disabled={disabled}
@@ -258,8 +270,8 @@ export function MetaCampaignFields({
         )}
         <p className="text-xs text-muted-foreground">
           {currentBudgetType === 'LIFETIME' 
-            ? 'Enter the total amount you want to spend on this campaign'
-            : 'Enter the maximum amount you want to spend per day'
+            ? `Enter the total amount you want to spend on this campaign (in ${detectedCurrency})`
+            : `Enter the maximum amount you want to spend per day (in ${detectedCurrency})`
           }
         </p>
       </MetaCampaignLockableField>
@@ -274,6 +286,19 @@ export function MetaCampaignFields({
           Campaigns start paused by default for safety
         </p>
       </div>
+
+      {/* NEW: Currency Detection Info (only show if not USD) */}
+      {detectedCurrency !== 'USD' && (
+        <div className="p-3 rounded-md bg-green-50 border border-green-200 dark:bg-green-950/20 dark:border-green-800">
+          <p className="text-green-800 dark:text-green-300 text-sm">
+            <strong>Currency Detected:</strong> {detectedCurrency}
+            <br />
+            <span className="text-xs">
+              Budget amounts will be sent to Meta in {detectedCurrency}. The currency is detected from your form data.
+            </span>
+          </p>
+        </div>
+      )}
     </div>
   )
 }

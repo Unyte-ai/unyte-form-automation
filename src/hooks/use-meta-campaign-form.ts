@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { populateMetaFormFromFormData } from '@/lib/meta-autopopulate-utils'
 import { getBudgetAllocationSummary } from '@/lib/meta-budget-utils'
+import { detectCurrencyFromForm, SupportedCurrency } from '@/lib/meta-currency-utils'
 import { 
   FacebookCampaignData,
   FacebookAdSetData,
@@ -50,6 +51,9 @@ export function useMetaCampaignForm(formData?: StructuredData) {
 
   // State management
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false)
+  
+  // NEW: Currency detection state
+  const [detectedCurrency, setDetectedCurrency] = useState<SupportedCurrency>('USD')
   
   // Track original form data to determine if fields had auto-populated values
   const [originalFormData, setOriginalFormData] = useState<OriginalMetaFormData>({
@@ -128,6 +132,11 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     }
 
     try {
+      // NEW: Detect currency from form data first
+      const currency = detectCurrencyFromForm(formData)
+      setDetectedCurrency(currency)
+      console.log('💱 Detected currency from form:', currency)
+
       // Use the utility function to populate both campaign and ad set data
       const result = populateMetaFormFromFormData(formData, campaignData, adSetData)
       
@@ -181,8 +190,11 @@ export function useMetaCampaignForm(formData?: StructuredData) {
         const selectedPlatforms = result.adSetData.targeting?.publisher_platforms || []
         const budgetSummary = getBudgetAllocationSummary(formData, selectedPlatforms)
         
+        // NEW: Include currency information in success message
+        const currencyInfo = currency !== 'USD' ? ` (Currency: ${currency})` : ''
+        
         toast.success('Auto-populated successfully!', {
-          description: `Filled: ${result.populatedFields.join(', ')}\n${budgetSummary}`
+          description: `Filled: ${result.populatedFields.join(', ')}\n${budgetSummary}${currencyInfo}`
         })
       } else {
         toast.info('No matching fields found in form data', {
@@ -289,6 +301,9 @@ export function useMetaCampaignForm(formData?: StructuredData) {
 
     // Reset auto-populate state
     setHasAutoPopulated(false)
+    
+    // NEW: Reset currency detection
+    setDetectedCurrency('USD')
 
     // Reset original form data tracking
     setOriginalFormData({
@@ -307,6 +322,9 @@ export function useMetaCampaignForm(formData?: StructuredData) {
     setAdSetData,
     campaignErrors,
     adSetErrors,
+    
+    // NEW: Currency state
+    detectedCurrency,
     
     // Individual lock states (following Google pattern)
     isBudgetTypeLocked,
