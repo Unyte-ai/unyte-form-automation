@@ -248,6 +248,12 @@ export function populateMetaAdSetFromForm(
   if (!formData?.formData) return currentAdSetData
   
   const populatedData = { ...currentAdSetData }
+
+  // In meta-autopopulate-utils.ts, add this at the start of populateMetaAdSetFromForm
+  console.log('🔍 Form data questions:', formData.formData?.map(item => ({
+    question: item.question,
+    answer: item.answer
+  })))
   
   // Ad Set Name (can derive from campaign name if not found specifically)
   const adSetNameFromForm = findAnswerByQuestion(formData.formData, [
@@ -295,18 +301,31 @@ export function populateMetaAdSetFromForm(
     }
   }
 
-  // Age Targeting
+  // Age Targeting - WITH DEBUGGING
+  console.log('🔍 AGE DEBUG - Starting age extraction...')
+  
   const ageFromForm = findAnswerByQuestion(formData.formData, [
-    'age',
+    'target audience age range',  // Most specific first
+    'audience age range',
     'age range',
     'target age',
     'audience age',
     'demographic',
     'age group'
+    // Removed generic 'age' to prevent matching 'agency'
   ])
+  
+  console.log('🔍 AGE DEBUG - Age answer found:', ageFromForm)
+  
   if (ageFromForm) {
+    console.log('🔍 AGE DEBUG - Parsing age range:', ageFromForm)
     const ageRange = parseAgeRange(ageFromForm)
+    console.log('🔍 AGE DEBUG - Parsed age range:', ageRange)
+    
     if (ageRange.age_min || ageRange.age_max) {
+      console.log('🔍 AGE DEBUG - Age range valid, updating targeting...')
+      console.log('🔍 AGE DEBUG - Current targeting before update:', populatedData.targeting)
+      
       if (populatedData.targeting) {
         populatedData.targeting = {
           ...populatedData.targeting,
@@ -320,7 +339,29 @@ export function populateMetaAdSetFromForm(
           age_max: ageRange.age_max || DEFAULT_ADSET_VALUES.targeting!.age_max
         }
       }
+      
+      console.log('🔍 AGE DEBUG - Updated targeting:', populatedData.targeting)
+    } else {
+      console.log('❌ AGE DEBUG - Age range not valid')
     }
+  } else {
+    console.log('❌ AGE DEBUG - No age answer found')
+    
+    // Let's check what questions contain "age"
+    const ageQuestions = formData.formData.filter(item => 
+      item.question.toLowerCase().includes('age')
+    )
+    console.log('🔍 AGE DEBUG - Questions containing "age":', ageQuestions)
+    
+    // Let's also check the findAnswerByQuestion function step by step
+    console.log('🔍 AGE DEBUG - Testing search terms individually:')
+    const searchTerms = ['age', 'age range', 'target age', 'audience age', 'demographic', 'age group']
+    searchTerms.forEach(term => {
+      const found = formData.formData.find(item => 
+        item.question.toLowerCase().includes(term.toLowerCase())
+      )
+      console.log(`  - "${term}": ${found ? `Found: "${found.question}" = "${found.answer}"` : 'Not found'}`)
+    })
   }
 
   // Publisher Platforms - Use the publisher platform utility
