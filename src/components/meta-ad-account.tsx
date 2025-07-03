@@ -1,14 +1,22 @@
 'use client'
 
 import * as React from 'react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { FacebookAdAccount, FacebookPage } from '@/app/actions/facebook-ad-accounts'
 import { getFacebookPageFollowers, PageFollowers } from '@/app/actions/facebook-page-followers'
 
@@ -21,12 +29,16 @@ interface MetaAdAccountProps {
 }
 
 export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading = false, organizationId }: MetaAdAccountProps) {
+  const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
   const [pageFollowers, setPageFollowers] = React.useState<PageFollowers[]>([])
   const [loadingFollowers, setLoadingFollowers] = React.useState(false)
 
-  const handleValueChange = (newValue: string) => {
+  const handleSelect = (accountId: string) => {
+    const newValue = value === accountId ? '' : accountId
     setValue(newValue)
+    setOpen(false)
+    
     if (onChange) {
       onChange(newValue)
     }
@@ -71,38 +83,72 @@ export function MetaAdAccount({ accounts = [], pages = [], onChange, isLoading =
     }
   }
 
+  // Find the selected account for display
+  const selectedAccount = accounts.find(account => account.id === value)
+
   return (
     <div className="grid gap-2">
       <Label htmlFor="ad-account">Ad Account</Label>
-      <Select value={value} onValueChange={handleValueChange} disabled={isLoading}>
-        <SelectTrigger id="ad-account" className="w-full">
-          <SelectValue placeholder={isLoading ? "Loading accounts..." : "Select an ad account"} />
-        </SelectTrigger>
-        <SelectContent>
-          {isLoading ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Loading ad accounts...
-            </div>
-          ) : accounts.length > 0 ? (
-            accounts.map(account => (
-              <SelectItem key={account.id} value={account.id}>
-                <div className="flex flex-col">
-                  <span>{account.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ID: {account.id}
-                    {account.account_status && ` • Status: ${getAccountStatusText(account.account_status)}`}
-                    {account.currency && ` • Currency: ${account.currency}`}
-                  </span>
-                </div>
-              </SelectItem>
-            ))
-          ) : (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              No ad accounts available
-            </div>
-          )}
-        </SelectContent>
-      </Select>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              "Loading accounts..."
+            ) : selectedAccount ? (
+              <div className="flex flex-col items-start">
+                <span className="font-medium">{selectedAccount.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  ID: {selectedAccount.id}
+                </span>
+              </div>
+            ) : (
+              "Select an ad account"
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput 
+              placeholder="Search ad accounts..." 
+              disabled={isLoading}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {isLoading ? "Loading accounts..." : "No ad accounts found."}
+              </CommandEmpty>
+              {!isLoading && accounts.map((account) => (
+                <CommandItem
+                  key={account.id}
+                  value={`${account.name} ${account.id}`}
+                  onSelect={() => handleSelect(account.id)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === account.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium">{account.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ID: {account.id}
+                      {account.account_status && ` • Status: ${getAccountStatusText(account.account_status)}`}
+                      {account.currency && ` • Currency: ${account.currency}`}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
       
       {value && (
         <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
