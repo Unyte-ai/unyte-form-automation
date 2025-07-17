@@ -5,13 +5,40 @@ interface FormsProps {
   organizationId: string;
 }
 
+// Define interfaces for structured data
+interface FormQuestion {
+  question: string;
+  answer: string;
+}
+
+interface StructuredData {
+  rawText: string;
+  formData: FormQuestion[];
+}
+
+// Helper function to extract campaign name from structured_data
+function extractCampaignName(structuredData: StructuredData | null): string {
+  if (!structuredData?.formData || !Array.isArray(structuredData.formData)) {
+    return 'Untitled Submission';
+  }
+
+  // Search for questions containing "Campaign Name" or "Campaign Names"
+  const campaignNameField = structuredData.formData.find(
+    (field: FormQuestion) => 
+      field.question.toLowerCase().includes('campaign name') ||
+      field.question.toLowerCase().includes('campaign names')
+  );
+
+  return campaignNameField?.answer || 'Untitled Submission';
+}
+
 export async function Forms({ organizationId }: FormsProps) {
   const supabase = await createClient();
   
-  // Fetch submissions with pagination
+  // Fetch submissions with structured_data instead of email_subject
   const { data: submissions, error } = await supabase
     .from('form_submissions')
-    .select('id, email_subject')
+    .select('id, structured_data')
     .eq('organization_id', organizationId)
     .order('received_at', { ascending: false })
     .limit(10);
@@ -46,7 +73,7 @@ export async function Forms({ organizationId }: FormsProps) {
             <FormItem 
               key={submission.id}
               id={submission.id} 
-              title={submission.email_subject || 'Untitled Submission'} 
+              title={extractCampaignName(submission.structured_data)} 
             />
           ))}
         </div>
