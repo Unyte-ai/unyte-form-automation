@@ -1,4 +1,3 @@
-// src/components/forms.tsx (remains a server component)
 import { createClient } from '@/lib/supabase/server';
 import { FormItem } from '@/components/form-item'; // This will be a client component
 
@@ -21,7 +20,7 @@ export async function Forms({ organizationId }: FormsProps) {
 
   return (
     <div className="rounded-lg border p-6 bg-card">
-      <h2 className="text-xl font-semibold mb-4">Forms</h2>
+      <h2 className="text-xl font-semibold mb-4">Briefs</h2>
       
       {error ? (
         <div className="text-sm text-amber-500">
