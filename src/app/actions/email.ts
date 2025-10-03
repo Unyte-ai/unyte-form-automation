@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid' // You'll need to install this package
 
 /**
  * Generates a unique email address for organization forms
- * Format: forms+uniqueID@blockmerce.com
+ * Format: forms+uniqueID@accuracast.in
  */
 export async function generateUniqueEmail(): Promise<string> {
   const supabase = await createClient()
@@ -17,7 +17,7 @@ export async function generateUniqueEmail(): Promise<string> {
   while (!isUnique) {
     // Generate a shortened UUID (first 8 chars should be sufficient)
     uniqueID = uuidv4().split('-')[0]
-    email = `forms+${uniqueID}@blockmerce.com`
+    email = `forms+${uniqueID}@accuracast.in`
     
     // Check if this email already exists in the organizations table
     const { data, error } = await supabase

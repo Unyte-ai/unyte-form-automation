@@ -8,7 +8,7 @@ export function extractUuidFromEmail(email: string | null | undefined): string |
   }
   
   try {
-    // Extract UUID from forms+uuid@blockmerce.com or similar patterns
+    // Extract UUID from forms+uuid@accuracast.in or similar patterns
     const matches = email.match(/forms\+([a-f0-9-]+)@|unyteformautomation\+([a-f0-9-]+)@/i);
     return matches ? (matches[1] || matches[2]) : null;
   } catch (error) {
